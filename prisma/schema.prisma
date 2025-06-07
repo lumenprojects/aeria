@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Character {
+  id               Int                  @id @default(autoincrement())
+  name             String
+  slug             String               @unique
+  avatarUrl        String?
+  shortDescription String?
+  fullDescription  String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  chapters         ChapterCharacter[]
+  attributes       CharacterAttribute[]
+}
+
+model CharacterAttribute {
+  id             Int       @id @default(autoincrement())
+  characterId    Int
+  attributeName  String
+  attributeValue String?
+  attributeType  String    @default("text")
+  displayOrder   Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  character      Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@unique([characterId, attributeName])
+}
+
+model StoryLine {
+  id                Int         @id @default(autoincrement())
+  title             String
+  slug              String      @unique
+  description       String?
+  color             String?
+  displayOrder      Int         @default(0)
+  parentStoryLineId Int?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  chapters          Chapter[]
+  parentStoryLine   StoryLine?  @relation("StoryLineToStoryLine", fields: [parentStoryLineId], references: [id])
+  childStoryLines   StoryLine[] @relation("StoryLineToStoryLine")
+}
+
+model Chapter {
+  id               Int                   @id @default(autoincrement())
+  title            String
+  slug             String                @unique
+  storyLineId      Int
+  content          String?
+  summary          String?
+  chapterNumber    Int?
+  timelinePosition Int?
+  isPublished      Boolean               @default(false)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  storyLine        StoryLine             @relation(fields: [storyLineId], references: [id])
+  characters       ChapterCharacter[]
+  sourceRelations  ChapterRelationship[] @relation("SourceChapter")
+  targetRelations  ChapterRelationship[] @relation("TargetChapter")
+}
+
+model ChapterCharacter {
+  chapterId       Int
+  characterId     Int
+  isMainCharacter Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  chapter         Chapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  character       Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@id([chapterId, characterId])
+}
+
+model ChapterRelationship {
+  id               Int      @id @default(autoincrement())
+  sourceChapterId  Int
+  targetChapterId  Int
+  relationshipType String
+  createdAt        DateTime @default(now())
+  sourceChapter    Chapter  @relation("SourceChapter", fields: [sourceChapterId], references: [id], onDelete: Cascade)
+  targetChapter    Chapter  @relation("TargetChapter", fields: [targetChapterId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceChapterId, targetChapterId])
+}
+
+model Setting {
+  key         String   @id
+  value       String?
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model AdminUser {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique
+  passwordHash String
+  email        String?   @unique
+  isActive     Boolean   @default(true)
+  lastLogin    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
