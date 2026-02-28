@@ -1,0 +1,127 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --radius-lg: 20px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 56px;
+  --space-10: 72px;
+}
+
+[data-theme="paper"][data-mode="light"] {
+  --bg: #f8f3ec;
+  --surface: #ffffff;
+  --text: #1b1a17;
+  --muted: #6d6a65;
+  --accent: #d6a24a;
+  --border: #ded6c8;
+}
+
+[data-theme="paper"][data-mode="dark"] {
+  --bg: #15110d;
+  --surface: #1f1913;
+  --text: #f6efe6;
+  --muted: #b7ada2;
+  --accent: #f0c06a;
+  --border: #2b241b;
+}
+
+[data-theme="stone"][data-mode="light"] {
+  --bg: #f3f4f5;
+  --surface: #ffffff;
+  --text: #1a1d21;
+  --muted: #5c6168;
+  --accent: #4f6b85;
+  --border: #d8dde3;
+}
+
+[data-theme="stone"][data-mode="dark"] {
+  --bg: #0f1317;
+  --surface: #171c22;
+  --text: #f1f4f7;
+  --muted: #a5b0bc;
+  --accent: #6e91b2;
+  --border: #232a33;
+}
+
+[data-theme="coral"][data-mode="light"] {
+  --bg: #fff3ee;
+  --surface: #ffffff;
+  --text: #211714;
+  --muted: #6e5d56;
+  --accent: #e2694b;
+  --border: #f0d4c9;
+}
+
+[data-theme="coral"][data-mode="dark"] {
+  --bg: #1b120f;
+  --surface: #241814;
+  --text: #fbeee7;
+  --muted: #c6b0a5;
+  --accent: #f08a6d;
+  --border: #32231d;
+}
+
+[data-theme="amoled"][data-mode="light"] {
+  --bg: #f7f7f7;
+  --surface: #ffffff;
+  --text: #101010;
+  --muted: #5b5b5b;
+  --accent: #00b894;
+  --border: #e0e0e0;
+}
+
+[data-theme="amoled"][data-mode="dark"] {
+  --bg: #000000;
+  --surface: #0f0f0f;
+  --text: #f5f5f5;
+  --muted: #9f9f9f;
+  --accent: #00d6a7;
+  --border: #1c1c1c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body, "Source Serif 4"), serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.container {
+  width: min(1200px, 90vw);
+  margin: 0 auto;
+}
+
+.text-ui {
+  font-family: var(--font-ui, "Manrope"), sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.text-body {
+  font-family: var(--font-body, "Source Serif 4"), serif;
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+.text-heading {
+  font-family: var(--font-heading, "Fraunces"), serif;
+}

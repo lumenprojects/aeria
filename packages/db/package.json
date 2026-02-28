@@ -1,0 +1,12 @@
+﻿{
+  "name": "@aeria/db",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "migrate": "node-pg-migrate -m migrations up",
+    "migrate:down": "node-pg-migrate -m migrations down"
+  },
+  "dependencies": {
+    "node-pg-migrate": "^7.7.0"
+  }
+}

@@ -1,0 +1,27 @@
+﻿version: "3.9"
+services:
+  postgres:
+    image: postgres:16
+    container_name: aeria-postgres
+    environment:
+      POSTGRES_USER: aeria
+      POSTGRES_PASSWORD: aeria
+      POSTGRES_DB: aeria
+    ports:
+      - "5432:5432"
+    volumes:
+      - aeria_postgres:/var/lib/postgresql/data
+  typesense:
+    image: typesense/typesense:0.26.0
+    container_name: aeria-typesense
+    environment:
+      TYPESENSE_API_KEY: changeme
+      TYPESENSE_DATA_DIR: /data
+    ports:
+      - "8108:8108"
+    volumes:
+      - aeria_typesense:/data
+    command: "--data-dir /data --api-key=changeme --enable-cors"
+volumes:
+  aeria_postgres:
+  aeria_typesense:

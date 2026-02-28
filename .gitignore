@@ -1,0 +1,35 @@
+﻿# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependencies
+node_modules
+
+# Build
+/dist
+/build
+/out
+/.turbo
+/.cache
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vite
+/apps/web/dist
+
+# API build
+/apps/api/dist
+
+# Content
+/content/.cache
