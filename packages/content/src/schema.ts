@@ -36,8 +36,8 @@ export const episodeSchema = z.object({
   summary: z.string().optional().nullable(),
   reading_minutes: z.number().int().optional().nullable(),
   published_at: z.string().optional().nullable(),
-  characters: z.array(slugSchema).optional().default([]),
-  locations: z.array(slugSchema).optional().default([])
+  characters: z.array(slugSchema).default([]),
+  locations: z.array(slugSchema).default([])
 });
 
 export const characterSchema = z.object({
@@ -55,8 +55,8 @@ export const characterSchema = z.object({
   description: z.string().optional().nullable(),
   quote: z.string().optional().nullable(),
   stats: z.record(z.any()).optional().nullable(),
-  traits: z.array(z.string()).optional().default([]),
-  rumors: z.array(z.string()).optional().default([]),
+  traits: z.array(z.string()).default([]),
+  rumors: z.array(z.string()).default([]),
   published_at: z.string().optional().nullable()
 });
 
@@ -73,7 +73,7 @@ export const atlasSchema = z.object({
   summary: z.string().optional().nullable(),
   country_slug: z.string().optional().nullable(),
   location_slug: z.string().optional().nullable(),
-  links: z.array(atlasLinkSchema).optional().default([]),
+  links: z.array(atlasLinkSchema).default([]),
   published_at: z.string().optional().nullable()
 });
 

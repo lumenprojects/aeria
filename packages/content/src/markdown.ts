@@ -2,7 +2,7 @@
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
 import remarkStringify from "remark-stringify";
-import { visit } from "unist-util-visit";
+import { SKIP, visit } from "unist-util-visit";
 
 const disallowed = new Set(["html", "yaml"]);
 
@@ -12,7 +12,7 @@ function stripDisallowed() {
       if (!parent || typeof index !== "number") return;
       if (disallowed.has(node.type)) {
         parent.children.splice(index, 1);
-        return [visit.SKIP, index];
+        return [SKIP, index];
       }
       return undefined;
     });

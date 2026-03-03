@@ -75,10 +75,10 @@ async function walkDir(dir: string): Promise<string[]> {
   return files;
 }
 
-async function loadFiles<T>(
+async function loadFiles<T extends { slug: string }>(
   rootDir: string,
   dir: string,
-  schema: z.ZodSchema<T>,
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>,
   entity: string,
   useBody: boolean
 ): Promise<LoadedFile<T>[]> {
@@ -102,7 +102,7 @@ async function loadFiles<T>(
     }
 
     const normalizedBody = useBody ? await normalizeMarkdown(parsed.content) : "";
-    const slug = (result.data as any).slug as string;
+    const slug = result.data.slug;
     const sourcePath = path.relative(rootDir, filePath).replace(/\\/g, "/");
     loaded.push({
       id: entityId(entity, slug),
