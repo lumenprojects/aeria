@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "import": "tsx src/cli.ts",
     "worker": "tsx src/search-worker.ts"
   },
@@ -20,5 +22,8 @@
     "uuid": "^10.0.0",
     "zod": "^3.23.8",
     "typesense": "^1.8.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
   }
 }

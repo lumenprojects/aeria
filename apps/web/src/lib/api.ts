@@ -20,6 +20,10 @@ export function getEpisode(slug: string) {
   return fetchJson<any>(`/api/episodes/${slug}`);
 }
 
+export function getSeries(slug: string) {
+  return fetchJson<any>(`/api/series/${slug}`);
+}
+
 export function getCharacters() {
   return fetchJson<{ items: any[] }>("/api/characters");
 }

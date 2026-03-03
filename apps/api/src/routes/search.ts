@@ -43,19 +43,21 @@ export async function registerSearchRoutes(app: FastifyInstance) {
       per_page: 8
     }));
 
-    const result = await typesenseClient.multiSearch.perform({ searches }, {});
+    const result = (await typesenseClient.multiSearch.perform({ searches }, {})) as {
+      results: Array<{ hits?: Array<{ document: Record<string, unknown> }> }>;
+    };
 
     const groups = result.results.map((group, index) => {
       const type = collections[index].type;
       const hits = (group.hits || []).map((hit) => {
-        const doc = hit.document as any;
+        const doc = hit.document;
         return {
           type,
-          id: doc.id,
-          slug: doc.slug,
-          title: doc.title,
-          summary: doc.summary ?? null,
-          url: doc.url
+          id: String(doc.id),
+          slug: String(doc.slug),
+          title: String(doc.title),
+          summary: (doc.summary as string | null | undefined) ?? null,
+          url: String(doc.url)
         };
       });
       return { type, hits };
