@@ -1,5 +1,6 @@
 import { FastifyInstance } from "fastify";
 import {
+  CountryFlagDTO,
   CountryDTO,
   EpisodeCharacterLinkDTO,
   EpisodeDetailResponseDTO,
@@ -52,7 +53,8 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
     );
 
     const rows = await pool.query(
-      `SELECT e.id, e.slug, e.series_id, e.country_id, e.episode_number, e.global_order, e.title_native, e.title_ru, e.summary, e.reading_minutes, e.published_at
+      `SELECT e.id, e.slug, e.series_id, e.country_id, e.episode_number, e.global_order, e.title_native, e.title_ru, e.summary, e.reading_minutes, e.published_at,
+              c.slug AS country_slug, c.title_ru AS country_title_ru, c.flag_colors AS country_flag_colors
        FROM episodes e
        JOIN episode_series s ON s.id = e.series_id
        JOIN countries c ON c.id = e.country_id
@@ -76,7 +78,17 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
           title_ru: row.title_ru,
           summary: row.summary ?? null,
           reading_minutes: row.reading_minutes ?? null,
-          published_at: toNullableIsoDateTime(row.published_at)
+          published_at: toNullableIsoDateTime(row.published_at),
+          country: validateResponse(
+            CountryFlagDTO,
+            {
+              id: row.country_id,
+              slug: row.country_slug,
+              title_ru: row.country_title_ru,
+              flag_colors: row.country_flag_colors ?? null
+            },
+            "/api/episodes:item:country"
+          )
         },
         "/api/episodes:item"
       )

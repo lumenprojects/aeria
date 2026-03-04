@@ -4,6 +4,7 @@ import {
   CharacterDetailResponseDTO,
   CharacterListItemDTO,
   CharacterTraitDTO,
+  CountryFlagDTO,
   EpisodeListItemDTO,
   PaginatedCharactersResponseDTO,
   PaginationQueryDTO
@@ -65,7 +66,7 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
   app.get("/api/characters/:slug", async (req, reply) => {
     const { slug } = req.params as { slug: string };
     const characterResult = await pool.query(
-      "SELECT id, slug, name_ru, name_native, affiliation_id, gender, race, height_cm, age, birth_country_id, favorite_food, orientation, description, quote, bio_markdown, stats, published_at FROM characters WHERE slug = $1 AND archived_at IS NULL",
+      "SELECT id, slug, name_ru, avatar_asset_path, name_native, affiliation_id, gender, race, height_cm, age, birth_country_id, favorite_food, orientation, description, quote, bio_markdown, stats, published_at FROM characters WHERE slug = $1 AND archived_at IS NULL",
       [slug]
     );
     const characterRow = characterResult.rows[0];
@@ -74,7 +75,7 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
       return errorPayload("Character not found");
     }
 
-    const [traits, rumors, episodes] = await Promise.all([
+    const [traits, rumors, episodes, birthCountry] = await Promise.all([
       pool.query(
         "SELECT text, sort_order FROM character_traits WHERE character_id = $1 ORDER BY sort_order ASC",
         [characterRow.id]
@@ -84,13 +85,21 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
         [characterRow.id]
       ),
       pool.query(
-        `SELECT e.id, e.slug, e.series_id, e.country_id, e.episode_number, e.global_order, e.title_native, e.title_ru, e.summary, e.reading_minutes, e.published_at
+        `SELECT e.id, e.slug, e.series_id, e.country_id, e.episode_number, e.global_order, e.title_native, e.title_ru, e.summary, e.reading_minutes, e.published_at,
+                c.slug AS country_slug, c.title_ru AS country_title_ru, c.flag_colors AS country_flag_colors
          FROM episodes e
          JOIN episode_characters ec ON ec.episode_id = e.id
+         JOIN countries c ON c.id = e.country_id
          WHERE ec.character_id = $1 AND e.archived_at IS NULL
          ORDER BY e.global_order ASC`,
         [characterRow.id]
-      )
+      ),
+      characterRow.birth_country_id
+        ? pool.query(
+            "SELECT id, slug, title_ru, flag_colors FROM countries WHERE id = $1 AND archived_at IS NULL",
+            [characterRow.birth_country_id]
+          )
+        : Promise.resolve({ rows: [] })
     ]);
 
     const character = validateResponse(
@@ -99,6 +108,7 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
         id: characterRow.id,
         slug: characterRow.slug,
         name_ru: characterRow.name_ru,
+        avatar_asset_path: characterRow.avatar_asset_path,
         name_native: characterRow.name_native ?? null,
         affiliation_id: characterRow.affiliation_id ?? null,
         gender: characterRow.gender ?? null,
@@ -153,16 +163,40 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
           title_ru: row.title_ru,
           summary: row.summary ?? null,
           reading_minutes: row.reading_minutes ?? null,
-          published_at: toNullableIsoDateTime(row.published_at)
+          published_at: toNullableIsoDateTime(row.published_at),
+          country: validateResponse(
+            CountryFlagDTO,
+            {
+              id: row.country_id,
+              slug: row.country_slug,
+              title_ru: row.country_title_ru,
+              flag_colors: row.country_flag_colors ?? null
+            },
+            "/api/characters/:slug:episode:country"
+          )
         },
         "/api/characters/:slug:episode"
       )
     );
 
+    const birthCountryItem = birthCountry.rows[0]
+      ? validateResponse(
+          CountryFlagDTO,
+          {
+            id: birthCountry.rows[0].id,
+            slug: birthCountry.rows[0].slug,
+            title_ru: birthCountry.rows[0].title_ru,
+            flag_colors: birthCountry.rows[0].flag_colors ?? null
+          },
+          "/api/characters/:slug:birth-country"
+        )
+      : null;
+
     return validateResponse(
       CharacterDetailResponseDTO,
       {
         character,
+        birth_country: birthCountryItem,
         traits: traitItems,
         rumors: rumorItems,
         episodes: episodeItems

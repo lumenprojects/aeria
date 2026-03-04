@@ -47,7 +47,10 @@ describe("API route contracts smoke", () => {
             title_ru: "Episode 001",
             summary: "Test episode",
             reading_minutes: 3,
-            published_at: new Date("2026-03-04T00:00:00Z")
+            published_at: new Date("2026-03-04T00:00:00Z"),
+            country_slug: "ru-example",
+            country_title_ru: "Country 01",
+            country_flag_colors: ["#111111", "#ffffff"]
           }
         ]
       });
@@ -74,7 +77,13 @@ describe("API route contracts smoke", () => {
           title_ru: "Episode 001",
           summary: "Test episode",
           reading_minutes: 3,
-          published_at: "2026-03-04T00:00:00.000Z"
+          published_at: "2026-03-04T00:00:00.000Z",
+          country: {
+            id: "00000000-0000-0000-0000-000000000021",
+            slug: "ru-example",
+            title_ru: "Country 01",
+            flag_colors: ["#111111", "#ffffff"]
+          }
         }
       ],
       total: 1,
@@ -152,7 +161,7 @@ describe("API route contracts smoke", () => {
             id: "00000000-0000-0000-0000-000000000021",
             slug: "ru-example",
             title_ru: "Country 01",
-            flag_emoji: "🏳️",
+            flag_emoji: null,
             flag_asset_path: null,
             flag_colors: ["#111111", "#ffffff"]
           }
@@ -216,7 +225,7 @@ describe("API route contracts smoke", () => {
         id: "00000000-0000-0000-0000-000000000021",
         slug: "ru-example",
         title_ru: "Country 01",
-        flag_emoji: "🏳️",
+        flag_emoji: null,
         flag_asset_path: null,
         flag_colors: ["#111111", "#ffffff"]
       },
@@ -250,6 +259,7 @@ describe("API route contracts smoke", () => {
             id: "00000000-0000-0000-0000-000000000031",
             slug: "character-001",
             name_ru: "Character 001",
+            avatar_asset_path: "/assets/images/characters/character-001.png",
             name_native: null,
             affiliation_id: null,
             gender: "unknown",
@@ -286,7 +296,20 @@ describe("API route contracts smoke", () => {
             title_ru: "Episode 001",
             summary: "Test episode",
             reading_minutes: 3,
-            published_at: new Date("2026-03-04T00:00:00Z")
+            published_at: new Date("2026-03-04T00:00:00Z"),
+            country_slug: "ru-example",
+            country_title_ru: "Country 01",
+            country_flag_colors: ["#111111", "#ffffff"]
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000021",
+            slug: "ru-example",
+            title_ru: "Country 01",
+            flag_colors: ["#111111", "#ffffff"]
           }
         ]
       });
@@ -305,6 +328,7 @@ describe("API route contracts smoke", () => {
         id: "00000000-0000-0000-0000-000000000031",
         slug: "character-001",
         name_ru: "Character 001",
+        avatar_asset_path: "/assets/images/characters/character-001.png",
         name_native: null,
         affiliation_id: null,
         gender: "unknown",
@@ -320,6 +344,12 @@ describe("API route contracts smoke", () => {
         stats: { power: 10 },
         published_at: "2026-03-04T00:00:00.000Z"
       },
+      birth_country: {
+        id: "00000000-0000-0000-0000-000000000021",
+        slug: "ru-example",
+        title_ru: "Country 01",
+        flag_colors: ["#111111", "#ffffff"]
+      },
       traits: [{ text: "Trait 1", sort_order: 1 }],
       rumors: [{ text: "Rumor 1", sort_order: 1 }],
       episodes: [
@@ -334,7 +364,13 @@ describe("API route contracts smoke", () => {
           title_ru: "Episode 001",
           summary: "Test episode",
           reading_minutes: 3,
-          published_at: "2026-03-04T00:00:00.000Z"
+          published_at: "2026-03-04T00:00:00.000Z",
+          country: {
+            id: "00000000-0000-0000-0000-000000000021",
+            slug: "ru-example",
+            title_ru: "Country 01",
+            flag_colors: ["#111111", "#ffffff"]
+          }
         }
       ]
     });
@@ -352,6 +388,7 @@ describe("API route contracts smoke", () => {
             title_ru: "Atlas 001",
             summary: "Atlas summary",
             content_markdown: "Atlas content",
+            avatar_asset_path: "/assets/images/atlas/atlas-001.png",
             country_id: "00000000-0000-0000-0000-000000000021",
             location_id: "00000000-0000-0000-0000-000000000041",
             published_at: new Date("2026-03-04T00:00:00Z")
@@ -366,6 +403,16 @@ describe("API route contracts smoke", () => {
             to_type: "episode",
             to_id: "00000000-0000-0000-0000-000000000001",
             label: "related"
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000021",
+            slug: "ru-example",
+            title_ru: "Country 01",
+            flag_colors: ["#111111", "#ffffff"]
           }
         ]
       });
@@ -387,9 +434,16 @@ describe("API route contracts smoke", () => {
         title_ru: "Atlas 001",
         summary: "Atlas summary",
         content_markdown: "Atlas content",
+        avatar_asset_path: "/assets/images/atlas/atlas-001.png",
         country_id: "00000000-0000-0000-0000-000000000021",
         location_id: "00000000-0000-0000-0000-000000000041",
         published_at: "2026-03-04T00:00:00.000Z"
+      },
+      country: {
+        id: "00000000-0000-0000-0000-000000000021",
+        slug: "ru-example",
+        title_ru: "Country 01",
+        flag_colors: ["#111111", "#ffffff"]
       },
       links: [
         {

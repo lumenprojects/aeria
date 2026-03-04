@@ -69,6 +69,7 @@ slug: ${locationSlug}
 title_ru: Тестовая локация
 country_slug: ${countrySlug}
 summary: Локация для интеграционного теста.
+avatar_asset_path: /assets/images/locations/${locationSlug}.png
 ---
 
 # Тестовая локация
@@ -119,6 +120,7 @@ published_at: "2026-03-04T00:00:00Z"
     `---
 slug: ${characterSlug}
 name_ru: Тестовый персонаж
+avatar_asset_path: /assets/images/characters/${characterSlug}.png
 affiliation_slug: ${atlasMainSlug}
 birth_country_slug: ${countrySlug}
 traits:
@@ -138,6 +140,7 @@ rumors:
 slug: ${atlasMainSlug}
 kind: social
 title_ru: Тестовая принадлежность
+avatar_asset_path: /assets/images/atlas/${atlasMainSlug}.png
 country_slug: ${countrySlug}
 location_slug: ${locationSlug}
 links:

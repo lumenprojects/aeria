@@ -51,13 +51,21 @@ export const CountryDTO = z.object({
   flag_colors: z.array(z.string()).nullable()
 });
 
+export const CountryFlagDTO = z.object({
+  id: Uuid,
+  slug: z.string(),
+  title_ru: z.string(),
+  flag_colors: z.array(z.string()).nullable()
+});
+
 export const LocationDTO = z.object({
   id: Uuid,
   slug: z.string(),
   title_ru: z.string(),
   country_id: NullableUuid,
   summary: z.string().nullable(),
-  description_markdown: z.string().nullable()
+  description_markdown: z.string().nullable(),
+  avatar_asset_path: z.string().nullable()
 });
 
 export const EpisodeDTO = z.object({
@@ -79,6 +87,7 @@ export const CharacterDTO = z.object({
   id: Uuid,
   slug: z.string(),
   name_ru: z.string(),
+  avatar_asset_path: z.string(),
   name_native: z.string().nullable(),
   affiliation_id: NullableUuid,
   gender: z.string().nullable(),
@@ -102,6 +111,7 @@ export const AtlasEntryDTO = z.object({
   title_ru: z.string(),
   summary: z.string().nullable(),
   content_markdown: z.string().nullable(),
+  avatar_asset_path: z.string().nullable(),
   country_id: NullableUuid,
   location_id: NullableUuid,
   published_at: NullableIsoDateTime
@@ -138,7 +148,9 @@ export const SearchQueryDTO = z.object({
   q: z.string().optional()
 });
 
-export const EpisodeListItemDTO = EpisodeDTO.omit({ content_markdown: true });
+export const EpisodeListItemDTO = EpisodeDTO.omit({ content_markdown: true }).extend({
+  country: CountryFlagDTO
+});
 
 export const CharacterListItemDTO = z.object({
   id: Uuid,
@@ -190,6 +202,7 @@ export const EpisodeDetailResponseDTO = z.object({
 
 export const CharacterDetailResponseDTO = z.object({
   character: CharacterDTO,
+  birth_country: CountryFlagDTO.nullable(),
   traits: z.array(CharacterTraitDTO),
   rumors: z.array(CharacterTraitDTO),
   episodes: z.array(EpisodeListItemDTO)
@@ -197,6 +210,7 @@ export const CharacterDetailResponseDTO = z.object({
 
 export const AtlasDetailResponseDTO = z.object({
   entry: AtlasEntryDTO,
+  country: CountryFlagDTO.nullable(),
   links: z.array(AtlasLinkDTO)
 });
 
@@ -227,5 +241,6 @@ export type EpisodeDTO = z.infer<typeof EpisodeDTO>;
 export type CharacterDTO = z.infer<typeof CharacterDTO>;
 export type AtlasEntryDTO = z.infer<typeof AtlasEntryDTO>;
 export type CountryDTO = z.infer<typeof CountryDTO>;
+export type CountryFlagDTO = z.infer<typeof CountryFlagDTO>;
 export type LocationDTO = z.infer<typeof LocationDTO>;
 export type SearchResultDTO = z.infer<typeof SearchResultDTO>;

@@ -1,6 +1,7 @@
 ﻿---
 slug: character-001
 name_ru: Пример Персонажа
+avatar_asset_path: /assets/images/characters/character-001.png
 name_native: null
 affiliation_slug: atlas-001
 gender: ""

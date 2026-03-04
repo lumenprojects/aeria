@@ -52,6 +52,53 @@ type LoadedFile<T> = {
   body: string;
 };
 
+function isValidAssetPath(value: string) {
+  return value.startsWith("/assets/") && !value.includes("..");
+}
+
+async function validateAvatarAssetPaths(
+  locations: LoadedFile<LocationFrontmatter>[],
+  characters: LoadedFile<CharacterFrontmatter>[],
+  atlas: LoadedFile<AtlasFrontmatter>[],
+  runId: number
+) {
+  const errors: string[] = [];
+
+  for (const record of characters) {
+    if (!isValidAssetPath(record.frontmatter.avatar_asset_path)) {
+      errors.push(
+        `[character] ${record.sourcePath}: avatar_asset_path must be an absolute web path in /assets/*`
+      );
+    }
+  }
+
+  for (const record of locations) {
+    const value = record.frontmatter.avatar_asset_path;
+    if (value && !isValidAssetPath(value)) {
+      errors.push(
+        `[location] ${record.sourcePath}: avatar_asset_path must be an absolute web path in /assets/*`
+      );
+    }
+  }
+
+  for (const record of atlas) {
+    const value = record.frontmatter.avatar_asset_path;
+    if (value && !isValidAssetPath(value)) {
+      errors.push(
+        `[atlas] ${record.sourcePath}: avatar_asset_path must be an absolute web path in /assets/*`
+      );
+    }
+  }
+
+  for (const error of errors) {
+    await logImportError(runId, null, null, error);
+  }
+
+  if (errors.length) {
+    throw new Error(`Avatar path validation failed: ${errors.length} issues`);
+  }
+}
+
 async function loadSchemaVersion(rootDir: string) {
   const schemaPath = path.join(rootDir, "content", "schema.json");
   const raw = await fs.readFile(schemaPath, "utf8");
@@ -346,6 +393,7 @@ async function importLocations(records: LoadedFile<LocationFrontmatter>[], summa
       country_id: frontmatter.country_slug ? entityId("country", frontmatter.country_slug) : null,
       summary: frontmatter.summary ?? null,
       description_markdown: record.body || null,
+      avatar_asset_path: frontmatter.avatar_asset_path ?? null,
       source_path: record.sourcePath,
       content_hash: record.contentHash,
       archived_at: null,
@@ -494,6 +542,7 @@ async function importCharacters(
       id: record.id,
       slug: record.slug,
       name_ru: frontmatter.name_ru,
+      avatar_asset_path: frontmatter.avatar_asset_path,
       name_native: frontmatter.name_native ?? null,
       affiliation_id: affiliationId,
       gender: frontmatter.gender ?? null,
@@ -584,6 +633,7 @@ async function importAtlas(records: LoadedFile<AtlasFrontmatter>[], summary: Imp
       title_ru: frontmatter.title_ru,
       summary: frontmatter.summary ?? null,
       content_markdown: record.body || null,
+      avatar_asset_path: frontmatter.avatar_asset_path ?? null,
       country_id: frontmatter.country_slug ? entityId("country", frontmatter.country_slug) : null,
       location_id: frontmatter.location_slug ? entityId("location", frontmatter.location_slug) : null,
       published_at: publishedAt,
@@ -701,6 +751,7 @@ export async function runImport(options: ImportOptions) {
       loadFiles(options.rootDir, "atlas", atlasSchema, "atlas_entry", true)
     ]);
 
+    await validateAvatarAssetPaths(locations, characters, atlas, runId);
     await validateReferences(countries, locations, series, episodes, characters, atlas, runId);
 
     if (options.dryRun) {

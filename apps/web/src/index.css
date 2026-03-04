@@ -34,6 +34,20 @@
   --opacity-8: 0.08;
   --noise-opacity: 0;
 
+  --avatar-xs: 24px;
+  --avatar-sm: 36px;
+  --avatar-md: 56px;
+  --avatar-lg: 88px;
+
+  --flag-w-xs: 40px;
+  --flag-h-xs: 4px;
+  --flag-w-sm: 56px;
+  --flag-h-sm: 6px;
+  --flag-w-md: 72px;
+  --flag-h-md: 8px;
+  --flag-w-lg: 104px;
+  --flag-h-lg: 10px;
+
   --container-small: clamp(320px, 70vw, 880px);
   --container-medium: clamp(640px, 80vw, 1400px);
   --container-large: clamp(960px, 90vw, 2240px);

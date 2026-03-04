@@ -2,6 +2,7 @@
 import { atlasKindValues, entityTypeValues } from "@aeria/shared";
 
 export const slugSchema = z.string().min(1);
+export const assetWebPathSchema = z.string().regex(/^\/assets\/.+/, "Asset path must start with /assets/");
 
 export const seriesSchema = z.object({
   slug: slugSchema,
@@ -22,7 +23,8 @@ export const locationSchema = z.object({
   slug: slugSchema,
   title_ru: z.string().min(1),
   country_slug: z.string().optional().nullable(),
-  summary: z.string().optional().nullable()
+  summary: z.string().optional().nullable(),
+  avatar_asset_path: assetWebPathSchema.optional().nullable()
 });
 
 export const episodeSchema = z.object({
@@ -43,6 +45,7 @@ export const episodeSchema = z.object({
 export const characterSchema = z.object({
   slug: slugSchema,
   name_ru: z.string().min(1),
+  avatar_asset_path: assetWebPathSchema,
   name_native: z.string().optional().nullable(),
   affiliation_slug: z.string().optional().nullable(),
   gender: z.string().optional().nullable(),
@@ -71,6 +74,7 @@ export const atlasSchema = z.object({
   kind: z.enum(atlasKindValues),
   title_ru: z.string().min(1),
   summary: z.string().optional().nullable(),
+  avatar_asset_path: assetWebPathSchema.optional().nullable(),
   country_slug: z.string().optional().nullable(),
   location_slug: z.string().optional().nullable(),
   links: z.array(atlasLinkSchema).default([]),

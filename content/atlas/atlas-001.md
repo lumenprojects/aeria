@@ -3,6 +3,7 @@ slug: atlas-001
 kind: social
 title_ru: Дом Примера
 summary: Минимальная принадлежность для персонажа.
+avatar_asset_path: /assets/images/atlas/atlas-001.png
 country_slug: ru-example
 location_slug: capital-example
 links:

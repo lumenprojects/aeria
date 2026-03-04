@@ -27,6 +27,7 @@ test("collectLocalMissingReferences returns empty sets for consistent references
       frontmatter: {
         slug: "hero-1",
         name_ru: "Герой",
+        avatar_asset_path: "/assets/images/characters/hero-1.png",
         birth_country_slug: "fr",
         affiliation_slug: "guild-1"
       }
@@ -87,6 +88,7 @@ test("collectLocalMissingReferences aggregates unknown slugs by entity", () => {
       frontmatter: {
         slug: "char-1",
         name_ru: "Name",
+        avatar_asset_path: "/assets/images/characters/char-1.png",
         affiliation_slug: "atlas-missing",
         birth_country_slug: "country-missing"
       }

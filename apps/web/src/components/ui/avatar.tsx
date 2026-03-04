@@ -1,17 +1,33 @@
-﻿import * as React from "react";
+import * as React from "react";
 import * as AvatarPrimitive from "@radix-ui/react-avatar";
 import { cn } from "@/lib/utils";
 
-const Avatar = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Root
-    ref={ref}
-    className={cn("relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full", className)}
-    {...props}
-  />
-));
+export type AvatarSize = "xs" | "sm" | "md" | "lg";
+
+const avatarSizeClass: Record<AvatarSize, string> = {
+  xs: "h-[var(--avatar-xs)] w-[var(--avatar-xs)]",
+  sm: "h-[var(--avatar-sm)] w-[var(--avatar-sm)]",
+  md: "h-[var(--avatar-md)] w-[var(--avatar-md)]",
+  lg: "h-[var(--avatar-lg)] w-[var(--avatar-lg)]"
+};
+
+type AvatarProps = React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root> & {
+  size?: AvatarSize;
+};
+
+const Avatar = React.forwardRef<React.ElementRef<typeof AvatarPrimitive.Root>, AvatarProps>(
+  ({ className, size = "md", ...props }, ref) => (
+    <AvatarPrimitive.Root
+      ref={ref}
+      className={cn(
+        "relative flex shrink-0 overflow-hidden rounded-full",
+        avatarSizeClass[size],
+        className
+      )}
+      {...props}
+    />
+  )
+);
 Avatar.displayName = AvatarPrimitive.Root.displayName;
 
 const AvatarImage = React.forwardRef<
