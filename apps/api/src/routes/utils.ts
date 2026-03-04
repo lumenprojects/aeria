@@ -1,18 +1,48 @@
-﻿import { z } from "zod";
+import type { FastifyReply } from "fastify";
+import { z } from "zod";
+import { ApiErrorDTO } from "@aeria/shared";
 
-const paginationSchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20)
-});
+export function parseQuery<T>(
+  reply: FastifyReply,
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>,
+  query: unknown
+): T | null {
+  const parsed = schema.safeParse(query);
+  if (parsed.success) {
+    return parsed.data;
+  }
 
-export function getPagination(query: Record<string, any>) {
-  const parsed = paginationSchema.safeParse(query);
-  const page = parsed.success ? parsed.data.page : 1;
-  const limit = parsed.success ? parsed.data.limit : 20;
-  const offset = (page - 1) * limit;
-  return { page, limit, offset };
+  reply.code(400);
+  return null;
 }
 
 export function withArchivedFilter(clauses: string[]) {
   return ["archived_at IS NULL", ...clauses].filter(Boolean).join(" AND ");
+}
+
+export function toNullableIsoDateTime(value: unknown): string | null {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (typeof value === "string") {
+    return new Date(value).toISOString();
+  }
+
+  return null;
+}
+
+export function validateResponse<T>(schema: z.ZodType<T>, payload: unknown, routeId: string): T {
+  const parsed = schema.safeParse(payload);
+  if (parsed.success) {
+    return parsed.data;
+  }
+
+  throw new Error(`Response validation failed for ${routeId}: ${parsed.error.message}`);
+}
+
+export function errorPayload(message: string) {
+  return validateResponse(ApiErrorDTO, { error: message }, "error");
 }

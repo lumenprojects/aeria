@@ -6,6 +6,7 @@ import { registerCharactersRoutes } from "./routes/characters.js";
 import { registerAtlasRoutes } from "./routes/atlas.js";
 import { registerWorldRoutes } from "./routes/world.js";
 import { registerSearchRoutes } from "./routes/search.js";
+import { pool } from "./db.js";
 
 export async function buildApp() {
   const app = Fastify({ logger: true });
@@ -22,6 +23,10 @@ export async function buildApp() {
   await registerAtlasRoutes(app);
   await registerWorldRoutes(app);
   await registerSearchRoutes(app);
+
+  app.addHook("onClose", async () => {
+    await pool.end();
+  });
 
   return app;
 }

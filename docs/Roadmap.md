@@ -1,118 +1,51 @@
-# Aeria — Дальний технический roadmap
-
-Документ задаёт последовательность работ после bootstrap, чтобы проект масштабировался без хаотичных локальных решений.
-
-## Принципы выполнения
-- Каждый этап заканчивается измеримым результатом и зелёным quality gate.
-- Никаких новых сущностей/вариаций UI без фиксации в `docs/Guide.md`.
-- Любая схема БД меняется только миграциями в `packages/db/migrations`.
-- Каждый крупный шаг отдельным PR и отдельным коммитом.
-
-## Этап 1. Стабилизация content-контура (критично)
-**Цель:** сделать `verify:content` надёжной ежедневной проверкой.
-
-### 1.1 Type-safe импорт (в работе)
-- Довести `packages/content` до чистого `typecheck`.
-- Зафиксировать строгие output-типы Zod для frontmatter (без `undefined` там, где есть defaults).
-- Убрать технические типовые дыры в markdown/uuid.
-
-**Критерий готовности**
-- `npm run typecheck -w packages/content` зелёный.
-
-### 1.2 Окружение для `verify:content`
-- Привести `.env` и `DATABASE_URL` к единому формату с валидным паролем.
-- Добавить `docs/Runbook.md` с локальным сценарием:
-  - `docker-compose up -d`
-  - `npm run migrate`
-  - `npm run content:dry-run`
-- Добавить быстрый preflight-скрипт проверки env перед миграциями.
-
-**Критерий готовности**
-- `npm run verify:content` стабильно зелёный локально и в CI.
-
-### 1.3 Контентные smoke-тесты
-- Добавить smoke-тест CLI dry-run с проверкой:
-  - reference validation;
-  - archive policy;
-  - unchanged hash logic.
-
-**Критерий готовности**
-- Регрессии импорта ловятся тестами до merge.
-
-## Этап 2. API-контракты и поиск
-**Цель:** зафиксировать стабильные контракты API и предсказуемое поведение поиска.
-
-### 2.1 DTO и валидация ответов
-- Ввести жёсткие response-схемы Zod в API-маршрутах.
-- Исключить `any` из ответов и нормализовать пагинацию (`{items,total,page,limit}`).
-
-### 2.2 Поиск
-- Завершить поведение пустого запроса (`recent` + fallback).
-- Зафиксировать словарь синонимов и версионность `config/search-synonyms.json`.
-- Добавить retry/telemetry для `search_queue` worker.
-
-### 2.3 API smoke/integration
-- Тесты на `/api/search`, `/api/episodes/:slug`, `/api/characters/:slug`.
-
-**Критерий готовности**
-- Контракты API и поиск покрыты тестами, ручные проверки не требуются в каждом PR.
-
-## Этап 3. Дизайн-система как платформа
-**Цель:** исключить UI-дрифт и обеспечить управляемое развитие интерфейса.
-
-### 3.1 Token governance
-- Сформировать единый `tokens`-слой с правилами изменения.
-- Добавить линт-ограничения на произвольные размеры/цвета вне токенов.
-
-### 3.2 Компонентные контракты
-- Для обязательных shadcn/Radix компонентов прописать usage-rules:
-  - когда использовать;
-  - допустимые variants;
-  - запреты.
-
-### 3.3 Визуальные тесты
-- Snapshot/visual smoke для Navbar, карточек, detail-страниц.
-
-**Критерий готовности**
-- Новые экраны собираются из стандартных блоков без ручного стилевого дублирования.
-
-## Этап 4. Core-экраны контента
-**Цель:** завершить функциональные сценарии чтения и навигации.
-
-### 4.1 Episodes
-- list/detail/read режимы;
-- chapter context (`current/total`), cross-links, related entries.
-
-### 4.2 Characters
-- list/detail с traits/rumors/episodes appearance.
-
-### 4.3 Atlas
-- list/detail + связанные записи через `atlas_links`.
-
-### 4.4 Global navigation
-- довести navbar mobile behavior и keyboard a11y до production-grade.
-
-**Критерий готовности**
-- Пользователь проходит полный сценарий: найти -> открыть -> читать -> перейти по связям.
-
-## Этап 5. Надёжность и эксплуатация
-**Цель:** подготовить проект к регулярной публикации.
-
-### 5.1 Observability
-- Логи API/import/worker с correlation id.
-- Базовые метрики ошибок и latency.
-
-### 5.2 Release discipline
-- Semver/релизный changelog.
-- rollback-инструкция для миграций и content-import.
-
-### 5.3 Performance pass
-- профилирование web bundle;
-- оптимизация heavy markdown/поиска.
-
-**Критерий готовности**
-- Выкатывание и откат контролируемы, деградации ловятся заранее.
+# Aeria Roadmap (до старта плотной разработки страниц)
 
 ## Текущий статус
-- Этап 1.1 начат и частично выполнен (типобезопасность импорта улучшена).
-- Следующее действие: закрыть Этап 1.2 (env + стабильный `verify:content`).
+Этап фундаментной стабилизации закрыт на `2026-03-04`:
+1. `npm run verify` — зелёный.
+2. `npm run verify:content` — зелёный.
+3. Dry-run импорта проходит без ошибок ссылок.
+4. API input/output контракты валидируются Zod.
+5. Smoke-тесты покрывают list/detail/search сценарии API.
+6. CI содержит обязательные job `verify`, `content-dry-run`, `content-integration`.
+
+## Что считалось “закрытием этапа”
+
+### Этап 1. Стабильный content-контур (закрыт)
+- Env preflight для content-контура.
+- Единый `verify:content`.
+- Runbook с однозначным порядком запуска.
+- Unit/smoke тесты критичной логики импортера.
+- Интеграционный сценарий импортера (opt-in) + отдельная CI job.
+- Локальный Postgres fallback (`npm run db:up`) для запуска без Docker.
+
+### Этап 2. Контракты API (закрыт)
+- DTO/Query/Response схемы в `packages/shared`.
+- Валидация входа/выхода в API роутерах через Zod.
+- Smoke-тесты контрактов:
+  - invalid query -> 400;
+  - list payload shape;
+  - detail payload shape (`episodes/:slug`, `characters/:slug`, `atlas/:slug`);
+  - not-found -> 404;
+  - search backend unavailable -> 503.
+
+### Этап 3. CI дисциплина (закрыт на уровне кода)
+- В CI закреплены `verify`, `content-dry-run`, `content-integration`.
+- Остался один ручной репозиторный шаг: включить branch protection в GitHub (настройка репо, не код).
+
+## Что дальше (уже про практическую разработку страниц)
+Дальше можно переходить к UI-страницам, сохраняя порядок:
+1. `/episodes`, `/episodes/:slug`
+2. `/characters`, `/characters/:slug`
+3. `/atlas`, `/atlas/:slug`
+
+Порядок внутри каждой страницы:
+1. Данные и состояния (`loading/error/empty`) на TanStack Query.
+2. Вёрстка по дизайн-системе (`Typography`, palette, spacing, container rules).
+3. A11y + smoke-тест страницы.
+
+## Рельсы, чтобы не скатиться в хаос
+- Любое изменение БД только миграцией.
+- Любое изменение API-контракта только через `packages/shared` + тест в том же PR.
+- Любое новое поведение импортера фиксировать тестом + записью в `docs/Runbook.md`/`docs/Guide.md`.
+- Перед merge в `main` всегда `npm run verify && npm run verify:content`.

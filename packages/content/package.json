@@ -1,10 +1,12 @@
-﻿{
+{
   "name": "@aeria/content",
   "private": true,
   "type": "module",
   "scripts": {
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test \"test/**/*.test.ts\"",
+    "test:integration": "node --import tsx --test \"test/integration/**/*.test.ts\"",
     "import": "tsx src/cli.ts",
     "worker": "tsx src/search-worker.ts"
   },

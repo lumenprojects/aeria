@@ -1,5 +1,7 @@
-﻿import { FastifyInstance } from "fastify";
+import { FastifyInstance } from "fastify";
 import Typesense from "typesense";
+import { SearchGroupsDTO, SearchQueryDTO, SearchResultDTO } from "@aeria/shared";
+import { errorPayload, parseQuery, validateResponse } from "./utils.js";
 
 const typesenseClient = (() => {
   const host = process.env.TYPESENSE_HOST;
@@ -25,15 +27,19 @@ const collections = [
 
 export async function registerSearchRoutes(app: FastifyInstance) {
   app.get("/api/search", async (req, reply) => {
-    if (!typesenseClient) {
-      reply.code(503);
-      return { error: "Typesense is not configured" };
+    const queryParams = parseQuery(reply, SearchQueryDTO, req.query);
+    if (!queryParams) {
+      return errorPayload("Invalid query parameters");
     }
 
-    const { q } = req.query as { q?: string };
-    const query = q?.trim() ?? "";
+    if (!typesenseClient) {
+      reply.code(503);
+      return errorPayload("Typesense is not configured");
+    }
+
+    const query = queryParams.q?.trim() ?? "";
     if (!query) {
-      return { groups: [] };
+      return validateResponse(SearchGroupsDTO, { groups: [] }, "/api/search:empty");
     }
 
     const searches = collections.map((collection) => ({
@@ -51,18 +57,22 @@ export async function registerSearchRoutes(app: FastifyInstance) {
       const type = collections[index].type;
       const hits = (group.hits || []).map((hit) => {
         const doc = hit.document;
-        return {
-          type,
-          id: String(doc.id),
-          slug: String(doc.slug),
-          title: String(doc.title),
-          summary: (doc.summary as string | null | undefined) ?? null,
-          url: String(doc.url)
-        };
+        return validateResponse(
+          SearchResultDTO,
+          {
+            type,
+            id: String(doc.id),
+            slug: String(doc.slug),
+            title: String(doc.title),
+            summary: doc.summary ? String(doc.summary) : null,
+            url: String(doc.url)
+          },
+          "/api/search:hit"
+        );
       });
       return { type, hits };
     });
 
-    return { groups };
+    return validateResponse(SearchGroupsDTO, { groups }, "/api/search");
   });
 }

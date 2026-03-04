@@ -6,8 +6,15 @@ import { v5 as uuidv5 } from "uuid";
 import { pool } from "./db.js";
 import type { PoolClient } from "pg";
 import { hashContent } from "./hash.js";
+import {
+  applyHashDiff,
+  computeArchivedSourcePaths,
+  emptySummary,
+  type ImportSummary
+} from "./import-summary.js";
 import { normalizeMarkdown } from "./markdown.js";
 import { readingMinutes } from "./reading.js";
+import { collectLocalMissingReferences } from "./reference-validation.js";
 import {
   atlasSchema,
   characterSchema,
@@ -44,15 +51,6 @@ type LoadedFile<T> = {
   frontmatter: T;
   body: string;
 };
-
-type ImportSummary = {
-  created: number;
-  updated: number;
-  unchanged: number;
-  archived: number;
-};
-
-const emptySummary = (): ImportSummary => ({ created: 0, updated: 0, unchanged: 0, archived: 0 });
 
 async function loadSchemaVersion(rootDir: string) {
   const schemaPath = path.join(rootDir, "content", "schema.json");
@@ -204,7 +202,7 @@ async function withTransaction<T>(fn: (client: PoolClient) => Promise<T>) {
 
 async function archiveMissing(table: string, entityType: string, importedSources: Set<string>) {
   const existingSources = await queryExistingSourcePaths(table);
-  const toArchive = [...existingSources].filter((source) => !importedSources.has(source));
+  const toArchive = computeArchivedSourcePaths(existingSources, importedSources);
   if (toArchive.length === 0) return 0;
 
   await withTransaction(async (client) => {
@@ -234,94 +232,21 @@ async function validateReferences(
   runId: number
 ) {
   const errors: string[] = [];
+  const missing = collectLocalMissingReferences(
+    countries,
+    locations,
+    series,
+    episodes,
+    characters,
+    atlas
+  );
 
-  const countrySlugs = new Set(countries.map((c) => c.slug));
-  const locationSlugs = new Set(locations.map((l) => l.slug));
-  const seriesSlugs = new Set(series.map((s) => s.slug));
-  const episodeSlugs = new Set(episodes.map((e) => e.slug));
-  const characterSlugs = new Set(characters.map((c) => c.slug));
-  const atlasSlugs = new Set(atlas.map((a) => a.slug));
-
-  const missingCountryRefs = new Set<string>();
-  const missingLocationRefs = new Set<string>();
-  const missingSeriesRefs = new Set<string>();
-  const missingEpisodeRefs = new Set<string>();
-  const missingCharacterRefs = new Set<string>();
-  const missingAtlasRefs = new Set<string>();
-
-  for (const location of locations) {
-    if (location.frontmatter.country_slug && !countrySlugs.has(location.frontmatter.country_slug)) {
-      missingCountryRefs.add(location.frontmatter.country_slug);
-    }
-  }
-
-  for (const episode of episodes) {
-    if (!seriesSlugs.has(episode.frontmatter.series_slug)) {
-      missingSeriesRefs.add(episode.frontmatter.series_slug);
-    }
-    if (!countrySlugs.has(episode.frontmatter.country_slug)) {
-      missingCountryRefs.add(episode.frontmatter.country_slug);
-    }
-    for (const characterSlug of episode.frontmatter.characters ?? []) {
-      if (!characterSlugs.has(characterSlug)) {
-        missingCharacterRefs.add(characterSlug);
-      }
-    }
-    for (const locationSlug of episode.frontmatter.locations ?? []) {
-      if (!locationSlugs.has(locationSlug)) {
-        missingLocationRefs.add(locationSlug);
-      }
-    }
-  }
-
-  for (const character of characters) {
-    if (character.frontmatter.birth_country_slug && !countrySlugs.has(character.frontmatter.birth_country_slug)) {
-      missingCountryRefs.add(character.frontmatter.birth_country_slug);
-    }
-    if (character.frontmatter.affiliation_slug && !atlasSlugs.has(character.frontmatter.affiliation_slug)) {
-      missingAtlasRefs.add(character.frontmatter.affiliation_slug);
-    }
-  }
-
-  for (const entry of atlas) {
-    if (entry.frontmatter.country_slug && !countrySlugs.has(entry.frontmatter.country_slug)) {
-      missingCountryRefs.add(entry.frontmatter.country_slug);
-    }
-    if (entry.frontmatter.location_slug && !locationSlugs.has(entry.frontmatter.location_slug)) {
-      missingLocationRefs.add(entry.frontmatter.location_slug);
-    }
-    for (const link of entry.frontmatter.links ?? []) {
-      switch (link.type) {
-        case "episode":
-          if (!episodeSlugs.has(link.slug)) missingEpisodeRefs.add(link.slug);
-          break;
-        case "character":
-          if (!characterSlugs.has(link.slug)) missingCharacterRefs.add(link.slug);
-          break;
-        case "atlas_entry":
-          if (!atlasSlugs.has(link.slug)) missingAtlasRefs.add(link.slug);
-          break;
-        case "episode_series":
-          if (!seriesSlugs.has(link.slug)) missingSeriesRefs.add(link.slug);
-          break;
-        case "country":
-          if (!countrySlugs.has(link.slug)) missingCountryRefs.add(link.slug);
-          break;
-        case "location":
-          if (!locationSlugs.has(link.slug)) missingLocationRefs.add(link.slug);
-          break;
-        default:
-          break;
-      }
-    }
-  }
-
-  const missingCountryArray = [...missingCountryRefs];
-  const missingLocationArray = [...missingLocationRefs];
-  const missingSeriesArray = [...missingSeriesRefs];
-  const missingEpisodeArray = [...missingEpisodeRefs];
-  const missingCharacterArray = [...missingCharacterRefs];
-  const missingAtlasArray = [...missingAtlasRefs];
+  const missingCountryArray = [...missing.countries];
+  const missingLocationArray = [...missing.locations];
+  const missingSeriesArray = [...missing.series];
+  const missingEpisodeArray = [...missing.episodes];
+  const missingCharacterArray = [...missing.characters];
+  const missingAtlasArray = [...missing.atlas];
 
   const existingCountries = await queryExistingSlugs("countries", missingCountryArray);
   const existingLocations = await queryExistingSlugs("locations", missingLocationArray);
@@ -388,7 +313,7 @@ async function importCountries(records: LoadedFile<CountryFrontmatter>[], summar
       title_ru: frontmatter.title_ru,
       flag_emoji: frontmatter.flag_emoji ?? null,
       flag_asset_path: frontmatter.flag_asset_path ?? null,
-      flag_colors: frontmatter.flag_colors ?? null,
+      flag_colors: frontmatter.flag_colors ? JSON.stringify(frontmatter.flag_colors) : null,
       source_path: record.sourcePath,
       content_hash: record.contentHash,
       archived_at: null,
@@ -396,12 +321,7 @@ async function importCountries(records: LoadedFile<CountryFrontmatter>[], summar
     };
   });
 
-  for (const record of records) {
-    const existingRow = existing.get(record.slug);
-    if (!existingRow) summary.created += 1;
-    else if (existingRow.content_hash === record.contentHash) summary.unchanged += 1;
-    else summary.updated += 1;
-  }
+  applyHashDiff(summary, records, existing);
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows.slice(i, i + batchSize);
     await withTransaction(async (client) => {
@@ -433,12 +353,7 @@ async function importLocations(records: LoadedFile<LocationFrontmatter>[], summa
     };
   });
 
-  for (const record of records) {
-    const existingRow = existing.get(record.slug);
-    if (!existingRow) summary.created += 1;
-    else if (existingRow.content_hash === record.contentHash) summary.unchanged += 1;
-    else summary.updated += 1;
-  }
+  applyHashDiff(summary, records, existing);
 
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows.slice(i, i + batchSize);
@@ -470,12 +385,7 @@ async function importSeries(records: LoadedFile<SeriesFrontmatter>[], summary: I
     };
   });
 
-  for (const record of records) {
-    const existingRow = existing.get(record.slug);
-    if (!existingRow) summary.created += 1;
-    else if (existingRow.content_hash === record.contentHash) summary.unchanged += 1;
-    else summary.updated += 1;
-  }
+  applyHashDiff(summary, records, existing);
 
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows.slice(i, i + batchSize);
@@ -539,12 +449,7 @@ async function importEpisodes(
     };
   });
 
-  for (const record of records) {
-    const existingRow = existing.get(record.slug);
-    if (!existingRow) summary.created += 1;
-    else if (existingRow.content_hash === record.contentHash) summary.unchanged += 1;
-    else summary.updated += 1;
-  }
+  applyHashDiff(summary, records, existing);
 
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows.slice(i, i + batchSize);
@@ -610,12 +515,7 @@ async function importCharacters(
     };
   });
 
-  for (const record of records) {
-    const existingRow = existing.get(record.slug);
-    if (!existingRow) summary.created += 1;
-    else if (existingRow.content_hash === record.contentHash) summary.unchanged += 1;
-    else summary.updated += 1;
-  }
+  applyHashDiff(summary, records, existing);
 
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows.slice(i, i + batchSize);
@@ -694,12 +594,7 @@ async function importAtlas(records: LoadedFile<AtlasFrontmatter>[], summary: Imp
     };
   });
 
-  for (const record of records) {
-    const existingRow = existing.get(record.slug);
-    if (!existingRow) summary.created += 1;
-    else if (existingRow.content_hash === record.contentHash) summary.unchanged += 1;
-    else summary.updated += 1;
-  }
+  applyHashDiff(summary, records, existing);
 
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows.slice(i, i + batchSize);
@@ -778,15 +673,10 @@ async function importAtlasLinks(records: LoadedFile<AtlasFrontmatter>[]) {
 
 async function diffSummary(table: string, records: LoadedFile<any>[], summary: ImportSummary) {
   const existing = await queryExistingBySlug(table, records.map((r) => r.slug));
-  for (const record of records) {
-    const existingRow = existing.get(record.slug);
-    if (!existingRow) summary.created += 1;
-    else if (existingRow.content_hash === record.contentHash) summary.unchanged += 1;
-    else summary.updated += 1;
-  }
+  applyHashDiff(summary, records, existing);
   const existingSources = await queryExistingSourcePaths(table);
   const importedSources = new Set(records.map((r) => r.sourcePath));
-  summary.archived += [...existingSources].filter((source) => !importedSources.has(source)).length;
+  summary.archived += computeArchivedSourcePaths(existingSources, importedSources).length;
 }
 
 export async function runImport(options: ImportOptions) {

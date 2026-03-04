@@ -8,6 +8,7 @@ pnpm-debug.log*
 
 # Dependencies
 node_modules
+**/node_modules
 
 # Build
 /dist
@@ -15,10 +16,16 @@ node_modules
 /out
 /.turbo
 /.cache
+/coverage
+/.tmp
+/.temp
+/.local
 
 # Env
 .env
 .env.local
+.env.development
+.env.test
 .env.*.local
 
 # OS
@@ -30,6 +37,8 @@ Thumbs.db
 
 # API build
 /apps/api/dist
+/apps/api/.tsbuildinfo
 
 # Content
 /content/.cache
+/packages/content/.cache
