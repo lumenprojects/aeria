@@ -637,6 +637,197 @@ a {
   }
 }
 
+.tap-effect-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.tap-effect {
+  position: absolute;
+  width: 0;
+  height: 0;
+  transform: translate(-50%, -50%);
+}
+
+.tap-effect-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 90%, var(--text));
+  transform: translate(-50%, -50%);
+  animation: tap-core-fade 340ms ease-out forwards;
+}
+
+.tap-effect-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  border: 2px solid color-mix(in srgb, var(--accent) 84%, transparent);
+  border-radius: 999px;
+  transform: translate(-50%, -50%) scale(0.24);
+  animation: tap-ripple-wave 520ms cubic-bezier(0.18, 0.72, 0.16, 1) forwards;
+}
+
+.tap-effect-wave {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  border: 2px solid color-mix(in srgb, var(--accent) 86%, transparent);
+  border-radius: 999px;
+  transform: translate(-50%, -50%) scale(0.15);
+  animation: tap-pulse-wave 620ms cubic-bezier(0.16, 0.75, 0.15, 1) forwards;
+}
+
+.tap-effect-wave--second {
+  animation-delay: 120ms;
+}
+
+.tap-effect-sparks {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+}
+
+.tap-effect-sparks > span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 88%, var(--text));
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.4);
+  animation: tap-spark-burst 460ms ease-out forwards;
+}
+
+.tap-effect-sparks > span:nth-child(1) {
+  --spark-x: 0px;
+  --spark-y: -34px;
+}
+
+.tap-effect-sparks > span:nth-child(2) {
+  --spark-x: 27px;
+  --spark-y: -18px;
+}
+
+.tap-effect-sparks > span:nth-child(3) {
+  --spark-x: 29px;
+  --spark-y: 16px;
+}
+
+.tap-effect-sparks > span:nth-child(4) {
+  --spark-x: 0px;
+  --spark-y: 34px;
+}
+
+.tap-effect-sparks > span:nth-child(5) {
+  --spark-x: -28px;
+  --spark-y: 14px;
+}
+
+.tap-effect-sparks > span:nth-child(6) {
+  --spark-x: -26px;
+  --spark-y: -19px;
+}
+
+.tap-effect--spark .tap-effect-core {
+  width: 7px;
+  height: 7px;
+  animation-duration: 260ms;
+}
+
+.tap-effect--pulse .tap-effect-core {
+  animation-name: tap-core-pulse;
+  animation-duration: 420ms;
+}
+
+@keyframes tap-core-fade {
+  from {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.36);
+  }
+}
+
+@keyframes tap-core-pulse {
+  0% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+
+  65% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.45);
+  }
+}
+
+@keyframes tap-ripple-wave {
+  from {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(6.4);
+  }
+}
+
+@keyframes tap-pulse-wave {
+  0% {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(8);
+  }
+}
+
+@keyframes tap-spark-burst {
+  0% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--spark-x)), calc(-50% + var(--spark-y))) scale(1.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tap-effect-core,
+  .tap-effect-ring,
+  .tap-effect-wave,
+  .tap-effect-sparks > span {
+    animation-duration: 1ms !important;
+  }
+}
+
 body::before {
   content: "";
   position: fixed;

@@ -42,7 +42,9 @@ const noiseOptions = [
 
 const tapOptions = [
   { value: "none", label: "None" },
-  { value: "ripple", label: "Ripple" }
+  { value: "ripple", label: "Ripple" },
+  { value: "spark", label: "Spark" },
+  { value: "pulse", label: "Pulse" }
 ] as const;
 
 export default function Navbar() {

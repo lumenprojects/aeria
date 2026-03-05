@@ -3,7 +3,7 @@ import { getCookie, setCookie } from "./cookies";
 
 export type ThemeName = "paper" | "stone" | "coral" | "amoled";
 export type ThemeMode = "light" | "dark";
-export type TapEffect = "none" | "ripple";
+export type TapEffect = "none" | "ripple" | "spark" | "pulse";
 
 export type FontSet = {
   heading: string;
