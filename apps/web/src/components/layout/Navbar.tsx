@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Search, Moon, Sun, Ellipsis } from "lucide-react";
 import { Button } from "../ui/button";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbSeparator } from "../ui/breadcrumb";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { useTheme } from "@/lib/theme";
 import { getEpisode, getSeries } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -52,8 +51,7 @@ export default function Navbar() {
   const params = useParams();
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [scrollProgress, setScrollProgress] = React.useState(0);
-  const [fontMenuOpen, setFontMenuOpen] = React.useState(false);
-  const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [activePanel, setActivePanel] = React.useState<"fonts" | "settings" | null>(null);
   const {
     theme,
     mode,
@@ -115,6 +113,11 @@ export default function Navbar() {
     } else {
       navigate("/");
     }
+  }
+
+  function togglePanel(panel: "fonts" | "settings") {
+    setSearchOpen(false);
+    setActivePanel((prev) => (prev === panel ? null : panel));
   }
 
   return (
@@ -179,7 +182,10 @@ export default function Navbar() {
                   type="button"
                   aria-label="Поиск"
                   className={cn("navbar-icon", searchOpen && "navbar-icon-active")}
-                  onClick={() => setSearchOpen((value) => !value)}
+                  onClick={() => {
+                    setActivePanel(null);
+                    setSearchOpen((value) => !value);
+                  }}
                 >
                   <Search size={18} />
                 </button>
@@ -199,23 +205,33 @@ export default function Navbar() {
                 >
                   {mode === "dark" ? <Moon size={18} /> : <Sun size={18} />}
                 </button>
-                <Popover onOpenChange={setFontMenuOpen}>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label="Шрифты"
-                      className={cn("navbar-icon navbar-icon-text", fontMenuOpen && "navbar-icon-active")}
-                    >
-                      Aa
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    align="end"
-                    sideOffset={0}
-                    avoidCollisions={false}
-                    className="navbar-popover navbar-popover-fixed"
-                  >
-                    <div className="navbar-popover-panel role-ui text-sm">
+                <button
+                  type="button"
+                  aria-label="Шрифты"
+                  className={cn("navbar-icon navbar-icon-text", activePanel === "fonts" && "navbar-icon-active")}
+                  onClick={() => togglePanel("fonts")}
+                >
+                  Aa
+                </button>
+                <button
+                  type="button"
+                  aria-label="Настройки"
+                  className={cn("navbar-icon", activePanel === "settings" && "navbar-icon-active")}
+                  onClick={() => togglePanel("settings")}
+                >
+                  <Ellipsis size={20} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        {activePanel && (
+          <div className="navbar-subpanel-shell">
+            <div className="container">
+              <div className="navbar-subpanel-inner">
+                <div className="navbar-subpanel-panel role-ui text-sm">
+                  {activePanel === "fonts" ? (
+                    <>
                       <div className="navbar-field">
                         <span className="navbar-label">UI</span>
                         <select className="navbar-select" value={fontUi} onChange={(event) => setFontUi(event.target.value)}>
@@ -254,26 +270,9 @@ export default function Navbar() {
                           ))}
                         </select>
                       </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <Popover onOpenChange={setSettingsOpen}>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label="Настройки"
-                      className={cn("navbar-icon", settingsOpen && "navbar-icon-active")}
-                    >
-                      <Ellipsis size={20} />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    align="end"
-                    sideOffset={0}
-                    avoidCollisions={false}
-                    className="navbar-popover navbar-popover-fixed"
-                  >
-                    <div className="navbar-popover-panel role-ui text-sm">
+                    </>
+                  ) : (
+                    <>
                       <div className="navbar-field">
                         <span className="navbar-label">Style</span>
                         <select
@@ -316,13 +315,13 @@ export default function Navbar() {
                           ))}
                         </select>
                       </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
         <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
       </header>
       <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-divider bg-background md:hidden">

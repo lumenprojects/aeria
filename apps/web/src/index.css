@@ -344,24 +344,30 @@ a {
   opacity: var(--opacity-64);
 }
 
-.navbar-popover {
-  width: min(320px, calc(100vw - (2 * var(--gutter))));
-  border: none;
-  border-radius: 0;
-  background: var(--bg);
+.navbar-subpanel-shell {
+  position: absolute;
+  top: var(--navbar-height);
+  left: 0;
+  right: 0;
+  z-index: 45;
+  width: 100%;
+  background: transparent;
+}
+
+.navbar-subpanel-inner {
+  display: flex;
+  justify-content: flex-end;
+  background: transparent;
+}
+
+.navbar-subpanel-panel {
+  position: relative;
+  width: min(320px, 100%);
   padding: var(--space-sm) 0 var(--space-sm) var(--space-sm);
-  box-shadow: none;
+  background: var(--bg);
 }
 
-.navbar-popover-fixed {
-  position: fixed !important;
-  top: calc(var(--navbar-height) + var(--space-xs)) !important;
-  right: max(var(--gutter), calc((100vw - var(--container-large)) / 2)) !important;
-  left: auto !important;
-  transform: none !important;
-}
-
-.navbar-popover::after {
+.navbar-subpanel-panel::after {
   content: "";
   position: absolute;
   top: 0;
@@ -371,17 +377,11 @@ a {
   background: var(--accent);
 }
 
-.navbar-popover-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  padding-right: calc(var(--space-xl) + var(--space-sm));
-}
-
 .navbar-field {
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
+  padding-right: var(--space-sm);
 }
 
 .navbar-mobile-row {
@@ -618,8 +618,7 @@ a {
 }
 
 @media (max-width: 767px) {
-  .navbar-popover-fixed {
-    right: var(--gutter) !important;
+  .navbar-subpanel-panel {
     width: min(320px, calc(100vw - (2 * var(--gutter))));
   }
 
