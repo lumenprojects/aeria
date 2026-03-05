@@ -16,14 +16,14 @@ export default function EpisodeDetailPage() {
   if (!data) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <Typography variant="h1">{data.episode.title_ru}</Typography>
       {data.episode.summary && <Typography variant="lead">{data.episode.summary}</Typography>}
-      <div className="rounded-md border border-border p-4">
+      <div className="detail-meta">
         <Typography variant="ui">Серия: {data.series?.title_ru ?? "—"}</Typography>
         <Typography variant="ui">Страна: {data.country?.title_ru ?? "—"}</Typography>
       </div>
-      <article className="prose max-w-none text-body">
+      <article className="prose max-w-none role-body">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.episode.content_markdown || ""}</ReactMarkdown>
       </article>
     </div>

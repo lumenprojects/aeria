@@ -13,12 +13,12 @@ export default function EpisodesPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <Typography variant="h1">Эпизоды</Typography>
       {isLoading && <Skeleton className="h-10 w-full" />}
-      <div className="space-y-3">
+      <div className="page-list">
         {data?.items?.map((episode) => (
-          <Link key={episode.id} to={`/episodes/${episode.slug}`} className="block rounded-md border border-border p-4">
+          <Link key={episode.id} to={`/episodes/${episode.slug}`} className="entity-link-block">
             <Typography variant="h3">{episode.title_ru}</Typography>
             {episode.summary && <Typography variant="muted">{episode.summary}</Typography>}
           </Link>

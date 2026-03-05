@@ -16,10 +16,10 @@ export default function CharacterDetailPage() {
   if (!data) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <Typography variant="h1">{data.character.name_ru}</Typography>
       {data.character.description && <Typography variant="lead">{data.character.description}</Typography>}
-      <article className="prose max-w-none text-body">
+      <article className="prose max-w-none role-body">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.character.bio_markdown || ""}</ReactMarkdown>
       </article>
     </div>

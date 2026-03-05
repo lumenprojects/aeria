@@ -16,10 +16,10 @@ export default function AtlasDetailPage() {
   if (!data) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <Typography variant="h1">{data.entry.title_ru}</Typography>
       {data.entry.summary && <Typography variant="lead">{data.entry.summary}</Typography>}
-      <article className="prose max-w-none text-body">
+      <article className="prose max-w-none role-body">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.entry.content_markdown || ""}</ReactMarkdown>
       </article>
     </div>

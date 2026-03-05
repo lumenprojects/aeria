@@ -99,7 +99,7 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
 
   return (
     <div className="border-b border-divider bg-background">
-      <div className="container py-3">
+      <div className="container search-inline-shell">
         <Command className="bg-transparent">
           <CommandInput
             ref={inputRef}
@@ -108,13 +108,13 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
             placeholder="Поиск по главам, персонажам и миру..."
             className="border-divider text-ui text-sm text-text placeholder:text-muted focus-visible:border-accent"
           />
-          <div className="mt-3 overflow-hidden rounded-md border border-divider bg-surface shadow-soft">
+          <div className="search-inline-panel overflow-hidden rounded-md border border-divider bg-surface shadow-soft">
             <CommandList>
-              {isFetching && <div className="px-3 py-2 text-sm text-muted">Ищем...</div>}
+              {isFetching && <div className="search-inline-status text-sm text-muted">Ищем...</div>}
               {isError && (
-                <div className="px-3 py-2 text-sm text-muted">Поиск временно недоступен. Попробуйте позже.</div>
+                <div className="search-inline-status text-sm text-muted">Поиск временно недоступен. Попробуйте позже.</div>
               )}
-              {showEmptyPrompt && <div className="px-3 py-2 text-sm text-muted">Введите запрос для поиска</div>}
+              {showEmptyPrompt && <div className="search-inline-status text-sm text-muted">Введите запрос для поиска</div>}
               {query.length > 0 && <CommandEmpty>Ничего не найдено. Попробуйте другое слово.</CommandEmpty>}
               {showRecent && (
                 <CommandGroup heading={labels.recent}>

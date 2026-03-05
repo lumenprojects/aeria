@@ -126,16 +126,19 @@ export default function Navbar() {
               <div className="h-full bg-accent transition-all" style={{ width: `${scrollProgress}%` }} />
             </div>
           )}
-          <div className="container relative flex h-[72px] items-center justify-between">
-            <div className="flex items-center gap-6 text-ui text-sm">
+          <div className="container relative flex navbar-shell items-center justify-between">
+            <div className="navbar-left role-ui text-sm">
               {!isDetail ? (
-                <nav className="flex items-center gap-6">
+                <nav className="navbar-links">
                   {navItems.map((item) => (
                     <NavLink
                       key={item.to}
                       to={item.to}
                       className={({ isActive }) =>
-                        cn("navbar-link text-ui text-sm", isActive ? "navbar-link-active" : "text-secondary hover:text-text")
+                        cn(
+                          "navbar-link role-ui text-sm",
+                          isActive ? "navbar-link-active" : "tone-secondary hover:text-text"
+                        )
                       }
                     >
                       {item.label}
@@ -143,12 +146,12 @@ export default function Navbar() {
                   ))}
                 </nav>
               ) : (
-                <div className="flex items-center gap-3">
-                  <Button variant="ghost" size="sm" className="text-secondary hover:text-text" onClick={handleBack}>
+                <div className="navbar-detail">
+                  <Button variant="ghost" size="sm" className="tone-secondary hover:text-text" onClick={handleBack}>
                     Назад
                   </Button>
                   <Breadcrumb>
-                    <BreadcrumbList className="text-ui text-sm text-secondary">
+                    <BreadcrumbList className="role-ui text-sm tone-secondary">
                       <BreadcrumbItem>
                         <NavLink to={`/${section}`} className="hover:text-text">
                           {sectionLabel}
@@ -170,7 +173,7 @@ export default function Navbar() {
               </NavLink>
             </div>
 
-            <div className="flex items-center gap-3 text-ui text-sm">
+            <div className="navbar-right role-ui text-sm">
               <button
                 type="button"
                 aria-label="Поиск"
@@ -196,7 +199,6 @@ export default function Navbar() {
               >
                 {mode === "dark" ? <Moon size={18} /> : <Sun size={18} />}
               </button>
-              <span className="navbar-divider" aria-hidden="true" />
               <Popover onOpenChange={setFontMenuOpen}>
                 <PopoverTrigger asChild>
                   <button
@@ -207,15 +209,11 @@ export default function Navbar() {
                     Aa
                   </button>
                 </PopoverTrigger>
-                <PopoverContent align="end" className="navbar-popover">
-                  <div className="flex flex-col gap-4 text-ui text-sm">
-                    <div className="flex flex-col gap-2">
+                <PopoverContent align="end" sideOffset={0} className="navbar-popover">
+                  <div className="navbar-popover-panel role-ui text-sm">
+                    <div className="navbar-field">
                       <span className="navbar-label">UI</span>
-                      <select
-                        className="navbar-select"
-                        value={fontUi}
-                        onChange={(event) => setFontUi(event.target.value)}
-                      >
+                      <select className="navbar-select" value={fontUi} onChange={(event) => setFontUi(event.target.value)}>
                         {fontOptions.ui.map((font) => (
                           <option key={font} value={font}>
                             {font}
@@ -223,7 +221,7 @@ export default function Navbar() {
                         ))}
                       </select>
                     </div>
-                    <div className="flex flex-col gap-2">
+                    <div className="navbar-field">
                       <span className="navbar-label">Headings</span>
                       <select
                         className="navbar-select"
@@ -237,7 +235,7 @@ export default function Navbar() {
                         ))}
                       </select>
                     </div>
-                    <div className="flex flex-col gap-2">
+                    <div className="navbar-field">
                       <span className="navbar-label">Text</span>
                       <select
                         className="navbar-select"
@@ -265,9 +263,9 @@ export default function Navbar() {
                     <Ellipsis size={20} />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent align="end" className="navbar-popover">
-                  <div className="flex flex-col gap-4 text-ui text-sm">
-                    <div className="flex flex-col gap-2">
+                <PopoverContent align="end" sideOffset={0} className="navbar-popover">
+                  <div className="navbar-popover-panel role-ui text-sm">
+                    <div className="navbar-field">
                       <span className="navbar-label">Style</span>
                       <select
                         className="navbar-select"
@@ -281,7 +279,7 @@ export default function Navbar() {
                         ))}
                       </select>
                     </div>
-                    <div className="flex flex-col gap-2">
+                    <div className="navbar-field">
                       <span className="navbar-label">Noise</span>
                       <select
                         className="navbar-select"
@@ -295,7 +293,7 @@ export default function Navbar() {
                         ))}
                       </select>
                     </div>
-                    <div className="flex flex-col gap-2">
+                    <div className="navbar-field">
                       <span className="navbar-label">Tap Effect</span>
                       <select
                         className="navbar-select"
@@ -318,13 +316,16 @@ export default function Navbar() {
         <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
       </header>
       <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-divider bg-background md:hidden">
-        <div className="container flex items-center justify-between py-3 text-ui text-sm">
+        <div className="container flex items-center justify-between navbar-mobile-row role-ui text-sm">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                cn("navbar-link text-ui text-sm", isActive ? "navbar-link-active" : "text-secondary hover:text-text")
+                cn(
+                  "navbar-link role-ui text-sm",
+                  isActive ? "navbar-link-active" : "tone-secondary hover:text-text"
+                )
               }
             >
               {item.label}

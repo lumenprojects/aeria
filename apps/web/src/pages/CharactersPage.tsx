@@ -7,11 +7,11 @@ export default function CharactersPage() {
   const { data } = useQuery({ queryKey: ["characters"], queryFn: getCharacters });
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <Typography variant="h1">Персонажи</Typography>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="page-grid">
         {data?.items?.map((character) => (
-          <Link key={character.id} to={`/characters/${character.slug}`} className="rounded-md border border-border p-4">
+          <Link key={character.id} to={`/characters/${character.slug}`} className="entity-link-block">
             <Typography variant="h3">{character.name_ru}</Typography>
             {character.description && <Typography variant="muted">{character.description}</Typography>}
           </Link>

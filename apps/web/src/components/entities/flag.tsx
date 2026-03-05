@@ -1,4 +1,4 @@
-type CountryFlag = {
+﻿type CountryFlag = {
   id: string;
   slug: string;
   title_ru: string;

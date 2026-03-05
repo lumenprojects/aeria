@@ -9,11 +9,11 @@ export default function AtlasPage() {
   const { data } = useQuery({ queryKey: ["atlas", kind], queryFn: () => getAtlas({ kind }) });
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <Typography variant="h1">Атлас</Typography>
-      <div className="space-y-3">
+      <div className="page-list">
         {data?.items?.map((entry) => (
-          <Link key={entry.id} to={`/atlas/${entry.slug}`} className="block rounded-md border border-border p-4">
+          <Link key={entry.id} to={`/atlas/${entry.slug}`} className="entity-link-block">
             <Typography variant="h3">{entry.title_ru}</Typography>
             {entry.summary && <Typography variant="muted">{entry.summary}</Typography>}
           </Link>
