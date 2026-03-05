@@ -93,55 +93,62 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
 
   const groups = data?.groups?.filter((group) => group.hits.length > 0) ?? [];
   const showRecent = query.length === 0 && recent.length > 0;
-  const showEmptyPrompt = query.length === 0 && recent.length === 0;
+  const showResultsPanel = isFetching || isError || query.length > 0 || showRecent;
 
   if (!open) return null;
 
   return (
-    <div className="border-b border-divider bg-background">
+    <div className="bg-background">
       <div className="container search-inline-shell">
-        <Command className="bg-transparent">
+        <Command className="search-inline-command">
           <CommandInput
             ref={inputRef}
             value={query}
             onValueChange={setQuery}
             placeholder="Поиск по главам, персонажам и миру..."
-            className="border-divider text-ui text-sm text-text placeholder:text-muted focus-visible:border-accent"
+            className="search-inline-input role-ui text-sm text-text placeholder:text-muted focus-visible:border-accent"
           />
-          <div className="search-inline-panel overflow-hidden rounded-md border border-divider bg-surface shadow-soft">
-            <CommandList>
-              {isFetching && <div className="search-inline-status text-sm text-muted">Ищем...</div>}
-              {isError && (
-                <div className="search-inline-status text-sm text-muted">Поиск временно недоступен. Попробуйте позже.</div>
-              )}
-              {showEmptyPrompt && <div className="search-inline-status text-sm text-muted">Введите запрос для поиска</div>}
-              {query.length > 0 && <CommandEmpty>Ничего не найдено. Попробуйте другое слово.</CommandEmpty>}
-              {showRecent && (
-                <CommandGroup heading={labels.recent}>
-                  {recent.map((hit) => (
-                    <CommandItem key={`${hit.type}:${hit.id}`} onSelect={() => handleSelect(hit)}>
-                      <div className="flex flex-col">
-                        <span className="text-sm text-text">{hit.title}</span>
-                        {hit.summary && <span className="text-xs text-muted">{hit.summary}</span>}
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
-              {groups.map((group) => (
-                <CommandGroup key={group.type} heading={labels[group.type] ?? group.type}>
-                  {group.hits.map((hit: SearchHit) => (
-                    <CommandItem key={hit.id} onSelect={() => handleSelect(hit)}>
-                      <div className="flex flex-col">
-                        <span className="text-sm text-text">{hit.title}</span>
-                        {hit.summary && <span className="text-xs text-muted">{hit.summary}</span>}
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              ))}
-            </CommandList>
-          </div>
+          {showResultsPanel && (
+            <div className="search-inline-panel">
+              <CommandList className="search-inline-list">
+                {isFetching && <div className="search-inline-status text-sm text-muted">Ищем...</div>}
+                {isError && (
+                  <div className="search-inline-status text-sm text-muted">
+                    Поиск временно недоступен. Попробуйте позже.
+                  </div>
+                )}
+                {!isFetching && !isError && query.length > 0 && (
+                  <CommandEmpty className="search-inline-status text-sm text-muted">
+                    Ничего не найдено. Попробуйте другое слово.
+                  </CommandEmpty>
+                )}
+                {showRecent && (
+                  <CommandGroup className="search-inline-group" heading={labels.recent}>
+                    {recent.map((hit) => (
+                      <CommandItem key={`${hit.type}:${hit.id}`} className="search-inline-item" onSelect={() => handleSelect(hit)}>
+                        <div className="flex flex-col">
+                          <span className="text-sm text-text">{hit.title}</span>
+                          {hit.summary && <span className="text-xs text-muted">{hit.summary}</span>}
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+                {groups.map((group) => (
+                  <CommandGroup key={group.type} className="search-inline-group" heading={labels[group.type] ?? group.type}>
+                    {group.hits.map((hit: SearchHit) => (
+                      <CommandItem key={hit.id} className="search-inline-item" onSelect={() => handleSelect(hit)}>
+                        <div className="flex flex-col">
+                          <span className="text-sm text-text">{hit.title}</span>
+                          {hit.summary && <span className="text-xs text-muted">{hit.summary}</span>}
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                ))}
+              </CommandList>
+            </div>
+          )}
         </Command>
       </div>
     </div>

@@ -120,7 +120,7 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-40 bg-background">
-        <div className="relative border-b border-divider">
+        <div className="relative">
           {isEpisodeReading && (
             <div className="absolute inset-x-0 top-0 h-0.5 bg-divider">
               <div className="h-full bg-accent transition-all" style={{ width: `${scrollProgress}%` }} />
@@ -174,142 +174,152 @@ export default function Navbar() {
             </div>
 
             <div className="navbar-right role-ui text-sm">
-              <button
-                type="button"
-                aria-label="Поиск"
-                className={cn("navbar-icon", searchOpen && "navbar-icon-active")}
-                onClick={() => setSearchOpen((value) => !value)}
-              >
-                <Search size={18} />
-              </button>
-              <span className="navbar-divider" aria-hidden="true" />
-              {isEpisodeReading && (
-                <>
+              <div className="navbar-tool-cluster">
+                <button
+                  type="button"
+                  aria-label="Поиск"
+                  className={cn("navbar-icon", searchOpen && "navbar-icon-active")}
+                  onClick={() => setSearchOpen((value) => !value)}
+                >
+                  <Search size={18} />
+                </button>
+                {isEpisodeReading && (
                   <span className="navbar-reading" title={seriesTitle ?? ""}>
                     {currentEpisode ?? "—"}/{totalEpisodes ?? "—"}
                   </span>
-                  <span className="navbar-divider" aria-hidden="true" />
-                </>
-              )}
-              <button
-                type="button"
-                aria-label={mode === "dark" ? "Переключить на дневной режим" : "Переключить на ночной режим"}
-                className="navbar-icon"
-                onClick={() => setMode(mode === "dark" ? "light" : "dark")}
-              >
-                {mode === "dark" ? <Moon size={18} /> : <Sun size={18} />}
-              </button>
-              <Popover onOpenChange={setFontMenuOpen}>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    aria-label="Шрифты"
-                    className={cn("navbar-icon navbar-icon-text", fontMenuOpen && "navbar-icon-active")}
-                  >
-                    Aa
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent align="end" sideOffset={0} className="navbar-popover">
-                  <div className="navbar-popover-panel role-ui text-sm">
-                    <div className="navbar-field">
-                      <span className="navbar-label">UI</span>
-                      <select className="navbar-select" value={fontUi} onChange={(event) => setFontUi(event.target.value)}>
-                        {fontOptions.ui.map((font) => (
-                          <option key={font} value={font}>
-                            {font}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="navbar-field">
-                      <span className="navbar-label">Headings</span>
-                      <select
-                        className="navbar-select"
-                        value={fontHeading}
-                        onChange={(event) => setFontHeading(event.target.value)}
-                      >
-                        {fontOptions.heading.map((font) => (
-                          <option key={font} value={font}>
-                            {font}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="navbar-field">
-                      <span className="navbar-label">Text</span>
-                      <select
-                        className="navbar-select"
-                        value={fontBody}
-                        onChange={(event) => setFontBody(event.target.value)}
-                      >
-                        {fontOptions.body.map((font) => (
-                          <option key={font} value={font}>
-                            {font}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+                )}
+              </div>
               <span className="navbar-divider" aria-hidden="true" />
-              <Popover onOpenChange={setSettingsOpen}>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    aria-label="Настройки"
-                    className={cn("navbar-icon", settingsOpen && "navbar-icon-active")}
+              <div className="navbar-tool-cluster">
+                <button
+                  type="button"
+                  aria-label={mode === "dark" ? "Переключить на дневной режим" : "Переключить на ночной режим"}
+                  className="navbar-icon"
+                  onClick={() => setMode(mode === "dark" ? "light" : "dark")}
+                >
+                  {mode === "dark" ? <Moon size={18} /> : <Sun size={18} />}
+                </button>
+                <Popover onOpenChange={setFontMenuOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Шрифты"
+                      className={cn("navbar-icon navbar-icon-text", fontMenuOpen && "navbar-icon-active")}
+                    >
+                      Aa
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="end"
+                    sideOffset={0}
+                    avoidCollisions={false}
+                    className="navbar-popover navbar-popover-fixed"
                   >
-                    <Ellipsis size={20} />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent align="end" sideOffset={0} className="navbar-popover">
-                  <div className="navbar-popover-panel role-ui text-sm">
-                    <div className="navbar-field">
-                      <span className="navbar-label">Style</span>
-                      <select
-                        className="navbar-select"
-                        value={theme}
-                        onChange={(event) => setTheme(event.target.value as typeof theme)}
-                      >
-                        {themeOptions.map((item) => (
-                          <option key={item.value} value={item.value}>
-                            {item.label}
-                          </option>
-                        ))}
-                      </select>
+                    <div className="navbar-popover-panel role-ui text-sm">
+                      <div className="navbar-field">
+                        <span className="navbar-label">UI</span>
+                        <select className="navbar-select" value={fontUi} onChange={(event) => setFontUi(event.target.value)}>
+                          {fontOptions.ui.map((font) => (
+                            <option key={font} value={font}>
+                              {font}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="navbar-field">
+                        <span className="navbar-label">Headings</span>
+                        <select
+                          className="navbar-select"
+                          value={fontHeading}
+                          onChange={(event) => setFontHeading(event.target.value)}
+                        >
+                          {fontOptions.heading.map((font) => (
+                            <option key={font} value={font}>
+                              {font}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="navbar-field">
+                        <span className="navbar-label">Text</span>
+                        <select
+                          className="navbar-select"
+                          value={fontBody}
+                          onChange={(event) => setFontBody(event.target.value)}
+                        >
+                          {fontOptions.body.map((font) => (
+                            <option key={font} value={font}>
+                              {font}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
-                    <div className="navbar-field">
-                      <span className="navbar-label">Noise</span>
-                      <select
-                        className="navbar-select"
-                        value={noise ? "on" : "off"}
-                        onChange={(event) => setNoise(event.target.value === "on")}
-                      >
-                        {noiseOptions.map((item) => (
-                          <option key={item.value} value={item.value}>
-                            {item.label}
-                          </option>
-                        ))}
-                      </select>
+                  </PopoverContent>
+                </Popover>
+                <Popover onOpenChange={setSettingsOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Настройки"
+                      className={cn("navbar-icon", settingsOpen && "navbar-icon-active")}
+                    >
+                      <Ellipsis size={20} />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="end"
+                    sideOffset={0}
+                    avoidCollisions={false}
+                    className="navbar-popover navbar-popover-fixed"
+                  >
+                    <div className="navbar-popover-panel role-ui text-sm">
+                      <div className="navbar-field">
+                        <span className="navbar-label">Style</span>
+                        <select
+                          className="navbar-select"
+                          value={theme}
+                          onChange={(event) => setTheme(event.target.value as typeof theme)}
+                        >
+                          {themeOptions.map((item) => (
+                            <option key={item.value} value={item.value}>
+                              {item.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="navbar-field">
+                        <span className="navbar-label">Noise</span>
+                        <select
+                          className="navbar-select"
+                          value={noise ? "on" : "off"}
+                          onChange={(event) => setNoise(event.target.value === "on")}
+                        >
+                          {noiseOptions.map((item) => (
+                            <option key={item.value} value={item.value}>
+                              {item.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="navbar-field">
+                        <span className="navbar-label">Tap Effect</span>
+                        <select
+                          className="navbar-select"
+                          value={tapEffect}
+                          onChange={(event) => setTapEffect(event.target.value as typeof tapEffect)}
+                        >
+                          {tapOptions.map((item) => (
+                            <option key={item.value} value={item.value}>
+                              {item.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
-                    <div className="navbar-field">
-                      <span className="navbar-label">Tap Effect</span>
-                      <select
-                        className="navbar-select"
-                        value={tapEffect}
-                        onChange={(event) => setTapEffect(event.target.value as typeof tapEffect)}
-                      >
-                        {tapOptions.map((item) => (
-                          <option key={item.value} value={item.value}>
-                            {item.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           </div>
         </div>

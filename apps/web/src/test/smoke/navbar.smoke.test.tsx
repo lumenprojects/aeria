@@ -41,16 +41,38 @@ function renderNavbar(path = "/") {
 
 describe("Navbar smoke", () => {
   it("renders primary nav links", () => {
-    renderNavbar("/");
+    const { container } = renderNavbar("/");
     expect(screen.getAllByRole("link", { name: "Главная" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "Эпизоды" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "Персонажи" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "Атлас" }).length).toBeGreaterThan(0);
+    expect(container.querySelectorAll(".navbar-divider")).toHaveLength(1);
   });
 
-  it("opens inline search by icon click", () => {
+  it("opens inline search by icon click without empty prompt", () => {
     renderNavbar("/");
     fireEvent.click(screen.getByRole("button", { name: "Поиск" }));
+    const input = screen.getByPlaceholderText("Поиск по главам, персонажам и миру...");
+    expect(input).toBeInTheDocument();
+    expect(input).toHaveClass("role-ui");
+    expect(screen.queryByText("Введите запрос для поиска")).not.toBeInTheDocument();
+  });
+
+  it("toggles inline search with keyboard", () => {
+    renderNavbar("/");
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
     expect(screen.getByPlaceholderText("Поиск по главам, персонажам и миру...")).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByPlaceholderText("Поиск по главам, персонажам и миру...")).not.toBeInTheDocument();
+  });
+
+  it("opens fonts and settings popovers", () => {
+    renderNavbar("/");
+    fireEvent.click(screen.getByRole("button", { name: "Шрифты" }));
+    expect(screen.getByText("UI")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Настройки" }));
+    expect(screen.getByText("Style")).toBeInTheDocument();
   });
 });
