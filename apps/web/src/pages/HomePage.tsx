@@ -165,6 +165,9 @@ export default function HomePage() {
           <Typography variant="h3" as="p">
             Заголовок h3
           </Typography>
+          <Typography variant="h4" as="p">
+            Заголовок h4
+          </Typography>
           <Typography variant="body">Основной текст body.</Typography>
           <Typography variant="lead">Lead-текст для акцентного абзаца.</Typography>
           <Typography variant="muted">Muted-текст для вторичного контента.</Typography>
@@ -263,6 +266,8 @@ export default function HomePage() {
               flag_colors: ["#ffffff", "#0057b7", "#d52b1e"]
             }}
           />
+          <span className="theme-stroke stroke-demo" aria-label="Демо обводки по теме" />
+          <span className="theme-stroke theme-stroke-accent stroke-demo" aria-label="Демо акцентной обводки" />
         </div>
       </Section>
 

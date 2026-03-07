@@ -54,7 +54,9 @@ async function writeFixture(rootDir: string, token: string, options: FixtureOpti
     `---
 slug: ${countrySlug}
 title_ru: Тестовая страна
-flag_emoji: "🏳️"
+flag_colors:
+  - "#111111"
+  - "#eeeeee"
 ---
 
 # Тестовая страна

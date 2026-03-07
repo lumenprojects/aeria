@@ -9,7 +9,7 @@ const variants: Record<TypographyVariant, string> = {
   h3: "role-heading type-h3",
   h4: "role-heading type-h4",
   body: "role-body",
-  ui: "role-ui text-sm",
+  ui: "role-ui",
   muted: "role-body tone-secondary",
   lead: "role-body type-h3"
 };
@@ -20,7 +20,7 @@ const variantStyles: Record<TypographyVariant, React.CSSProperties> = {
   h3: { fontSize: "var(--type-normal)", lineHeight: "var(--lh-heading)" },
   h4: { fontSize: "var(--type-small)", lineHeight: "var(--lh-heading)" },
   body: { fontSize: "var(--type-small)", lineHeight: "var(--lh-body)" },
-  ui: { lineHeight: "var(--lh-ui)" },
+  ui: { fontSize: "var(--type-ui)", lineHeight: "var(--lh-ui)" },
   muted: { fontSize: "var(--type-small)", lineHeight: "var(--lh-body)" },
   lead: { fontSize: "var(--type-normal)", lineHeight: "var(--lh-body)" }
 };

@@ -24,7 +24,7 @@ export async function registerWorldRoutes(app: FastifyInstance) {
       `SELECT COUNT(*)::int AS count FROM countries WHERE ${where}`
     );
     const rows = await pool.query(
-      `SELECT id, slug, title_ru, flag_emoji, flag_asset_path, flag_colors FROM countries WHERE ${where} ORDER BY title_ru ASC LIMIT $1 OFFSET $2`,
+      `SELECT id, slug, title_ru, flag_colors FROM countries WHERE ${where} ORDER BY title_ru ASC LIMIT $1 OFFSET $2`,
       [limit, offset]
     );
 
@@ -35,8 +35,6 @@ export async function registerWorldRoutes(app: FastifyInstance) {
           id: row.id,
           slug: row.slug,
           title_ru: row.title_ru,
-          flag_emoji: row.flag_emoji ?? null,
-          flag_asset_path: row.flag_asset_path ?? null,
           flag_colors: row.flag_colors ?? null
         },
         "/api/countries:item"

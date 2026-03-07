@@ -46,8 +46,6 @@ export const CountryDTO = z.object({
   id: Uuid,
   slug: z.string(),
   title_ru: z.string(),
-  flag_emoji: z.string().nullable(),
-  flag_asset_path: z.string().nullable(),
   flag_colors: z.array(z.string()).nullable()
 });
 

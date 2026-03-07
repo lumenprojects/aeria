@@ -358,8 +358,6 @@ async function importCountries(records: LoadedFile<CountryFrontmatter>[], summar
       id: record.id,
       slug: record.slug,
       title_ru: frontmatter.title_ru,
-      flag_emoji: frontmatter.flag_emoji ?? null,
-      flag_asset_path: frontmatter.flag_asset_path ?? null,
       flag_colors: frontmatter.flag_colors ? JSON.stringify(frontmatter.flag_colors) : null,
       source_path: record.sourcePath,
       content_hash: record.contentHash,

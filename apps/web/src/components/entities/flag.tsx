@@ -1,11 +1,14 @@
-﻿type CountryFlag = {
+import type { CSSProperties } from "react";
+import { cn } from "@/lib/utils";
+
+type CountryFlag = {
   id: string;
   slug: string;
   title_ru: string;
   flag_colors: string[] | null;
 };
 
-type FlagSize = "xs" | "sm" | "md" | "lg";
+type FlagSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 type FlagProps = {
   country: CountryFlag | null;
@@ -17,7 +20,8 @@ const sizeClassMap: Record<FlagSize, string> = {
   xs: "w-[var(--flag-w-xs)] h-[var(--flag-h-xs)]",
   sm: "w-[var(--flag-w-sm)] h-[var(--flag-h-sm)]",
   md: "w-[var(--flag-w-md)] h-[var(--flag-h-md)]",
-  lg: "w-[var(--flag-w-lg)] h-[var(--flag-h-lg)]"
+  lg: "w-[var(--flag-w-lg)] h-[var(--flag-h-lg)]",
+  xl: "w-[var(--flag-w-xl)] h-[var(--flag-h-xl)]"
 };
 
 export function Flag({ country, size = "md", className }: FlagProps) {
@@ -29,7 +33,8 @@ export function Flag({ country, size = "md", className }: FlagProps) {
     <span
       role="img"
       aria-label={`Флаг страны: ${country.title_ru}`}
-      className={`inline-flex overflow-hidden ${sizeClassMap[size]} ${className ?? ""}`.trim()}
+      className={cn("theme-stroke inline-flex overflow-hidden", sizeClassMap[size], className)}
+      style={{ "--theme-stroke-width": "1px" } as CSSProperties}
       data-country-slug={country.slug}
     >
       {country.flag_colors.map((color, index) => (

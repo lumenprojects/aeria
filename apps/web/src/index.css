@@ -18,10 +18,11 @@
   --space-9: 56px;
   --space-10: 72px;
 
-  --type-extra: clamp(2.5rem, calc(2.5rem + 3.5 * ((100vw - 360px) / 1560)), 6rem);
-  --type-medium: clamp(2rem, calc(2rem + 2 * ((100vw - 360px) / 1560)), 4rem);
-  --type-normal: clamp(1.375rem, calc(1.375rem + 0.875 * ((100vw - 360px) / 1560)), 2.25rem);
-  --type-small: clamp(1rem, calc(1rem + 0.5 * ((100vw - 360px) / 1560)), 1.5rem);
+  --type-extra: clamp(5rem, calc(5rem + 11 * ((100vw - 360px) / 1560)), 16rem);
+  --type-medium: clamp(3rem, calc(3rem + 5 * ((100vw - 360px) / 1560)), 8rem);
+  --type-normal: clamp(2.5rem, calc(2.5rem + 3.5 * ((100vw - 360px) / 1560)), 6rem);
+  --type-small: clamp(2rem, calc(2rem + 2 * ((100vw - 360px) / 1560)), 4rem);
+  --type-ui: 1rem;
 
   /* Curated spacing scale: near 10/20/40/80/160 at ~1440 width, no vh coupling. */
   --space-xs: clamp(6px, calc(6px + (12 - 6) * ((100vw - 360px) / 1560)), 12px);
@@ -41,14 +42,17 @@
   --avatar-md: 56px;
   --avatar-lg: 88px;
 
-  --flag-w-xs: 40px;
-  --flag-h-xs: 4px;
-  --flag-w-sm: 56px;
-  --flag-h-sm: 6px;
-  --flag-w-md: 72px;
-  --flag-h-md: 8px;
-  --flag-w-lg: 104px;
-  --flag-h-lg: 10px;
+  --flag-height-ratio: 0.0375;
+  --flag-w-xs: 64px;
+  --flag-h-xs: calc(var(--flag-w-xs) * var(--flag-height-ratio));
+  --flag-w-sm: 96px;
+  --flag-h-sm: calc(var(--flag-w-sm) * var(--flag-height-ratio));
+  --flag-w-md: 128px;
+  --flag-h-md: calc(var(--flag-w-md) * var(--flag-height-ratio));
+  --flag-w-lg: 160px;
+  --flag-h-lg: calc(var(--flag-w-lg) * var(--flag-height-ratio));
+  --flag-w-xl: 192px;
+  --flag-h-xl: calc(var(--flag-w-xl) * var(--flag-height-ratio));
 
   --container-small: clamp(320px, 70vw, 880px);
   --container-medium: clamp(640px, 80vw, 1400px);
@@ -57,6 +61,7 @@
   --navbar-height: 72px;
   --nav-underline-thickness: 2px;
   --nav-underline-offset: -6px;
+  --stroke-width: clamp(1px, calc(1px + (2 - 1) * ((100vw - 360px) / 1560)), 2px);
 
   --lh-heading: 1.05;
   --lh-body: 1.8;
@@ -169,6 +174,7 @@ a {
 .role-ui,
 .text-ui {
   font-family: var(--font-ui, "Manrope"), sans-serif;
+  font-size: var(--type-ui);
   letter-spacing: 0.02em;
   line-height: var(--lh-ui);
 }
@@ -227,6 +233,22 @@ a {
 
 .bg-divider {
   background-color: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.theme-stroke {
+  --theme-stroke-color: color-mix(in srgb, var(--text) 8%, transparent);
+  box-shadow: 0 0 0 var(--theme-stroke-width, var(--stroke-width)) var(--theme-stroke-color);
+}
+
+.theme-stroke-accent {
+  --theme-stroke-color: var(--accent);
+}
+
+.stroke-demo {
+  width: clamp(56px, 6vw, 80px);
+  height: clamp(56px, 6vw, 80px);
+  border-radius: 999px;
+  background: transparent;
 }
 
 .navbar-link {

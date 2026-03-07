@@ -14,8 +14,6 @@ export const seriesSchema = z.object({
 export const countrySchema = z.object({
   slug: slugSchema,
   title_ru: z.string().min(1),
-  flag_emoji: z.string().optional().nullable(),
-  flag_asset_path: z.string().optional().nullable(),
   flag_colors: z.array(z.string()).optional().nullable()
 });
 

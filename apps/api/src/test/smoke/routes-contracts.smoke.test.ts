@@ -161,8 +161,6 @@ describe("API route contracts smoke", () => {
             id: "00000000-0000-0000-0000-000000000021",
             slug: "ru-example",
             title_ru: "Country 01",
-            flag_emoji: null,
-            flag_asset_path: null,
             flag_colors: ["#111111", "#ffffff"]
           }
         ]
@@ -225,8 +223,6 @@ describe("API route contracts smoke", () => {
         id: "00000000-0000-0000-0000-000000000021",
         slug: "ru-example",
         title_ru: "Country 01",
-        flag_emoji: null,
-        flag_asset_path: null,
         flag_colors: ["#111111", "#ffffff"]
       },
       characters: [
