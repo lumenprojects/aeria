@@ -7,26 +7,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getCharacter } from "@/lib/api";
 import { Typography } from "@/components/ui/typography";
 
-type CharacterQuirk = {
-  sort_order: number;
-  text: string;
-};
-
-type CharacterRumorSource = {
-  type: "character" | "atlas_entry";
-  slug: string;
-  title: string;
-  avatar_asset_path: string | null;
-};
-
-type CharacterRumor = {
-  sort_order: number;
-  text: string;
-  author_name: string;
-  author_meta: string | null;
-  source: CharacterRumorSource | null;
-};
-
 function fallbackText(label: string) {
   const parts = label.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -119,7 +99,7 @@ export default function CharacterDetailPage() {
             Особые приметы
           </Typography>
           <div className="showcase-stack-xs">
-            {data.quirks.map((quirk: CharacterQuirk) => (
+            {data.quirks.map((quirk) => (
               <Typography key={`${quirk.sort_order}-${quirk.text}`} variant="body">
                 {quirk.sort_order + 1}. {quirk.text}
               </Typography>
@@ -134,7 +114,7 @@ export default function CharacterDetailPage() {
             Что говорят другие?
           </Typography>
           <div className="page-grid">
-            {data.rumors.map((rumor: CharacterRumor) => (
+            {data.rumors.map((rumor) => (
               <article key={`${rumor.sort_order}-${rumor.author_name}`} className="showcase-panel showcase-stack-xs">
                 <Typography variant="body">{rumor.text}</Typography>
                 <Typography variant="muted">
