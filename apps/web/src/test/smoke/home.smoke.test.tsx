@@ -134,8 +134,8 @@ describe("LandingPage smoke", () => {
     expect(screen.getByRole("button", { name: "Подслушать ещё" })).toBeInTheDocument();
     expect(screen.getByTestId("home-country-carousel-dots").querySelectorAll("button")).toHaveLength(6);
     expect(view.container.querySelectorAll(".home-country-carousel-dot-active")).toHaveLength(1);
-    expect(view.container.querySelectorAll(".section-break-line")).toHaveLength(4);
-    expect(view.container.querySelectorAll(".section-break-stars")).toHaveLength(1);
+    expect(view.container.querySelectorAll(".section-break-line")).toHaveLength(6);
+    expect(view.container.querySelectorAll(".section-break-stars")).toHaveLength(2);
 
     expect(aboutHeading.compareDocumentPosition(carousel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(carousel.compareDocumentPosition(countrySnapshot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

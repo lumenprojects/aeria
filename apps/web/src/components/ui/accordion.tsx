@@ -15,13 +15,18 @@ AccordionItem.displayName = "AccordionItem";
 const AccordionTrigger = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => (
   <AccordionPrimitive.Header className="flex">
     <AccordionPrimitive.Trigger
       ref={ref}
-      className={cn("role-ui flex flex-1 items-center justify-between accordion-trigger-shell text-left font-medium", className)}
+      className={cn("group role-ui flex flex-1 items-center justify-between accordion-trigger-shell text-left", className)}
       {...props}
-    />
+    >
+      <span className="accordion-trigger-label">{children}</span>
+      <span className="accordion-trigger-chevron" aria-hidden="true">
+        {">"}
+      </span>
+    </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
 ));
 AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName;

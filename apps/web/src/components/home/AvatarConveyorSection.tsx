@@ -221,7 +221,7 @@ export function AvatarConveyorSection() {
   };
 
   return (
-    <section className="home-conveyor">
+    <section className="home-conveyor" data-testid="home-avatar-conveyor">
       <Typography variant="h2" as="h2" className="home-conveyor-title">
         Ваше личное <em>пространство</em>
         <br />
@@ -281,3 +281,4 @@ export function AvatarConveyorSection() {
     </section>
   );
 }
+

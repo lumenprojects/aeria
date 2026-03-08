@@ -17,9 +17,7 @@ type CountrySnapshot = {
   country: CountryFlagData;
 };
 
-const snapshotRatio = 3 / 4;
-
-const staticDescription = "Aeria - не карта а след. Здесь мир собирается из голосов писем и тихих сцен.";
+const snapshotRatio = 2 / 3;
 
 const snapshots: CountrySnapshot[] = [
   {
@@ -79,20 +77,22 @@ export function CountrySnapshotSection() {
               loading="eager"
               className="home-country-snapshot-image"
             />
-            <Flag country={snapshot.country} size="sm" className="home-country-snapshot-flag" />
+            <Flag country={snapshot.country} size="md" className="home-country-snapshot-flag" />
           </div>
         </AspectRatio>
         <div className="home-country-snapshot-captions" aria-label="Подписи к изображению">
           {snapshot.captions.map((caption) => (
-            <Typography key={caption} variant="ui" className="home-country-snapshot-caption">
+            <Typography key={caption} variant="ui">
               {caption}
             </Typography>
           ))}
         </div>
       </div>
 
-      <Typography variant="body" className="home-country-snapshot-description">
-        {staticDescription}
+      <Typography variant="body" fontRole="heading" className="home-country-snapshot-description">
+        <em>Aeria</em> — не карта а след
+        <br />
+        Здесь мир собирается из голосов писем и тихих сцен.
       </Typography>
     </section>
   );
