@@ -543,17 +543,16 @@ async function importCharacters(
       avatar_asset_path: frontmatter.avatar_asset_path,
       name_native: frontmatter.name_native ?? null,
       affiliation_id: affiliationId,
+      country_id: entityId("country", frontmatter.country_slug),
+      tagline: frontmatter.tagline ?? null,
       gender: frontmatter.gender ?? null,
       race: frontmatter.race ?? null,
       height_cm: frontmatter.height_cm ?? null,
       age: frontmatter.age ?? null,
-      birth_country_id: frontmatter.birth_country_slug ? entityId("country", frontmatter.birth_country_slug) : null,
       favorite_food: frontmatter.favorite_food ?? null,
       orientation: frontmatter.orientation ?? null,
-      description: frontmatter.description ?? null,
-      quote: frontmatter.quote ?? null,
+      mbti: frontmatter.mbti ?? null,
       bio_markdown: record.body || null,
-      stats: frontmatter.stats ?? null,
       published_at: publishedAt,
       source_path: record.sourcePath,
       content_hash: record.contentHash,
@@ -570,23 +569,35 @@ async function importCharacters(
     await withTransaction(async (client) => {
       await upsertRows(client, "characters", batch);
       for (const record of recordsBatch) {
-        const traits = record.frontmatter.traits ?? [];
+        const quirks = record.frontmatter.quirks ?? [];
         const rumors = record.frontmatter.rumors ?? [];
-        await client.query("DELETE FROM character_traits WHERE character_id = $1", [record.id]);
+        await client.query("DELETE FROM character_quirks WHERE character_id = $1", [record.id]);
         await client.query("DELETE FROM character_rumors WHERE character_id = $1", [record.id]);
 
         let order = 0;
-        for (const trait of traits) {
+        for (const quirk of quirks) {
           await client.query(
-            "INSERT INTO character_traits (character_id, text, sort_order) VALUES ($1, $2, $3)",
-            [record.id, trait, order++]
+            "INSERT INTO character_quirks (character_id, text, sort_order) VALUES ($1, $2, $3)",
+            [record.id, quirk, order++]
           );
         }
         order = 0;
         for (const rumor of rumors) {
+          const sourceId =
+            rumor.source_type && rumor.source_slug ? entityId(rumor.source_type, rumor.source_slug) : null;
           await client.query(
-            "INSERT INTO character_rumors (character_id, text, sort_order) VALUES ($1, $2, $3)",
-            [record.id, rumor, order++]
+            `INSERT INTO character_rumors
+             (character_id, text, author_name, author_meta, source_type, source_id, sort_order)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [
+              record.id,
+              rumor.text,
+              rumor.author_name,
+              rumor.author_meta ?? null,
+              rumor.source_type ?? null,
+              sourceId,
+              order++
+            ]
           );
         }
       }

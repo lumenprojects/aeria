@@ -119,7 +119,7 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
       ]),
       pool.query("SELECT id, slug, title_ru, flag_colors FROM countries WHERE id = $1", [episodeRow.country_id]),
       pool.query(
-        `SELECT c.id, c.slug, c.name_ru, c.name_native, c.description
+        `SELECT c.id, c.slug, c.name_ru, c.name_native, c.tagline
          FROM characters c
          JOIN episode_characters ec ON ec.character_id = c.id
          WHERE ec.episode_id = $1 AND c.archived_at IS NULL
@@ -172,12 +172,12 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
     const countryItem = country.rows[0]
       ? validateResponse(
           CountryDTO,
-        {
-          id: country.rows[0].id,
-          slug: country.rows[0].slug,
-          title_ru: country.rows[0].title_ru,
-          flag_colors: country.rows[0].flag_colors ?? null
-        },
+          {
+            id: country.rows[0].id,
+            slug: country.rows[0].slug,
+            title_ru: country.rows[0].title_ru,
+            flag_colors: country.rows[0].flag_colors ?? null
+          },
           "/api/episodes/:slug:country"
         )
       : null;
@@ -190,7 +190,7 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
           slug: row.slug,
           name_ru: row.name_ru,
           name_native: row.name_native ?? null,
-          description: row.description ?? null
+          tagline: row.tagline ?? null
         },
         "/api/episodes/:slug:character"
       )

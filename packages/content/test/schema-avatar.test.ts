@@ -5,7 +5,8 @@ import { atlasSchema, characterSchema, locationSchema } from "../src/schema.js";
 test("character schema requires avatar_asset_path", () => {
   const result = characterSchema.safeParse({
     slug: "character-1",
-    name_ru: "Character 1"
+    name_ru: "Character 1",
+    country_slug: "country-1"
   });
 
   assert.equal(result.success, false);
@@ -15,6 +16,7 @@ test("avatar_asset_path must be rooted in /assets", () => {
   const result = characterSchema.safeParse({
     slug: "character-1",
     name_ru: "Character 1",
+    country_slug: "country-1",
     avatar_asset_path: "assets/images/character-1.png"
   });
 
@@ -36,4 +38,22 @@ test("location and atlas avatar_asset_path are optional but validated when provi
     avatar_asset_path: "../atlas.png"
   });
   assert.equal(invalidAtlas.success, false);
+});
+
+test("character rumor source fields must be provided together", () => {
+  const result = characterSchema.safeParse({
+    slug: "character-1",
+    name_ru: "Character 1",
+    country_slug: "country-1",
+    avatar_asset_path: "/assets/images/character-1.png",
+    rumors: [
+      {
+        text: "Rumor",
+        author_name: "Witness",
+        source_type: "character"
+      }
+    ]
+  });
+
+  assert.equal(result.success, false);
 });

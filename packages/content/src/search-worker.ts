@@ -132,7 +132,7 @@ async function buildDocument(entityType: string, row: any) {
         id: row.id,
         slug: row.slug,
         title: row.name_ru,
-        summary: row.description,
+        summary: row.tagline,
         body: row.bio_markdown,
         type: "character",
         url: `/characters/${row.slug}`

@@ -1,9 +1,11 @@
 import { FastifyInstance } from "fastify";
 import {
+  AtlasReferenceDTO,
   CharacterDTO,
   CharacterDetailResponseDTO,
   CharacterListItemDTO,
-  CharacterTraitDTO,
+  CharacterQuirkDTO,
+  CharacterRumorDTO,
   CountryFlagDTO,
   EpisodeListItemDTO,
   PaginatedCharactersResponseDTO,
@@ -29,11 +31,13 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
     const offset = (page - 1) * limit;
     const where = withArchivedFilter([]);
 
-    const countResult = await pool.query(
-      `SELECT COUNT(*)::int AS count FROM characters WHERE ${where}`
-    );
+    const countResult = await pool.query(`SELECT COUNT(*)::int AS count FROM characters WHERE ${where}`);
     const rows = await pool.query(
-      `SELECT id, slug, name_ru, name_native, description FROM characters WHERE ${where} ORDER BY name_ru ASC LIMIT $1 OFFSET $2`,
+      `SELECT id, slug, name_ru, name_native, tagline
+       FROM characters
+       WHERE ${where}
+       ORDER BY name_ru ASC
+       LIMIT $1 OFFSET $2`,
       [limit, offset]
     );
 
@@ -45,7 +49,7 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
           slug: row.slug,
           name_ru: row.name_ru,
           name_native: row.name_native ?? null,
-          description: row.description ?? null
+          tagline: row.tagline ?? null
         },
         "/api/characters:item"
       )
@@ -66,7 +70,10 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
   app.get("/api/characters/:slug", async (req, reply) => {
     const { slug } = req.params as { slug: string };
     const characterResult = await pool.query(
-      "SELECT id, slug, name_ru, avatar_asset_path, name_native, affiliation_id, gender, race, height_cm, age, birth_country_id, favorite_food, orientation, description, quote, bio_markdown, stats, published_at FROM characters WHERE slug = $1 AND archived_at IS NULL",
+      `SELECT id, slug, name_ru, avatar_asset_path, name_native, affiliation_id, country_id, tagline,
+              gender, race, height_cm, age, orientation, mbti, favorite_food, bio_markdown, published_at
+       FROM characters
+       WHERE slug = $1 AND archived_at IS NULL`,
       [slug]
     );
     const characterRow = characterResult.rows[0];
@@ -75,13 +82,26 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
       return errorPayload("Character not found");
     }
 
-    const [traits, rumors, episodes, birthCountry] = await Promise.all([
+    const [quirks, rumors, episodes, country, affiliation] = await Promise.all([
       pool.query(
-        "SELECT text, sort_order FROM character_traits WHERE character_id = $1 ORDER BY sort_order ASC",
+        "SELECT text, sort_order FROM character_quirks WHERE character_id = $1 ORDER BY sort_order ASC",
         [characterRow.id]
       ),
       pool.query(
-        "SELECT text, sort_order FROM character_rumors WHERE character_id = $1 ORDER BY sort_order ASC",
+        `SELECT r.text, r.author_name, r.author_meta, r.source_type, r.source_id, r.sort_order,
+                sc.slug AS source_character_slug,
+                sc.name_ru AS source_character_title,
+                sc.avatar_asset_path AS source_character_avatar_asset_path,
+                sa.slug AS source_atlas_slug,
+                sa.title_ru AS source_atlas_title,
+                sa.avatar_asset_path AS source_atlas_avatar_asset_path
+         FROM character_rumors r
+         LEFT JOIN characters sc
+           ON r.source_type = 'character' AND r.source_id = sc.id AND sc.archived_at IS NULL
+         LEFT JOIN atlas_entries sa
+           ON r.source_type = 'atlas_entry' AND r.source_id = sa.id AND sa.archived_at IS NULL
+         WHERE r.character_id = $1
+         ORDER BY r.sort_order ASC`,
         [characterRow.id]
       ),
       pool.query(
@@ -94,10 +114,16 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
          ORDER BY e.global_order ASC`,
         [characterRow.id]
       ),
-      characterRow.birth_country_id
+      characterRow.country_id
         ? pool.query(
             "SELECT id, slug, title_ru, flag_colors FROM countries WHERE id = $1 AND archived_at IS NULL",
-            [characterRow.birth_country_id]
+            [characterRow.country_id]
+          )
+        : Promise.resolve({ rows: [] }),
+      characterRow.affiliation_id
+        ? pool.query(
+            "SELECT id, slug, kind, title_ru, avatar_asset_path FROM atlas_entries WHERE id = $1 AND archived_at IS NULL",
+            [characterRow.affiliation_id]
           )
         : Promise.resolve({ rows: [] })
     ]);
@@ -111,43 +137,64 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
         avatar_asset_path: characterRow.avatar_asset_path,
         name_native: characterRow.name_native ?? null,
         affiliation_id: characterRow.affiliation_id ?? null,
+        country_id: characterRow.country_id ?? null,
+        tagline: characterRow.tagline ?? null,
         gender: characterRow.gender ?? null,
         race: characterRow.race ?? null,
         height_cm: characterRow.height_cm ?? null,
         age: characterRow.age ?? null,
-        birth_country_id: characterRow.birth_country_id ?? null,
-        favorite_food: characterRow.favorite_food ?? null,
         orientation: characterRow.orientation ?? null,
-        description: characterRow.description ?? null,
-        quote: characterRow.quote ?? null,
+        mbti: characterRow.mbti ?? null,
+        favorite_food: characterRow.favorite_food ?? null,
         bio_markdown: characterRow.bio_markdown ?? null,
-        stats: characterRow.stats ?? null,
         published_at: toNullableIsoDateTime(characterRow.published_at)
       },
       "/api/characters/:slug:character"
     );
 
-    const traitItems = traits.rows.map((row) =>
+    const quirkItems = quirks.rows.map((row) =>
       validateResponse(
-        CharacterTraitDTO,
+        CharacterQuirkDTO,
         {
           text: row.text,
           sort_order: row.sort_order
         },
-        "/api/characters/:slug:trait"
+        "/api/characters/:slug:quirk"
       )
     );
 
-    const rumorItems = rumors.rows.map((row) =>
-      validateResponse(
-        CharacterTraitDTO,
+    const rumorItems = rumors.rows.map((row) => {
+      const source =
+        row.source_type === "character" && row.source_character_slug
+          ? {
+              type: "character" as const,
+              id: row.source_id,
+              slug: row.source_character_slug,
+              title: row.source_character_title,
+              avatar_asset_path: row.source_character_avatar_asset_path ?? null
+            }
+          : row.source_type === "atlas_entry" && row.source_atlas_slug
+            ? {
+                type: "atlas_entry" as const,
+                id: row.source_id,
+                slug: row.source_atlas_slug,
+                title: row.source_atlas_title,
+                avatar_asset_path: row.source_atlas_avatar_asset_path ?? null
+              }
+            : null;
+
+      return validateResponse(
+        CharacterRumorDTO,
         {
           text: row.text,
+          author_name: row.author_name,
+          author_meta: row.author_meta ?? null,
+          source,
           sort_order: row.sort_order
         },
         "/api/characters/:slug:rumor"
-      )
-    );
+      );
+    });
 
     const episodeItems = episodes.rows.map((row) =>
       validateResponse(
@@ -179,16 +226,30 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
       )
     );
 
-    const birthCountryItem = birthCountry.rows[0]
+    const countryItem = country.rows[0]
       ? validateResponse(
           CountryFlagDTO,
           {
-            id: birthCountry.rows[0].id,
-            slug: birthCountry.rows[0].slug,
-            title_ru: birthCountry.rows[0].title_ru,
-            flag_colors: birthCountry.rows[0].flag_colors ?? null
+            id: country.rows[0].id,
+            slug: country.rows[0].slug,
+            title_ru: country.rows[0].title_ru,
+            flag_colors: country.rows[0].flag_colors ?? null
           },
-          "/api/characters/:slug:birth-country"
+          "/api/characters/:slug:country"
+        )
+      : null;
+
+    const affiliationItem = affiliation.rows[0]
+      ? validateResponse(
+          AtlasReferenceDTO,
+          {
+            id: affiliation.rows[0].id,
+            slug: affiliation.rows[0].slug,
+            kind: affiliation.rows[0].kind,
+            title_ru: affiliation.rows[0].title_ru,
+            avatar_asset_path: affiliation.rows[0].avatar_asset_path ?? null
+          },
+          "/api/characters/:slug:affiliation"
         )
       : null;
 
@@ -196,8 +257,9 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
       CharacterDetailResponseDTO,
       {
         character,
-        birth_country: birthCountryItem,
-        traits: traitItems,
+        country: countryItem,
+        affiliation: affiliationItem,
+        quirks: quirkItems,
         rumors: rumorItems,
         episodes: episodeItems
       },

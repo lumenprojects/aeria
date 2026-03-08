@@ -13,7 +13,7 @@ export default function CharactersPage() {
         {data?.items?.map((character) => (
           <Link key={character.id} to={`/characters/${character.slug}`} className="entity-link-block">
             <Typography variant="h3">{character.name_ru}</Typography>
-            {character.description && <Typography variant="muted">{character.description}</Typography>}
+            {character.tagline && <Typography variant="muted">{character.tagline}</Typography>}
           </Link>
         ))}
       </div>

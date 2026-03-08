@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 
 export const atlasKindValues = [
   "geography",
@@ -19,8 +19,11 @@ export const entityTypeValues = [
   "location"
 ] as const;
 
+export const characterRumorSourceTypeValues = ["character", "atlas_entry"] as const;
+
 export const AtlasKind = z.enum(atlasKindValues);
 export const EntityType = z.enum(entityTypeValues);
+export const CharacterRumorSourceType = z.enum(characterRumorSourceTypeValues);
 
 export const Uuid = z.string().uuid();
 export const NullableUuid = Uuid.nullable();
@@ -81,6 +84,14 @@ export const EpisodeDTO = z.object({
   published_at: NullableIsoDateTime
 });
 
+export const AtlasReferenceDTO = z.object({
+  id: Uuid,
+  slug: z.string(),
+  kind: AtlasKind,
+  title_ru: z.string(),
+  avatar_asset_path: z.string().nullable()
+});
+
 export const CharacterDTO = z.object({
   id: Uuid,
   slug: z.string(),
@@ -88,17 +99,16 @@ export const CharacterDTO = z.object({
   avatar_asset_path: z.string(),
   name_native: z.string().nullable(),
   affiliation_id: NullableUuid,
+  country_id: NullableUuid,
+  tagline: z.string().nullable(),
   gender: z.string().nullable(),
   race: z.string().nullable(),
   height_cm: z.number().int().nullable(),
   age: z.number().int().nullable(),
-  birth_country_id: NullableUuid,
-  favorite_food: z.string().nullable(),
   orientation: z.string().nullable(),
-  description: z.string().nullable(),
-  quote: z.string().nullable(),
+  mbti: z.string().nullable(),
+  favorite_food: z.string().nullable(),
   bio_markdown: z.string().nullable(),
-  stats: z.record(z.unknown()).nullable(),
   published_at: NullableIsoDateTime
 });
 
@@ -155,7 +165,7 @@ export const CharacterListItemDTO = z.object({
   slug: z.string(),
   name_ru: z.string(),
   name_native: z.string().nullable(),
-  description: z.string().nullable()
+  tagline: z.string().nullable()
 });
 
 export const EpisodeCharacterLinkDTO = CharacterListItemDTO;
@@ -168,8 +178,24 @@ export const EpisodeLocationLinkDTO = z.object({
   country_id: NullableUuid
 });
 
-export const CharacterTraitDTO = z.object({
+export const CharacterQuirkDTO = z.object({
   text: z.string(),
+  sort_order: z.number().int()
+});
+
+export const CharacterRumorSourceDTO = z.object({
+  type: CharacterRumorSourceType,
+  id: Uuid,
+  slug: z.string(),
+  title: z.string(),
+  avatar_asset_path: z.string().nullable()
+});
+
+export const CharacterRumorDTO = z.object({
+  text: z.string(),
+  author_name: z.string(),
+  author_meta: z.string().nullable(),
+  source: CharacterRumorSourceDTO.nullable(),
   sort_order: z.number().int()
 });
 
@@ -200,9 +226,10 @@ export const EpisodeDetailResponseDTO = z.object({
 
 export const CharacterDetailResponseDTO = z.object({
   character: CharacterDTO,
-  birth_country: CountryFlagDTO.nullable(),
-  traits: z.array(CharacterTraitDTO),
-  rumors: z.array(CharacterTraitDTO),
+  country: CountryFlagDTO.nullable(),
+  affiliation: AtlasReferenceDTO.nullable(),
+  quirks: z.array(CharacterQuirkDTO),
+  rumors: z.array(CharacterRumorDTO),
   episodes: z.array(EpisodeListItemDTO)
 });
 

@@ -28,8 +28,16 @@ test("collectLocalMissingReferences returns empty sets for consistent references
         slug: "hero-1",
         name_ru: "Герой",
         avatar_asset_path: "/assets/images/characters/hero-1.png",
-        birth_country_slug: "fr",
-        affiliation_slug: "guild-1"
+        country_slug: "fr",
+        affiliation_slug: "guild-1",
+        rumors: [
+          {
+            text: "Rumor",
+            author_name: "Witness",
+            source_type: "atlas_entry",
+            source_slug: "guild-1"
+          }
+        ]
       }
     }
   ];
@@ -90,7 +98,15 @@ test("collectLocalMissingReferences aggregates unknown slugs by entity", () => {
         name_ru: "Name",
         avatar_asset_path: "/assets/images/characters/char-1.png",
         affiliation_slug: "atlas-missing",
-        birth_country_slug: "country-missing"
+        country_slug: "country-missing",
+        rumors: [
+          {
+            text: "Rumor",
+            author_name: "Witness",
+            source_type: "character",
+            source_slug: "char-missing"
+          }
+        ]
       }
     }
   ];

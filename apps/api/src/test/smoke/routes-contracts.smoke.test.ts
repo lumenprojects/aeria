@@ -172,7 +172,7 @@ describe("API route contracts smoke", () => {
             slug: "character-001",
             name_ru: "Character 001",
             name_native: null,
-            description: "Character description"
+            tagline: "Character tagline"
           }
         ]
       })
@@ -231,7 +231,7 @@ describe("API route contracts smoke", () => {
           slug: "character-001",
           name_ru: "Character 001",
           name_native: null,
-          description: "Character description"
+          tagline: "Character tagline"
         }
       ],
       locations: [
@@ -257,27 +257,41 @@ describe("API route contracts smoke", () => {
             name_ru: "Character 001",
             avatar_asset_path: "/assets/images/characters/character-001.png",
             name_native: null,
-            affiliation_id: null,
+            affiliation_id: "00000000-0000-0000-0000-000000000051",
+            country_id: "00000000-0000-0000-0000-000000000021",
+            tagline: "Character tagline",
             gender: "unknown",
             race: "human",
             height_cm: 170,
             age: 20,
-            birth_country_id: "00000000-0000-0000-0000-000000000021",
             favorite_food: "tea",
             orientation: "unknown",
-            description: "Character description",
-            quote: "Quote",
+            mbti: "INTJ",
             bio_markdown: "Bio",
-            stats: { power: 10 },
             published_at: new Date("2026-03-04T00:00:00Z")
           }
         ]
       })
       .mockResolvedValueOnce({
-        rows: [{ text: "Trait 1", sort_order: 1 }]
+        rows: [{ text: "Quirk 1", sort_order: 1 }]
       })
       .mockResolvedValueOnce({
-        rows: [{ text: "Rumor 1", sort_order: 1 }]
+        rows: [
+          {
+            text: "Rumor 1",
+            author_name: "Witness",
+            author_meta: "Cook",
+            source_type: "atlas_entry",
+            source_id: "00000000-0000-0000-0000-000000000051",
+            sort_order: 1,
+            source_character_slug: null,
+            source_character_title: null,
+            source_character_avatar_asset_path: null,
+            source_atlas_slug: "atlas-001",
+            source_atlas_title: "Atlas 001",
+            source_atlas_avatar_asset_path: "/assets/images/atlas/atlas-001.png"
+          }
+        ]
       })
       .mockResolvedValueOnce({
         rows: [
@@ -308,6 +322,17 @@ describe("API route contracts smoke", () => {
             flag_colors: ["#111111", "#ffffff"]
           }
         ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000051",
+            slug: "atlas-001",
+            kind: "social",
+            title_ru: "Atlas 001",
+            avatar_asset_path: "/assets/images/atlas/atlas-001.png"
+          }
+        ]
       });
 
     const { buildApp } = await import("../../app.js");
@@ -326,28 +351,48 @@ describe("API route contracts smoke", () => {
         name_ru: "Character 001",
         avatar_asset_path: "/assets/images/characters/character-001.png",
         name_native: null,
-        affiliation_id: null,
+        affiliation_id: "00000000-0000-0000-0000-000000000051",
+        country_id: "00000000-0000-0000-0000-000000000021",
+        tagline: "Character tagline",
         gender: "unknown",
         race: "human",
         height_cm: 170,
         age: 20,
-        birth_country_id: "00000000-0000-0000-0000-000000000021",
         favorite_food: "tea",
         orientation: "unknown",
-        description: "Character description",
-        quote: "Quote",
+        mbti: "INTJ",
         bio_markdown: "Bio",
-        stats: { power: 10 },
         published_at: "2026-03-04T00:00:00.000Z"
       },
-      birth_country: {
+      country: {
         id: "00000000-0000-0000-0000-000000000021",
         slug: "ru-example",
         title_ru: "Country 01",
         flag_colors: ["#111111", "#ffffff"]
       },
-      traits: [{ text: "Trait 1", sort_order: 1 }],
-      rumors: [{ text: "Rumor 1", sort_order: 1 }],
+      affiliation: {
+        id: "00000000-0000-0000-0000-000000000051",
+        slug: "atlas-001",
+        kind: "social",
+        title_ru: "Atlas 001",
+        avatar_asset_path: "/assets/images/atlas/atlas-001.png"
+      },
+      quirks: [{ text: "Quirk 1", sort_order: 1 }],
+      rumors: [
+        {
+          text: "Rumor 1",
+          author_name: "Witness",
+          author_meta: "Cook",
+          source: {
+            type: "atlas_entry",
+            id: "00000000-0000-0000-0000-000000000051",
+            slug: "atlas-001",
+            title: "Atlas 001",
+            avatar_asset_path: "/assets/images/atlas/atlas-001.png"
+          },
+          sort_order: 1
+        }
+      ],
       episodes: [
         {
           id: "00000000-0000-0000-0000-000000000001",

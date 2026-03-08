@@ -53,13 +53,13 @@ async function writeFixture(rootDir: string, token: string, options: FixtureOpti
     `content/countries/integration-${token}-country.md`,
     `---
 slug: ${countrySlug}
-title_ru: Тестовая страна
+title_ru: Test Country
 flag_colors:
   - "#111111"
   - "#eeeeee"
 ---
 
-# Тестовая страна
+# Test Country
 `
   );
 
@@ -68,13 +68,13 @@ flag_colors:
     `content/locations/integration-${token}-location.md`,
     `---
 slug: ${locationSlug}
-title_ru: Тестовая локация
+title_ru: Test Location
 country_slug: ${countrySlug}
-summary: Локация для интеграционного теста.
+summary: Location used by integration tests.
 avatar_asset_path: /assets/images/locations/${locationSlug}.png
 ---
 
-# Тестовая локация
+# Test Location
 `
   );
 
@@ -83,12 +83,12 @@ avatar_asset_path: /assets/images/locations/${locationSlug}.png
     `content/series/integration-${token}-series.md`,
     `---
 slug: ${seriesSlug}
-title_ru: Тестовая серия
+title_ru: Test Series
 brand_color: "#112233"
-summary: Серия для интеграционного теста.
+summary: Series used by integration tests.
 ---
 
-# Тестовая серия
+# Test Series
 `
   );
 
@@ -101,8 +101,8 @@ series_slug: ${seriesSlug}
 country_slug: ${countrySlug}
 episode_number: 1
 global_order: ${globalOrder}
-title_ru: Тестовый эпизод
-summary: Эпизод для интеграционного теста.
+title_ru: Test Episode
+summary: Episode used by integration tests.
 characters:
   - ${episodeCharacterSlug}
 locations:
@@ -110,9 +110,9 @@ locations:
 published_at: "2026-03-04T00:00:00Z"
 ---
 
-# Тестовый эпизод
+# Test Episode
 
-Текст эпизода для проверки dry-run и import.
+Body for dry-run and import verification.
 `
   );
 
@@ -121,17 +121,29 @@ published_at: "2026-03-04T00:00:00Z"
     `content/characters/integration-${token}-character.md`,
     `---
 slug: ${characterSlug}
-name_ru: Тестовый персонаж
+name_ru: Test Character
 avatar_asset_path: /assets/images/characters/${characterSlug}.png
 affiliation_slug: ${atlasMainSlug}
-birth_country_slug: ${countrySlug}
-traits:
-  - "Примета 1"
+country_slug: ${countrySlug}
+tagline: Test tagline
+gender: unknown
+race: human
+height_cm: 170
+age: 20
+orientation: unknown
+mbti: INTJ
+favorite_food: tea
+quirks:
+  - "Quirk 1"
 rumors:
-  - "Слух 1"
+  - text: "Rumor 1"
+    author_name: "Witness"
+    source_type: atlas_entry
+    source_slug: ${atlasMainSlug}
+published_at: "2026-03-04T00:00:00Z"
 ---
 
-# Тестовый персонаж
+# Test Character
 `
   );
 
@@ -141,7 +153,7 @@ rumors:
     `---
 slug: ${atlasMainSlug}
 kind: social
-title_ru: Тестовая принадлежность
+title_ru: Test Affiliation
 avatar_asset_path: /assets/images/atlas/${atlasMainSlug}.png
 country_slug: ${countrySlug}
 location_slug: ${locationSlug}
@@ -152,7 +164,7 @@ links:
     slug: ${characterSlug}
 ---
 
-# Тестовая принадлежность
+# Test Affiliation
 `
   );
 
@@ -163,11 +175,11 @@ links:
       `---
 slug: ${atlasExtraSlug}
 kind: object
-title_ru: Временный объект
-summary: Файл нужен для проверки archive policy.
+title_ru: Temporary Object
+summary: File used to verify archive policy.
 ---
 
-# Временный объект
+# Temporary Object
 `
     );
   }

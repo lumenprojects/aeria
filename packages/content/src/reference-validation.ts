@@ -74,12 +74,26 @@ export function collectLocalMissingReferences(
   }
 
   for (const character of characters) {
-    if (character.frontmatter.birth_country_slug && !countrySlugs.has(character.frontmatter.birth_country_slug)) {
-      missing.countries.add(character.frontmatter.birth_country_slug);
+    if (!countrySlugs.has(character.frontmatter.country_slug)) {
+      missing.countries.add(character.frontmatter.country_slug);
     }
 
     if (character.frontmatter.affiliation_slug && !atlasSlugs.has(character.frontmatter.affiliation_slug)) {
       missing.atlas.add(character.frontmatter.affiliation_slug);
+    }
+
+    for (const rumor of character.frontmatter.rumors ?? []) {
+      if (!rumor.source_type || !rumor.source_slug) {
+        continue;
+      }
+
+      if (rumor.source_type === "character" && !characterSlugs.has(rumor.source_slug)) {
+        missing.characters.add(rumor.source_slug);
+      }
+
+      if (rumor.source_type === "atlas_entry" && !atlasSlugs.has(rumor.source_slug)) {
+        missing.atlas.add(rumor.source_slug);
+      }
     }
   }
 
