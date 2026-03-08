@@ -40,6 +40,7 @@ export const PaginatedDTO = <T extends z.ZodTypeAny>(item: T) =>
 export const EpisodeSeriesDTO = z.object({
   id: Uuid,
   slug: z.string(),
+  url: z.string(),
   title_ru: z.string(),
   brand_color: z.string().nullable(),
   summary: z.string().nullable()
@@ -48,6 +49,7 @@ export const EpisodeSeriesDTO = z.object({
 export const CountryDTO = z.object({
   id: Uuid,
   slug: z.string(),
+  url: z.string(),
   title_ru: z.string(),
   flag_colors: z.array(z.string()).nullable()
 });
@@ -55,6 +57,7 @@ export const CountryDTO = z.object({
 export const CountryFlagDTO = z.object({
   id: Uuid,
   slug: z.string(),
+  url: z.string(),
   title_ru: z.string(),
   flag_colors: z.array(z.string()).nullable()
 });
@@ -62,6 +65,7 @@ export const CountryFlagDTO = z.object({
 export const LocationDTO = z.object({
   id: Uuid,
   slug: z.string(),
+  url: z.string(),
   title_ru: z.string(),
   country_id: NullableUuid,
   summary: z.string().nullable(),
@@ -72,6 +76,7 @@ export const LocationDTO = z.object({
 export const EpisodeDTO = z.object({
   id: Uuid,
   slug: z.string(),
+  url: z.string(),
   series_id: Uuid,
   country_id: Uuid,
   episode_number: z.number().int(),
@@ -87,6 +92,7 @@ export const EpisodeDTO = z.object({
 export const AtlasReferenceDTO = z.object({
   id: Uuid,
   slug: z.string(),
+  url: z.string(),
   kind: AtlasKind,
   title_ru: z.string(),
   avatar_asset_path: z.string().nullable()
@@ -95,6 +101,7 @@ export const AtlasReferenceDTO = z.object({
 export const CharacterDTO = z.object({
   id: Uuid,
   slug: z.string(),
+  url: z.string(),
   name_ru: z.string(),
   avatar_asset_path: z.string(),
   name_native: z.string().nullable(),
@@ -115,6 +122,7 @@ export const CharacterDTO = z.object({
 export const AtlasEntryDTO = z.object({
   id: Uuid,
   slug: z.string(),
+  url: z.string(),
   kind: AtlasKind,
   title_ru: z.string(),
   summary: z.string().nullable(),
@@ -163,6 +171,7 @@ export const EpisodeListItemDTO = EpisodeDTO.omit({ content_markdown: true }).ex
 export const CharacterListItemDTO = z.object({
   id: Uuid,
   slug: z.string(),
+  url: z.string(),
   name_ru: z.string(),
   name_native: z.string().nullable(),
   tagline: z.string().nullable()
@@ -173,6 +182,7 @@ export const EpisodeCharacterLinkDTO = CharacterListItemDTO;
 export const EpisodeLocationLinkDTO = z.object({
   id: Uuid,
   slug: z.string(),
+  url: z.string(),
   title_ru: z.string(),
   summary: z.string().nullable(),
   country_id: NullableUuid
@@ -187,6 +197,7 @@ export const CharacterRumorSourceDTO = z.object({
   type: CharacterRumorSourceType,
   id: Uuid,
   slug: z.string(),
+  url: z.string(),
   title: z.string(),
   avatar_asset_path: z.string().nullable()
 });
@@ -247,11 +258,70 @@ export const SeriesDetailResponseDTO = z.object({
 export const AtlasListItemDTO = z.object({
   id: Uuid,
   slug: z.string(),
+  url: z.string(),
   kind: AtlasKind,
   title_ru: z.string(),
   summary: z.string().nullable(),
   country_id: NullableUuid,
   location_id: NullableUuid
+});
+
+export const HomeEpisodeSeriesDTO = z.object({
+  id: Uuid,
+  slug: z.string(),
+  url: z.string(),
+  title_ru: z.string(),
+  brand_color: z.string().nullable()
+});
+
+export const HomeEpisodeParticipantDTO = z.object({
+  id: Uuid,
+  slug: z.string(),
+  url: z.string(),
+  name_ru: z.string(),
+  avatar_asset_path: z.string()
+});
+
+export const HomeLatestEpisodeDTO = z.object({
+  id: Uuid,
+  slug: z.string(),
+  url: z.string(),
+  episode_number: z.number().int(),
+  global_order: z.number().int(),
+  title_native: z.string().nullable(),
+  title_ru: z.string(),
+  summary: z.string().nullable(),
+  reading_minutes: z.number().int().nullable(),
+  published_at: NullableIsoDateTime,
+  country: CountryFlagDTO,
+  series: HomeEpisodeSeriesDTO.nullable(),
+  participants: z.array(HomeEpisodeParticipantDTO)
+});
+
+export const HomeAboutProfileDTO = z.object({
+  id: Uuid,
+  slug: z.string(),
+  url: z.string(),
+  name_ru: z.string(),
+  avatar_asset_path: z.string(),
+  home_intro_title: z.string(),
+  home_intro_markdown: z.string()
+});
+
+export const HomeWorldQuoteDTO = z.object({
+  id: z.number().int(),
+  quote: z.string(),
+  source: z.string()
+});
+
+export const HomeWorldQuoteResponseDTO = z.object({
+  world_quote: HomeWorldQuoteDTO.nullable()
+});
+
+export const HomeSnapshotDTO = z.object({
+  latest_episode: HomeLatestEpisodeDTO.nullable(),
+  about_profile: HomeAboutProfileDTO.nullable(),
+  world_quote: HomeWorldQuoteDTO.nullable()
 });
 
 export const PaginatedEpisodesResponseDTO = PaginatedDTO(EpisodeListItemDTO);
@@ -269,3 +339,8 @@ export type CountryDTO = z.infer<typeof CountryDTO>;
 export type CountryFlagDTO = z.infer<typeof CountryFlagDTO>;
 export type LocationDTO = z.infer<typeof LocationDTO>;
 export type SearchResultDTO = z.infer<typeof SearchResultDTO>;
+export type HomeSnapshotDTO = z.infer<typeof HomeSnapshotDTO>;
+export type HomeLatestEpisodeDTO = z.infer<typeof HomeLatestEpisodeDTO>;
+export type HomeAboutProfileDTO = z.infer<typeof HomeAboutProfileDTO>;
+export type HomeWorldQuoteDTO = z.infer<typeof HomeWorldQuoteDTO>;
+export type HomeWorldQuoteResponseDTO = z.infer<typeof HomeWorldQuoteResponseDTO>;

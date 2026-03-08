@@ -18,7 +18,7 @@ export default function EpisodesPage() {
       {isLoading && <Skeleton className="h-10 w-full" />}
       <div className="page-list">
         {data?.items?.map((episode) => (
-          <Link key={episode.id} to={`/episodes/${episode.slug}`} className="entity-link-block">
+          <Link key={episode.id} to={episode.url} className="entity-link-block">
             <Typography variant="h3">{episode.title_ru}</Typography>
             {episode.summary && <Typography variant="muted">{episode.summary}</Typography>}
           </Link>

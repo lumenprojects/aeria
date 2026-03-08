@@ -19,7 +19,7 @@ const AccordionTrigger = React.forwardRef<
   <AccordionPrimitive.Header className="flex">
     <AccordionPrimitive.Trigger
       ref={ref}
-      className={cn("flex flex-1 items-center justify-between py-4 text-left font-medium", className)}
+      className={cn("role-ui flex flex-1 items-center justify-between accordion-trigger-shell text-left font-medium", className)}
       {...props}
     />
   </AccordionPrimitive.Header>
@@ -30,7 +30,7 @@ const AccordionContent = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
 >(({ className, ...props }, ref) => (
-  <AccordionPrimitive.Content ref={ref} className={cn("pb-4 text-sm text-muted", className)} {...props} />
+  <AccordionPrimitive.Content ref={ref} className={cn("role-body accordion-content-shell tone-secondary", className)} {...props} />
 ));
 AccordionContent.displayName = AccordionPrimitive.Content.displayName;
 

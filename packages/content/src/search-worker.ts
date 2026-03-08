@@ -85,7 +85,7 @@ async function fetchEntity(entityType: string, entityId: string) {
       );
     case "character":
       return pool.query(
-        `SELECT * FROM characters WHERE id = $1 AND archived_at IS NULL`,
+        `SELECT * FROM characters WHERE id = $1 AND archived_at IS NULL AND listed = TRUE`,
         [entityId]
       );
     case "atlas_entry":
@@ -221,6 +221,11 @@ async function processQueue() {
           const entityResult = await fetchEntity(item.entity_type, item.entity_id);
           const row = entityResult.rows[0];
           if (!row) {
+            try {
+              await typesenseClient.collections(collection).documents(item.entity_id).delete();
+            } catch {
+              // document may already be absent
+            }
             await pool.query(
               "UPDATE search_queue SET status = 'done', updated_at = now() WHERE id = $1",
               [item.id]

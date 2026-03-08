@@ -15,11 +15,11 @@ export function Pagination({
 }) {
   if (totalPages <= 1) return null;
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className={cn("flex items-center pagination-shell", className)}>
       <Button variant="outline" size="sm" onClick={() => onPageChange(Math.max(1, page - 1))}>
         Назад
       </Button>
-      <span className="role-ui text-sm">
+      <span className="role-ui">
         {page} / {totalPages}
       </span>
       <Button variant="outline" size="sm" onClick={() => onPageChange(Math.min(totalPages, page + 1))}>

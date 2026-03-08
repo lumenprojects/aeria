@@ -14,6 +14,7 @@ import {
 import { pool } from "../db.js";
 import {
   errorPayload,
+  entityUrl,
   parseQuery,
   toNullableIsoDateTime,
   validateResponse,
@@ -70,6 +71,7 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
         {
           id: row.id,
           slug: row.slug,
+          url: entityUrl("episode", row.slug),
           series_id: row.series_id,
           country_id: row.country_id,
           episode_number: row.episode_number,
@@ -84,6 +86,7 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
             {
               id: row.country_id,
               slug: row.country_slug,
+              url: entityUrl("country", row.country_slug),
               title_ru: row.country_title_ru,
               flag_colors: row.country_flag_colors ?? null
             },
@@ -141,6 +144,7 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
       {
         id: episodeRow.id,
         slug: episodeRow.slug,
+        url: entityUrl("episode", episodeRow.slug),
         series_id: episodeRow.series_id,
         country_id: episodeRow.country_id,
         episode_number: episodeRow.episode_number,
@@ -161,6 +165,7 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
           {
             id: series.rows[0].id,
             slug: series.rows[0].slug,
+            url: entityUrl("episode_series", series.rows[0].slug),
             title_ru: series.rows[0].title_ru,
             brand_color: series.rows[0].brand_color ?? null,
             summary: series.rows[0].summary ?? null
@@ -175,6 +180,7 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
           {
             id: country.rows[0].id,
             slug: country.rows[0].slug,
+            url: entityUrl("country", country.rows[0].slug),
             title_ru: country.rows[0].title_ru,
             flag_colors: country.rows[0].flag_colors ?? null
           },
@@ -188,6 +194,7 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
         {
           id: row.id,
           slug: row.slug,
+          url: entityUrl("character", row.slug),
           name_ru: row.name_ru,
           name_native: row.name_native ?? null,
           tagline: row.tagline ?? null
@@ -202,6 +209,7 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
         {
           id: row.id,
           slug: row.slug,
+          url: entityUrl("location", row.slug),
           title_ru: row.title_ru,
           summary: row.summary ?? null,
           country_id: row.country_id ?? null

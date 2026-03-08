@@ -1,23 +1,23 @@
 ---
 slug: character-002
-name_ru: Пример Свидетеля
-avatar_asset_path: /assets/images/characters/character-002.png
-name_native: null
+name_ru: Люсьен Марьель
+avatar_asset_path: /assets/images/characters/lucien-mariel.png
+name_native: Lucien Mariel
 country_slug: ru-example
 tagline: На всякий случай запоминает всё, что слышит.
-gender: Женский
+gender: Мужской
 race: Человек
-height_cm: 164
-age: 19
+height_cm: 181
+age: 24
 orientation: null
-mbti: ISFJ
-favorite_food: Мятный чай
+mbti: INTJ
+favorite_food: Горький шоколад
 quirks:
-  - Записывает услышанные истории в маленькую тетрадь.
+  - Записывает услышанные истории в тонкие тетради без подписей на обложке.
 rumors: []
 published_at: "2026-02-28T00:00:00Z"
 ---
 
-# Пример Свидетеля
+# Люсьен Марьель
 
-Вспомогательная тестовая запись персонажа для проверки ссылок в цитатах.
+Архивист, который привык читать между строк быстрее, чем сами строки. В доме его считают удобным, пока он молчит.

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage, type AvatarSize } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 type EntityAvatarType = "character" | "location" | "atlas_entry";
 
@@ -8,7 +9,10 @@ type EntityAvatarProps = {
   entitySlug: string;
   imageSrc: string;
   label: string;
+  ariaLabel?: string;
   size?: AvatarSize;
+  className?: string;
+  avatarClassName?: string;
 };
 
 function resolveEntityHref(type: EntityAvatarType, slug: string) {
@@ -37,11 +41,18 @@ export function EntityAvatar({
   entitySlug,
   imageSrc,
   label,
-  size = "md"
+  ariaLabel,
+  size = "md",
+  className,
+  avatarClassName
 }: EntityAvatarProps) {
   return (
-    <Link to={resolveEntityHref(entityType, entitySlug)} aria-label={label} className="inline-flex rounded-full">
-      <Avatar size={size}>
+    <Link
+      to={resolveEntityHref(entityType, entitySlug)}
+      aria-label={ariaLabel ?? label}
+      className={cn("inline-flex rounded-full", className)}
+    >
+      <Avatar size={size} className={avatarClassName}>
         <AvatarImage src={imageSrc} alt={label} loading="lazy" decoding="async" />
         <AvatarFallback>{fallbackText(label)}</AvatarFallback>
       </Avatar>

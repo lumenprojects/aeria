@@ -1,4 +1,6 @@
-﻿const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+import type { HomeSnapshotDTO, HomeWorldQuoteResponseDTO } from "@aeria/shared";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 async function fetchJson<T>(path: string): Promise<T> {
   const res = await fetch(`${API_URL}${path}`);
@@ -14,6 +16,21 @@ export function getEpisodes(params?: { series?: string; country?: string }) {
   if (params?.country) query.set("country", params.country);
   const qs = query.toString();
   return fetchJson<{ items: any[] }>(`/api/episodes${qs ? `?${qs}` : ""}`);
+}
+
+export function getHomeSnapshot() {
+  return fetchJson<HomeSnapshotDTO>("/api/home");
+}
+
+export async function getRandomHomeWorldQuote(excludeId?: number) {
+  const query = new URLSearchParams();
+  if (excludeId !== undefined) {
+    query.set("exclude_id", String(excludeId));
+  }
+
+  const qs = query.toString();
+  const payload = await fetchJson<HomeWorldQuoteResponseDTO>(`/api/home/world-quote/random${qs ? `?${qs}` : ""}`);
+  return payload.world_quote;
 }
 
 export function getEpisode(slug: string) {

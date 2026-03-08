@@ -28,10 +28,10 @@ export function Combobox({
       <PopoverTrigger asChild>
         <Button variant="outline" className={cn("w-full justify-between", className)}>
           {selected ? selected.label : placeholder}
-          <ChevronsUpDown className="ml-2 h-4 w-4 opacity-60" />
+          <ChevronsUpDown className="combobox-trigger-icon h-4 w-4 opacity-60" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="p-0">
+      <PopoverContent className="popover-content-reset">
         <Command>
           <CommandInput placeholder="Поиск..." />
           <CommandList>

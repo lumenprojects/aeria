@@ -9,7 +9,14 @@ import {
   PaginatedAtlasResponseDTO
 } from "@aeria/shared";
 import { pool } from "../db.js";
-import { errorPayload, parseQuery, toNullableIsoDateTime, validateResponse, withArchivedFilter } from "./utils.js";
+import {
+  entityUrl,
+  errorPayload,
+  parseQuery,
+  toNullableIsoDateTime,
+  validateResponse,
+  withArchivedFilter
+} from "./utils.js";
 
 export async function registerAtlasRoutes(app: FastifyInstance) {
   app.get("/api/atlas", async (req, reply) => {
@@ -46,6 +53,7 @@ export async function registerAtlasRoutes(app: FastifyInstance) {
         {
           id: row.id,
           slug: row.slug,
+          url: entityUrl("atlas_entry", row.slug),
           kind: row.kind,
           title_ru: row.title_ru,
           summary: row.summary ?? null,
@@ -89,6 +97,7 @@ export async function registerAtlasRoutes(app: FastifyInstance) {
             entry: {
               id: country.id,
               slug: country.slug,
+              url: entityUrl("country", country.slug),
               kind: "geography",
               title_ru: country.title_ru,
               summary: null,
@@ -100,12 +109,13 @@ export async function registerAtlasRoutes(app: FastifyInstance) {
             },
             country: validateResponse(
               CountryFlagDTO,
-              {
-                id: country.id,
-                slug: country.slug,
-                title_ru: country.title_ru,
-                flag_colors: null
-              },
+                  {
+                    id: country.id,
+                    slug: country.slug,
+                    url: entityUrl("country", country.slug),
+                    title_ru: country.title_ru,
+                    flag_colors: null
+                  },
               "/api/atlas/:slug:fallback-country:country"
             ),
             links: []
@@ -133,6 +143,7 @@ export async function registerAtlasRoutes(app: FastifyInstance) {
             entry: {
               id: location.id,
               slug: location.slug,
+              url: entityUrl("location", location.slug),
               kind: "geography",
               title_ru: location.title_ru,
               summary: location.summary ?? null,
@@ -148,6 +159,7 @@ export async function registerAtlasRoutes(app: FastifyInstance) {
                   {
                     id: locationCountry.rows[0].id,
                     slug: locationCountry.rows[0].slug,
+                    url: entityUrl("country", locationCountry.rows[0].slug),
                     title_ru: locationCountry.rows[0].title_ru,
                     flag_colors: locationCountry.rows[0].flag_colors ?? null
                   },
@@ -182,6 +194,7 @@ export async function registerAtlasRoutes(app: FastifyInstance) {
       {
         id: entryRow.id,
         slug: entryRow.slug,
+        url: entityUrl("atlas_entry", entryRow.slug),
         kind: entryRow.kind,
         title_ru: entryRow.title_ru,
         summary: entryRow.summary ?? null,
@@ -214,6 +227,7 @@ export async function registerAtlasRoutes(app: FastifyInstance) {
           {
             id: country.rows[0].id,
             slug: country.rows[0].slug,
+            url: entityUrl("country", country.rows[0].slug),
             title_ru: country.rows[0].title_ru,
             flag_colors: country.rows[0].flag_colors ?? null
           },

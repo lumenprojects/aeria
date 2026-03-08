@@ -1,7 +1,8 @@
-﻿import React from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
+import { Typography } from "../ui/typography";
 import { searchAll } from "@/lib/api";
 
 type SearchHit = {
@@ -15,6 +16,7 @@ type SearchHit = {
 type RecentHit = SearchHit;
 
 const RECENT_KEY = "aeria-search-recent";
+const SEARCH_UNDERLINE_DELAY_MS = 120;
 
 function loadRecent(): RecentHit[] {
   try {
@@ -35,8 +37,10 @@ function saveRecent(items: RecentHit[]) {
 export default function GlobalSearch({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const navigate = useNavigate();
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const activationTimerRef = React.useRef<number | null>(null);
   const [query, setQuery] = React.useState("");
   const [recent, setRecent] = React.useState<RecentHit[]>([]);
+  const [isInputUnderlineActive, setIsInputUnderlineActive] = React.useState(false);
   const labels: Record<string, string> = {
     episode: "Эпизоды",
     character: "Персонажи",
@@ -46,6 +50,20 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
     location: "Локации",
     recent: "Недавнее"
   };
+
+  const clearActivationTimer = React.useCallback(() => {
+    if (activationTimerRef.current === null) return;
+    window.clearTimeout(activationTimerRef.current);
+    activationTimerRef.current = null;
+  }, []);
+
+  const queueUnderlineActivation = React.useCallback(() => {
+    clearActivationTimer();
+    activationTimerRef.current = window.setTimeout(() => {
+      setIsInputUnderlineActive(true);
+      activationTimerRef.current = null;
+    }, SEARCH_UNDERLINE_DELAY_MS);
+  }, [clearActivationTimer]);
 
   const { data, isFetching, isError } = useQuery({
     queryKey: ["search", query],
@@ -73,11 +91,20 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
 
   React.useEffect(() => {
     if (open) {
-      requestAnimationFrame(() => inputRef.current?.focus());
+      setIsInputUnderlineActive(false);
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+        queueUnderlineActivation();
+      });
       return;
     }
+
+    clearActivationTimer();
+    setIsInputUnderlineActive(false);
     setQuery("");
-  }, [open]);
+  }, [clearActivationTimer, open, queueUnderlineActivation]);
+
+  React.useEffect(() => clearActivationTimer, [clearActivationTimer]);
 
   function addRecent(hit: SearchHit) {
     const next = [hit, ...recent.filter((item) => item.url !== hit.url)].slice(0, 6);
@@ -99,26 +126,35 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
 
   return (
     <div className="bg-background">
-      <div className="container search-inline-shell">
+      <div className="width-wide search-inline-shell">
         <Command className="search-inline-command">
           <CommandInput
             ref={inputRef}
             value={query}
             onValueChange={setQuery}
+            onFocus={queueUnderlineActivation}
+            onBlur={() => {
+              clearActivationTimer();
+              setIsInputUnderlineActive(false);
+            }}
             placeholder="Поиск по главам, персонажам и миру..."
-            className="search-inline-input role-ui text-sm text-text placeholder:text-muted focus-visible:border-accent"
+            className={`search-inline-input text-text placeholder:text-muted${isInputUnderlineActive ? " search-inline-input-active" : ""}`}
           />
           {showResultsPanel && (
             <div className="search-inline-panel">
               <CommandList className="search-inline-list">
-                {isFetching && <div className="search-inline-status text-sm text-muted">Ищем...</div>}
+                {isFetching && (
+                  <Typography variant="ui" as="div" className="search-inline-status tone-secondary">
+                    Ищем...
+                  </Typography>
+                )}
                 {isError && (
-                  <div className="search-inline-status text-sm text-muted">
+                  <Typography variant="ui" as="div" className="search-inline-status tone-secondary">
                     Поиск временно недоступен. Попробуйте позже.
-                  </div>
+                  </Typography>
                 )}
                 {!isFetching && !isError && query.length > 0 && (
-                  <CommandEmpty className="search-inline-status text-sm text-muted">
+                  <CommandEmpty className="search-inline-status role-ui tone-secondary">
                     Ничего не найдено. Попробуйте другое слово.
                   </CommandEmpty>
                 )}
@@ -127,8 +163,14 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
                     {recent.map((hit) => (
                       <CommandItem key={`${hit.type}:${hit.id}`} className="search-inline-item" onSelect={() => handleSelect(hit)}>
                         <div className="flex flex-col">
-                          <span className="text-sm text-text">{hit.title}</span>
-                          {hit.summary && <span className="text-xs text-muted">{hit.summary}</span>}
+                          <Typography variant="ui" as="span">
+                            {hit.title}
+                          </Typography>
+                          {hit.summary && (
+                            <Typography variant="ui" as="span" className="tone-secondary">
+                              {hit.summary}
+                            </Typography>
+                          )}
                         </div>
                       </CommandItem>
                     ))}
@@ -139,8 +181,14 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
                     {group.hits.map((hit: SearchHit) => (
                       <CommandItem key={hit.id} className="search-inline-item" onSelect={() => handleSelect(hit)}>
                         <div className="flex flex-col">
-                          <span className="text-sm text-text">{hit.title}</span>
-                          {hit.summary && <span className="text-xs text-muted">{hit.summary}</span>}
+                          <Typography variant="ui" as="span">
+                            {hit.title}
+                          </Typography>
+                          {hit.summary && (
+                            <Typography variant="ui" as="span" className="tone-secondary">
+                              {hit.summary}
+                            </Typography>
+                          )}
                         </div>
                       </CommandItem>
                     ))}

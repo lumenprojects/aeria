@@ -34,6 +34,23 @@ export function toNullableIsoDateTime(value: unknown): string | null {
   return null;
 }
 
+export function entityUrl(type: "episode" | "character" | "atlas_entry" | "episode_series" | "country" | "location", slug: string) {
+  switch (type) {
+    case "episode":
+      return `/episodes/${slug}`;
+    case "character":
+      return `/characters/${slug}`;
+    case "atlas_entry":
+    case "country":
+    case "location":
+      return `/atlas/${slug}`;
+    case "episode_series":
+      return `/episodes?series=${slug}`;
+    default:
+      return "/";
+  }
+}
+
 export function validateResponse<T>(schema: z.ZodType<T>, payload: unknown, routeId: string): T {
   const parsed = schema.safeParse(payload);
   if (parsed.success) {

@@ -20,7 +20,7 @@ export function ButtonGroup({
       type="single"
       value={value}
       onValueChange={(next) => next && onValueChange(next)}
-      className={cn("inline-flex gap-2", className)}
+      className={cn("inline-flex button-group-shell", className)}
     >
       {options.map((option) => (
         <ToggleGroupItem key={option.value} value={option.value}>

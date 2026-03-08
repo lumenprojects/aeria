@@ -13,7 +13,7 @@ const NavigationMenuTrigger = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <NavigationMenuPrimitive.Trigger
     ref={ref}
-    className={cn("text-sm font-medium text-text", className)}
+    className={cn("role-ui font-medium text-text", className)}
     {...props}
   />
 ));
@@ -25,7 +25,7 @@ const NavigationMenuContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <NavigationMenuPrimitive.Content
     ref={ref}
-    className={cn("rounded-md border border-border bg-surface p-4", className)}
+    className={cn("rounded-md border border-border bg-surface navigation-menu-content-shell", className)}
     {...props}
   />
 ));

@@ -7,7 +7,7 @@ import {
   PaginationQueryDTO
 } from "@aeria/shared";
 import { pool } from "../db.js";
-import { errorPayload, parseQuery, validateResponse, withArchivedFilter } from "./utils.js";
+import { entityUrl, errorPayload, parseQuery, validateResponse, withArchivedFilter } from "./utils.js";
 
 export async function registerWorldRoutes(app: FastifyInstance) {
   app.get("/api/countries", async (req, reply) => {
@@ -34,6 +34,7 @@ export async function registerWorldRoutes(app: FastifyInstance) {
         {
           id: row.id,
           slug: row.slug,
+          url: entityUrl("country", row.slug),
           title_ru: row.title_ru,
           flag_colors: row.flag_colors ?? null
         },
@@ -77,6 +78,7 @@ export async function registerWorldRoutes(app: FastifyInstance) {
         {
           id: row.id,
           slug: row.slug,
+          url: entityUrl("location", row.slug),
           title_ru: row.title_ru,
           country_id: row.country_id ?? null,
           summary: row.summary ?? null,

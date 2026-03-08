@@ -7,7 +7,7 @@ export default function Layout() {
     <div className="min-h-screen bg-background text-text">
       <TapEffectLayer />
       <Navbar />
-      <main className="container layout-main">
+      <main className="width-wide layout-main">
         <Outlet />
       </main>
     </div>

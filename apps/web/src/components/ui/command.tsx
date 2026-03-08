@@ -15,7 +15,7 @@ const CommandInput = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <CommandPrimitive.Input
     ref={ref}
-    className={cn("h-11 w-full border-b border-border bg-transparent px-3 text-sm outline-none", className)}
+    className={cn("role-ui h-11 w-full border-b border-border bg-transparent command-input-shell outline-none", className)}
     {...props}
   />
 ));
@@ -37,7 +37,7 @@ const CommandItem = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <CommandPrimitive.Item
     ref={ref}
-    className={cn("cursor-pointer px-3 py-2 text-sm text-text aria-selected:bg-border", className)}
+    className={cn("role-ui cursor-pointer command-item-shell text-text aria-selected:bg-border", className)}
     {...props}
   />
 ));

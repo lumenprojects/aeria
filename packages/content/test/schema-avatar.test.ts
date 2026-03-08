@@ -57,3 +57,15 @@ test("character rumor source fields must be provided together", () => {
 
   assert.equal(result.success, false);
 });
+
+test("home featured character requires intro fields", () => {
+  const result = characterSchema.safeParse({
+    slug: "character-1",
+    name_ru: "Character 1",
+    country_slug: "country-1",
+    avatar_asset_path: "/assets/images/character-1.png",
+    home_featured: true
+  });
+
+  assert.equal(result.success, false);
+});

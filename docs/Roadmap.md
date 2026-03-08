@@ -41,7 +41,7 @@
 
 Порядок внутри каждой страницы:
 1. Данные и состояния (`loading/error/empty`) на TanStack Query.
-2. Вёрстка по дизайн-системе (`Typography`, palette, spacing, container rules).
+2. Вёрстка по дизайн-системе (`Typography`, palette, spacing, width rules: `narrow / medium / wide`).
 3. A11y + smoke-тест страницы.
 
 ## Рельсы, чтобы не скатиться в хаос

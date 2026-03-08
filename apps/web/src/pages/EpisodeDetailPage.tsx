@@ -1,9 +1,7 @@
-﻿import { useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { getEpisode } from "@/lib/api";
-import { Typography } from "@/components/ui/typography";
+import { MarkdownContent, Typography } from "@/components/ui";
 
 export default function EpisodeDetailPage() {
   const { slug } = useParams();
@@ -23,9 +21,7 @@ export default function EpisodeDetailPage() {
         <Typography variant="ui">Серия: {data.series?.title_ru ?? "—"}</Typography>
         <Typography variant="ui">Страна: {data.country?.title_ru ?? "—"}</Typography>
       </div>
-      <article className="prose max-w-none role-body">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.episode.content_markdown || ""}</ReactMarkdown>
-      </article>
+      <MarkdownContent source={data.episode.content_markdown || ""} />
     </div>
   );
 }

@@ -69,6 +69,7 @@ describe("API route contracts smoke", () => {
         {
           id: "00000000-0000-0000-0000-000000000001",
           slug: "episode-001",
+          url: "/episodes/episode-001",
           series_id: "00000000-0000-0000-0000-000000000011",
           country_id: "00000000-0000-0000-0000-000000000021",
           episode_number: 1,
@@ -81,6 +82,7 @@ describe("API route contracts smoke", () => {
           country: {
             id: "00000000-0000-0000-0000-000000000021",
             slug: "ru-example",
+            url: "/atlas/ru-example",
             title_ru: "Country 01",
             flag_colors: ["#111111", "#ffffff"]
           }
@@ -89,6 +91,223 @@ describe("API route contracts smoke", () => {
       total: 1,
       page: 1,
       limit: 20
+    });
+
+    await app.close();
+  });
+
+  it("filters hidden characters from the public characters list", async () => {
+    queryMock
+      .mockResolvedValueOnce({ rows: [{ count: 1 }] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000031",
+            slug: "character-001",
+            name_ru: "Character 001",
+            name_native: null,
+            tagline: "Character tagline"
+          }
+        ]
+      });
+
+    const { buildApp } = await import("../../app.js");
+    const app = await buildApp();
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/characters?page=1&limit=20"
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      items: [
+        {
+          id: "00000000-0000-0000-0000-000000000031",
+          slug: "character-001",
+          url: "/characters/character-001",
+          name_ru: "Character 001",
+          name_native: null,
+          tagline: "Character tagline"
+        }
+      ],
+      total: 1,
+      page: 1,
+      limit: 20
+    });
+    expect(String(queryMock.mock.calls[0][0])).toContain("listed = TRUE");
+    expect(String(queryMock.mock.calls[1][0])).toContain("listed = TRUE");
+
+    await app.close();
+  });
+
+  it("returns home snapshot with latest episode", async () => {
+    queryMock
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000001",
+            slug: "episode-001",
+            series_id: "00000000-0000-0000-0000-000000000011",
+            country_id: "00000000-0000-0000-0000-000000000021",
+            episode_number: 1,
+            global_order: 1,
+            title_native: "Au-dela des vignes",
+            title_ru: "За пределами виноградников",
+            summary: "Test episode",
+            reading_minutes: 3,
+            published_at: new Date("2026-03-04T00:00:00Z"),
+            country_slug: "ru-example",
+            country_title_ru: "Country 01",
+            country_flag_colors: ["#111111", "#ffffff"]
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000099",
+            slug: "ame",
+            name_ru: "Ame",
+            avatar_asset_path: "/assets/images/characters/ame.png",
+            home_intro_title: "Привет, я Амэ",
+            home_intro_markdown: "Aeria intro"
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: 7,
+            quote: "У нас не было героев. Только сосед, который умел дышать через уши.",
+            source: "Услышано у костра"
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000011",
+            slug: "series-01",
+            title_ru: "Жёлтая луна",
+            brand_color: "#ffaa44"
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000031",
+            slug: "character-001",
+            name_ru: "Character 001",
+            avatar_asset_path: "/assets/images/characters/character-001.png"
+          },
+          {
+            id: "00000000-0000-0000-0000-000000000032",
+            slug: "character-002",
+            name_ru: "Character 002",
+            avatar_asset_path: "/assets/images/characters/character-002.png"
+          }
+        ]
+      });
+
+    const { buildApp } = await import("../../app.js");
+    const app = await buildApp();
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/home"
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      latest_episode: {
+        id: "00000000-0000-0000-0000-000000000001",
+        slug: "episode-001",
+        url: "/episodes/episode-001",
+        episode_number: 1,
+        global_order: 1,
+        title_native: "Au-dela des vignes",
+        title_ru: "За пределами виноградников",
+        summary: "Test episode",
+        reading_minutes: 3,
+        published_at: "2026-03-04T00:00:00.000Z",
+        country: {
+          id: "00000000-0000-0000-0000-000000000021",
+          slug: "ru-example",
+          url: "/atlas/ru-example",
+          title_ru: "Country 01",
+          flag_colors: ["#111111", "#ffffff"]
+        },
+        series: {
+          id: "00000000-0000-0000-0000-000000000011",
+          slug: "series-01",
+          url: "/episodes?series=series-01",
+          title_ru: "Жёлтая луна",
+          brand_color: "#ffaa44"
+        },
+        participants: [
+          {
+            id: "00000000-0000-0000-0000-000000000031",
+            slug: "character-001",
+            url: "/characters/character-001",
+            name_ru: "Character 001",
+            avatar_asset_path: "/assets/images/characters/character-001.png"
+          },
+          {
+            id: "00000000-0000-0000-0000-000000000032",
+            slug: "character-002",
+            url: "/characters/character-002",
+            name_ru: "Character 002",
+            avatar_asset_path: "/assets/images/characters/character-002.png"
+          }
+        ]
+      },
+      about_profile: {
+        id: "00000000-0000-0000-0000-000000000099",
+        slug: "ame",
+        url: "/characters/ame",
+        name_ru: "Ame",
+        avatar_asset_path: "/assets/images/characters/ame.png",
+        home_intro_title: "Привет, я Амэ",
+        home_intro_markdown: "Aeria intro"
+      },
+      world_quote: {
+        id: 7,
+        quote: "У нас не было героев. Только сосед, который умел дышать через уши.",
+        source: "Услышано у костра"
+      }
+    });
+
+    await app.close();
+  });
+
+  it("returns random world quote payload with strict shape", async () => {
+    queryMock.mockResolvedValueOnce({
+      rows: [
+        {
+          id: 13,
+          quote: "Карта всегда врет о расстояниях, но редко врет о страхе.",
+          source: "Услышано на переправе"
+        }
+      ]
+    });
+
+    const { buildApp } = await import("../../app.js");
+    const app = await buildApp();
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/home/world-quote/random?exclude_id=7"
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      world_quote: {
+        id: 13,
+        quote: "Карта всегда врет о расстояниях, но редко врет о страхе.",
+        source: "Услышано на переправе"
+      }
     });
 
     await app.close();
@@ -201,6 +420,7 @@ describe("API route contracts smoke", () => {
       episode: {
         id: "00000000-0000-0000-0000-000000000001",
         slug: "episode-001",
+        url: "/episodes/episode-001",
         series_id: "00000000-0000-0000-0000-000000000011",
         country_id: "00000000-0000-0000-0000-000000000021",
         episode_number: 1,
@@ -215,6 +435,7 @@ describe("API route contracts smoke", () => {
       series: {
         id: "00000000-0000-0000-0000-000000000011",
         slug: "series-01",
+        url: "/episodes?series=series-01",
         title_ru: "Series 01",
         brand_color: "#ffaa44",
         summary: "Series summary"
@@ -222,6 +443,7 @@ describe("API route contracts smoke", () => {
       country: {
         id: "00000000-0000-0000-0000-000000000021",
         slug: "ru-example",
+        url: "/atlas/ru-example",
         title_ru: "Country 01",
         flag_colors: ["#111111", "#ffffff"]
       },
@@ -229,6 +451,7 @@ describe("API route contracts smoke", () => {
         {
           id: "00000000-0000-0000-0000-000000000031",
           slug: "character-001",
+          url: "/characters/character-001",
           name_ru: "Character 001",
           name_native: null,
           tagline: "Character tagline"
@@ -238,6 +461,7 @@ describe("API route contracts smoke", () => {
         {
           id: "00000000-0000-0000-0000-000000000041",
           slug: "location-001",
+          url: "/atlas/location-001",
           title_ru: "Location 001",
           summary: "Location summary",
           country_id: "00000000-0000-0000-0000-000000000021"
@@ -348,6 +572,7 @@ describe("API route contracts smoke", () => {
       character: {
         id: "00000000-0000-0000-0000-000000000031",
         slug: "character-001",
+        url: "/characters/character-001",
         name_ru: "Character 001",
         avatar_asset_path: "/assets/images/characters/character-001.png",
         name_native: null,
@@ -367,12 +592,14 @@ describe("API route contracts smoke", () => {
       country: {
         id: "00000000-0000-0000-0000-000000000021",
         slug: "ru-example",
+        url: "/atlas/ru-example",
         title_ru: "Country 01",
         flag_colors: ["#111111", "#ffffff"]
       },
       affiliation: {
         id: "00000000-0000-0000-0000-000000000051",
         slug: "atlas-001",
+        url: "/atlas/atlas-001",
         kind: "social",
         title_ru: "Atlas 001",
         avatar_asset_path: "/assets/images/atlas/atlas-001.png"
@@ -387,6 +614,7 @@ describe("API route contracts smoke", () => {
             type: "atlas_entry",
             id: "00000000-0000-0000-0000-000000000051",
             slug: "atlas-001",
+            url: "/atlas/atlas-001",
             title: "Atlas 001",
             avatar_asset_path: "/assets/images/atlas/atlas-001.png"
           },
@@ -397,6 +625,7 @@ describe("API route contracts smoke", () => {
         {
           id: "00000000-0000-0000-0000-000000000001",
           slug: "episode-001",
+          url: "/episodes/episode-001",
           series_id: "00000000-0000-0000-0000-000000000011",
           country_id: "00000000-0000-0000-0000-000000000021",
           episode_number: 1,
@@ -409,6 +638,7 @@ describe("API route contracts smoke", () => {
           country: {
             id: "00000000-0000-0000-0000-000000000021",
             slug: "ru-example",
+            url: "/atlas/ru-example",
             title_ru: "Country 01",
             flag_colors: ["#111111", "#ffffff"]
           }
@@ -471,6 +701,7 @@ describe("API route contracts smoke", () => {
       entry: {
         id: "00000000-0000-0000-0000-000000000051",
         slug: "atlas-001",
+        url: "/atlas/atlas-001",
         kind: "object",
         title_ru: "Atlas 001",
         summary: "Atlas summary",
@@ -483,6 +714,7 @@ describe("API route contracts smoke", () => {
       country: {
         id: "00000000-0000-0000-0000-000000000021",
         slug: "ru-example",
+        url: "/atlas/ru-example",
         title_ru: "Country 01",
         flag_colors: ["#111111", "#ffffff"]
       },

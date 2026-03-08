@@ -10,6 +10,7 @@ import {
 import { pool } from "../db.js";
 import {
   errorPayload,
+  entityUrl,
   parseQuery,
   toNullableIsoDateTime,
   validateResponse,
@@ -41,6 +42,7 @@ export async function registerSeriesRoutes(app: FastifyInstance) {
         {
           id: row.id,
           slug: row.slug,
+          url: entityUrl("episode_series", row.slug),
           title_ru: row.title_ru,
           brand_color: row.brand_color ?? null,
           summary: row.summary ?? null
@@ -87,6 +89,7 @@ export async function registerSeriesRoutes(app: FastifyInstance) {
       {
         id: seriesRow.id,
         slug: seriesRow.slug,
+        url: entityUrl("episode_series", seriesRow.slug),
         title_ru: seriesRow.title_ru,
         brand_color: seriesRow.brand_color ?? null,
         summary: seriesRow.summary ?? null
@@ -100,6 +103,7 @@ export async function registerSeriesRoutes(app: FastifyInstance) {
         {
           id: row.id,
           slug: row.slug,
+          url: entityUrl("episode", row.slug),
           series_id: row.series_id,
           country_id: row.country_id,
           episode_number: row.episode_number,
@@ -114,6 +118,7 @@ export async function registerSeriesRoutes(app: FastifyInstance) {
             {
               id: row.country_id,
               slug: row.country_slug,
+              url: entityUrl("country", row.country_slug),
               title_ru: row.country_title_ru,
               flag_colors: row.country_flag_colors ?? null
             },

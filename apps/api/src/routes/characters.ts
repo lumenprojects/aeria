@@ -14,6 +14,7 @@ import {
 import { pool } from "../db.js";
 import {
   errorPayload,
+  entityUrl,
   parseQuery,
   toNullableIsoDateTime,
   validateResponse,
@@ -29,7 +30,7 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
 
     const { page, limit } = query;
     const offset = (page - 1) * limit;
-    const where = withArchivedFilter([]);
+    const where = withArchivedFilter(["listed = TRUE"]);
 
     const countResult = await pool.query(`SELECT COUNT(*)::int AS count FROM characters WHERE ${where}`);
     const rows = await pool.query(
@@ -47,6 +48,7 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
         {
           id: row.id,
           slug: row.slug,
+          url: entityUrl("character", row.slug),
           name_ru: row.name_ru,
           name_native: row.name_native ?? null,
           tagline: row.tagline ?? null
@@ -133,6 +135,7 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
       {
         id: characterRow.id,
         slug: characterRow.slug,
+        url: entityUrl("character", characterRow.slug),
         name_ru: characterRow.name_ru,
         avatar_asset_path: characterRow.avatar_asset_path,
         name_native: characterRow.name_native ?? null,
@@ -170,6 +173,7 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
               type: "character" as const,
               id: row.source_id,
               slug: row.source_character_slug,
+              url: entityUrl("character", row.source_character_slug),
               title: row.source_character_title,
               avatar_asset_path: row.source_character_avatar_asset_path ?? null
             }
@@ -178,6 +182,7 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
                 type: "atlas_entry" as const,
                 id: row.source_id,
                 slug: row.source_atlas_slug,
+                url: entityUrl("atlas_entry", row.source_atlas_slug),
                 title: row.source_atlas_title,
                 avatar_asset_path: row.source_atlas_avatar_asset_path ?? null
               }
@@ -202,6 +207,7 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
         {
           id: row.id,
           slug: row.slug,
+          url: entityUrl("episode", row.slug),
           series_id: row.series_id,
           country_id: row.country_id,
           episode_number: row.episode_number,
@@ -216,6 +222,7 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
             {
               id: row.country_id,
               slug: row.country_slug,
+              url: entityUrl("country", row.country_slug),
               title_ru: row.country_title_ru,
               flag_colors: row.country_flag_colors ?? null
             },
@@ -232,6 +239,7 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
           {
             id: country.rows[0].id,
             slug: country.rows[0].slug,
+            url: entityUrl("country", country.rows[0].slug),
             title_ru: country.rows[0].title_ru,
             flag_colors: country.rows[0].flag_colors ?? null
           },
@@ -245,6 +253,7 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
           {
             id: affiliation.rows[0].id,
             slug: affiliation.rows[0].slug,
+            url: entityUrl("atlas_entry", affiliation.rows[0].slug),
             kind: affiliation.rows[0].kind,
             title_ru: affiliation.rows[0].title_ru,
             avatar_asset_path: affiliation.rows[0].avatar_asset_path ?? null

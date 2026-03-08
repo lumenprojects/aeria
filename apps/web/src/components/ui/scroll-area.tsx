@@ -23,7 +23,7 @@ const ScrollBar = React.forwardRef<
   <ScrollAreaPrimitive.Scrollbar
     ref={ref}
     orientation={orientation}
-    className={cn("flex touch-none select-none bg-transparent p-0.5", className)}
+    className={cn("flex touch-none select-none bg-transparent scrollbar-shell", className)}
     {...props}
   >
     <ScrollAreaPrimitive.Thumb className="relative flex-1 rounded-full bg-border" />

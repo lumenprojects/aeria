@@ -11,7 +11,7 @@ export default function CharactersPage() {
       <Typography variant="h1">Персонажи</Typography>
       <div className="page-grid">
         {data?.items?.map((character) => (
-          <Link key={character.id} to={`/characters/${character.slug}`} className="entity-link-block">
+          <Link key={character.id} to={character.url} className="entity-link-block">
             <Typography variant="h3">{character.name_ru}</Typography>
             {character.tagline && <Typography variant="muted">{character.tagline}</Typography>}
           </Link>

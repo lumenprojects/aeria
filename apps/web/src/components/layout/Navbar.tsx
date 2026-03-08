@@ -131,8 +131,8 @@ export default function Navbar() {
               <div className="h-full bg-accent transition-all" style={{ width: `${scrollProgress}%` }} />
             </div>
           )}
-          <div className="container relative flex navbar-shell items-center justify-between">
-            <div className="navbar-left role-ui text-sm">
+          <div className="width-wide relative flex navbar-shell items-center justify-between">
+            <div className="navbar-left role-ui">
               {!isDetail ? (
                 <nav className="navbar-links">
                   {navItems.map((item) => (
@@ -141,8 +141,8 @@ export default function Navbar() {
                       to={item.to}
                       className={({ isActive }) =>
                         cn(
-                          "navbar-link role-ui text-sm",
-                          isActive ? "navbar-link-active" : "tone-secondary hover:text-text"
+                          "navbar-link role-ui",
+                          isActive ? "navbar-link-active accent-underline" : "tone-secondary hover:text-text"
                         )
                       }
                     >
@@ -152,11 +152,16 @@ export default function Navbar() {
                 </nav>
               ) : (
                 <div className="navbar-detail">
-                  <Button variant="ghost" size="sm" className="tone-secondary hover:text-text" onClick={handleBack}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="navbar-back tone-secondary hover:text-text"
+                    onClick={handleBack}
+                  >
                     Назад
                   </Button>
                   <Breadcrumb>
-                    <BreadcrumbList className="role-ui text-sm tone-secondary">
+                    <BreadcrumbList className="role-ui tone-secondary">
                       <BreadcrumbItem>
                         <NavLink to={`/${section}`} className="hover:text-text">
                           {sectionLabel}
@@ -178,18 +183,18 @@ export default function Navbar() {
               </NavLink>
             </div>
 
-            <div className="navbar-right role-ui text-sm">
+            <div className="navbar-right role-ui">
               <div className="navbar-tool-cluster">
                 <button
                   type="button"
                   aria-label="Поиск"
-                  className={cn("navbar-icon", searchOpen && "navbar-icon-active")}
+                  className={cn("navbar-icon", searchOpen && "navbar-icon-active accent-underline")}
                   onClick={() => {
                     setActivePanel(null);
                     setSearchOpen((value) => !value);
                   }}
                 >
-                  <Search size={18} />
+                  <Search size={20} />
                 </button>
                 {isEpisodeReading && (
                   <span className="navbar-reading" title={seriesTitle ?? ""}>
@@ -205,12 +210,15 @@ export default function Navbar() {
                   className="navbar-icon"
                   onClick={() => setMode(mode === "dark" ? "light" : "dark")}
                 >
-                  {mode === "dark" ? <Moon size={18} /> : <Sun size={18} />}
+                  {mode === "dark" ? <Moon size={20} /> : <Sun size={20} />}
                 </button>
                 <button
                   type="button"
                   aria-label="Шрифты"
-                  className={cn("navbar-icon navbar-icon-text", activePanel === "fonts" && "navbar-icon-active")}
+                  className={cn(
+                    "navbar-icon navbar-icon-text",
+                    activePanel === "fonts" && "navbar-icon-active accent-underline"
+                  )}
                   onClick={() => togglePanel("fonts")}
                 >
                   Aa
@@ -218,7 +226,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   aria-label="Настройки"
-                  className={cn("navbar-icon", activePanel === "settings" && "navbar-icon-active")}
+                  className={cn("navbar-icon", activePanel === "settings" && "navbar-icon-active accent-underline")}
                   onClick={() => togglePanel("settings")}
                 >
                   <Ellipsis size={20} />
@@ -229,9 +237,9 @@ export default function Navbar() {
         </div>
         {activePanel && (
           <div className="navbar-subpanel-shell">
-            <div className="container">
+            <div className="width-wide">
               <div className="navbar-subpanel-inner">
-                <div className="navbar-subpanel-panel role-ui text-sm">
+                <div className="navbar-subpanel-panel role-ui">
                   {activePanel === "fonts" ? (
                     <>
                       <div className="navbar-field">
@@ -327,15 +335,15 @@ export default function Navbar() {
         <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
       </header>
       <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-divider bg-background md:hidden">
-        <div className="container flex items-center justify-between navbar-mobile-row role-ui text-sm">
+        <div className="width-wide flex items-center justify-between navbar-mobile-row role-ui">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
                 cn(
-                  "navbar-link role-ui text-sm",
-                  isActive ? "navbar-link-active" : "tone-secondary hover:text-text"
+                  "navbar-link role-ui",
+                  isActive ? "navbar-link-active accent-underline" : "tone-secondary hover:text-text"
                 )
               }
             >

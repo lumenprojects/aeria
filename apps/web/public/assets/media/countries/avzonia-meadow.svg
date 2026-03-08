@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2240 1080" fill="none">
+  <defs>
+    <linearGradient id="bg-avzonia" x1="0" y1="0" x2="2240" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7D6A43" />
+      <stop offset="1" stop-color="#293021" />
+    </linearGradient>
+  </defs>
+  <rect width="2240" height="1080" fill="url(#bg-avzonia)" />
+  <path d="M0 760C360 650 790 625 1110 705C1440 790 1760 875 2240 760V1080H0V760Z" fill="#5D4A2F" />
+  <path d="M0 520C330 450 670 465 1000 545C1350 625 1690 690 2240 560V1080H0V520Z" fill="#6E5D3E" opacity="0.72" />
+</svg>

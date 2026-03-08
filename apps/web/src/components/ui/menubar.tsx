@@ -11,7 +11,7 @@ const MenubarContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <MenubarPrimitive.Content
     ref={ref}
-    className={cn("z-50 min-w-[12rem] rounded-md border border-border bg-surface p-2", className)}
+    className={cn("z-50 min-w-[12rem] rounded-md border border-border bg-surface menubar-content-shell", className)}
     {...props}
   />
 ));
@@ -23,7 +23,7 @@ const MenubarItem = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <MenubarPrimitive.Item
     ref={ref}
-    className={cn("cursor-pointer rounded-md px-3 py-2 text-sm outline-none focus:bg-surface", className)}
+    className={cn("role-ui cursor-pointer rounded-md menubar-item-shell outline-none focus:bg-surface", className)}
     {...props}
   />
 ));

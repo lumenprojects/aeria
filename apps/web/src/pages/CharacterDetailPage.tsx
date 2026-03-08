@@ -1,11 +1,9 @@
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { Flag } from "@/components/entities";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getCharacter } from "@/lib/api";
-import { Typography } from "@/components/ui/typography";
+import { MarkdownContent, Typography } from "@/components/ui";
 
 function fallbackText(label: string) {
   const parts = label.trim().split(/\s+/).filter(Boolean);
@@ -14,10 +12,6 @@ function fallbackText(label: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
-}
-
-function resolveSourceHref(source: { type: "character" | "atlas_entry"; slug: string }) {
-  return source.type === "character" ? `/characters/${source.slug}` : `/atlas/${source.slug}`;
 }
 
 export default function CharacterDetailPage() {
@@ -42,13 +36,13 @@ export default function CharacterDetailPage() {
 
   return (
     <div className="page-stack">
-      <section className="flex flex-col gap-6 md:flex-row md:items-start">
+      <section className="detail-hero-layout">
         <Avatar size="lg">
           <AvatarImage src={data.character.avatar_asset_path} alt={data.character.name_ru} />
           <AvatarFallback>{fallbackText(data.character.name_ru)}</AvatarFallback>
         </Avatar>
 
-        <div className="flex min-w-0 flex-1 flex-col gap-4">
+        <div className="detail-hero-copy">
           <div className="showcase-stack-xs">
             <Typography variant="h1">{data.character.name_ru}</Typography>
             {data.character.name_native && (
@@ -65,7 +59,7 @@ export default function CharacterDetailPage() {
             {data.affiliation && (
               <Typography variant="ui">
                 Принадлежность:{" "}
-                <Link to={`/atlas/${data.affiliation.slug}`} className="underline decoration-[1px] underline-offset-4">
+                <Link to={data.affiliation.url} className="underline decoration-[1px] underline-offset-4">
                   {data.affiliation.title_ru}
                 </Link>
               </Typography>
@@ -88,9 +82,7 @@ export default function CharacterDetailPage() {
         <Typography variant="h2" as="h2">
           Биография
         </Typography>
-        <article className="prose max-w-none role-body">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.character.bio_markdown || ""}</ReactMarkdown>
-        </article>
+        <MarkdownContent source={data.character.bio_markdown || ""} />
       </section>
 
       {data.quirks.length > 0 && (
@@ -99,7 +91,7 @@ export default function CharacterDetailPage() {
             Особые приметы
           </Typography>
           <div className="showcase-stack-xs">
-            {data.quirks.map((quirk) => (
+            {data.quirks.map((quirk: any) => (
               <Typography key={`${quirk.sort_order}-${quirk.text}`} variant="body">
                 {quirk.sort_order + 1}. {quirk.text}
               </Typography>
@@ -114,7 +106,7 @@ export default function CharacterDetailPage() {
             Что говорят другие?
           </Typography>
           <div className="page-grid">
-            {data.rumors.map((rumor) => (
+            {data.rumors.map((rumor: any) => (
               <article key={`${rumor.sort_order}-${rumor.author_name}`} className="showcase-panel showcase-stack-xs">
                 <Typography variant="body">{rumor.text}</Typography>
                 <Typography variant="muted">
@@ -124,7 +116,7 @@ export default function CharacterDetailPage() {
                 {rumor.source && (
                   <div className="showcase-row-xs">
                     {rumor.source.avatar_asset_path && (
-                      <Link to={resolveSourceHref(rumor.source)}>
+                      <Link to={rumor.source.url}>
                         <Avatar size="xs">
                           <AvatarImage src={rumor.source.avatar_asset_path} alt={rumor.source.title} />
                           <AvatarFallback>{fallbackText(rumor.source.title)}</AvatarFallback>
@@ -133,10 +125,7 @@ export default function CharacterDetailPage() {
                     )}
                     <Typography variant="ui">
                       Источник:{" "}
-                      <Link
-                        to={resolveSourceHref(rumor.source)}
-                        className="underline decoration-[1px] underline-offset-4"
-                      >
+                      <Link to={rumor.source.url} className="underline decoration-[1px] underline-offset-4">
                         {rumor.source.title}
                       </Link>
                     </Typography>

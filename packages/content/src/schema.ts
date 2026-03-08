@@ -72,9 +72,20 @@ export const characterSchema = z.object({
   orientation: z.string().optional().nullable(),
   mbti: z.string().optional().nullable(),
   favorite_food: z.string().optional().nullable(),
+  listed: z.boolean().default(true),
+  home_featured: z.boolean().default(false),
+  home_intro_title: z.string().optional().nullable(),
+  home_intro_markdown: z.string().optional().nullable(),
   quirks: z.array(z.string()).default([]),
   rumors: z.array(characterRumorSchema).default([]),
   published_at: z.string().optional().nullable()
+}).superRefine((value, ctx) => {
+  if (value.home_featured && (!value.home_intro_title || !value.home_intro_markdown)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "home_featured characters must define home_intro_title and home_intro_markdown"
+    });
+  }
 });
 
 export const atlasLinkSchema = z.object({

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2240 1080" fill="none">
+  <defs>
+    <linearGradient id="bg-virdan" x1="0" y1="0" x2="2240" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#385B71" />
+      <stop offset="1" stop-color="#1B252F" />
+    </linearGradient>
+  </defs>
+  <rect width="2240" height="1080" fill="url(#bg-virdan)" />
+  <path d="M0 750C250 700 450 675 670 640C920 600 1130 585 1360 560C1690 525 1930 480 2240 390V1080H0V750Z" fill="#2E485A" />
+  <path d="M0 820C280 780 570 765 840 790C1180 820 1560 910 2240 860V1080H0V820Z" fill="#1F313D" opacity="0.85" />
+  <path d="M940 430C1010 490 1120 560 1260 630" stroke="#9CC7DD" stroke-width="26" stroke-linecap="round" opacity="0.45" />
+</svg>

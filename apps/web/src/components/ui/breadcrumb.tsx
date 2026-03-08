@@ -5,13 +5,13 @@ const Breadcrumb = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <nav ref={ref} className={cn("text-sm text-muted", className)} {...props} />
+  <nav ref={ref} className={cn("role-ui tone-secondary", className)} {...props} />
 ));
 Breadcrumb.displayName = "Breadcrumb";
 
 const BreadcrumbList = React.forwardRef<HTMLOListElement, React.HTMLAttributes<HTMLOListElement>>(
   ({ className, ...props }, ref) => (
-    <ol ref={ref} className={cn("flex items-center gap-2", className)} {...props} />
+    <ol ref={ref} className={cn("flex items-center breadcrumb-list", className)} {...props} />
   )
 );
 BreadcrumbList.displayName = "BreadcrumbList";

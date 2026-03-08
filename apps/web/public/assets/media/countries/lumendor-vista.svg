@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2240 1080" fill="none">
+  <defs>
+    <linearGradient id="bg-lumendor" x1="0" y1="0" x2="2240" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8F7D58" />
+      <stop offset="1" stop-color="#2A2F2D" />
+    </linearGradient>
+  </defs>
+  <rect width="2240" height="1080" fill="url(#bg-lumendor)" />
+  <ellipse cx="560" cy="230" rx="310" ry="120" fill="#D2B784" opacity="0.45" />
+  <path d="M0 610C250 535 510 515 760 550C1030 590 1310 675 1600 735C1840 785 2020 780 2240 730V1080H0V610Z" fill="#5C6243" />
+  <path d="M0 770C260 700 590 695 870 745C1140 790 1510 875 2240 780V1080H0V770Z" fill="#4B5337" opacity="0.85" />
+</svg>

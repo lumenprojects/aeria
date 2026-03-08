@@ -450,10 +450,13 @@ async function importEpisodes(
   records: LoadedFile<EpisodeFrontmatter>[],
   summary: ImportSummary,
   batchSize: number
-): Promise<{ episodeCharacters: Array<{ episodeId: string; characterId: string }>; episodeLocations: Array<{ episodeId: string; locationId: string }> }>
+): Promise<{
+  episodeCharacters: Array<{ episodeId: string; characterId: string; sortOrder: number }>;
+  episodeLocations: Array<{ episodeId: string; locationId: string }>;
+}>
 {
   const existing = await queryExistingBySlug("episodes", records.map((r) => r.slug));
-  const episodeCharacters: Array<{ episodeId: string; characterId: string }> = [];
+  const episodeCharacters: Array<{ episodeId: string; characterId: string; sortOrder: number }> = [];
   const episodeLocations: Array<{ episodeId: string; locationId: string }> = [];
 
   const rows = records.map((record) => {
@@ -461,10 +464,11 @@ async function importEpisodes(
     const computedReading = frontmatter.reading_minutes ?? readingMinutes(record.body);
     const publishedAt = frontmatter.published_at ? new Date(frontmatter.published_at) : null;
 
-    for (const charSlug of frontmatter.characters ?? []) {
+    for (const [index, charSlug] of (frontmatter.characters ?? []).entries()) {
       episodeCharacters.push({
         episodeId: record.id,
-        characterId: entityId("character", charSlug)
+        characterId: entityId("character", charSlug),
+        sortOrder: index
       });
     }
 
@@ -552,6 +556,10 @@ async function importCharacters(
       favorite_food: frontmatter.favorite_food ?? null,
       orientation: frontmatter.orientation ?? null,
       mbti: frontmatter.mbti ?? null,
+      listed: frontmatter.listed,
+      home_featured: frontmatter.home_featured,
+      home_intro_title: frontmatter.home_intro_title ?? null,
+      home_intro_markdown: frontmatter.home_intro_markdown ?? null,
       bio_markdown: record.body || null,
       published_at: publishedAt,
       source_path: record.sourcePath,
@@ -689,21 +697,21 @@ async function importEpisodeLocations(rows: Array<{ episodeId: string; locationI
   }
 }
 
-async function importEpisodeCharacters(rows: Array<{ episodeId: string; characterId: string }>) {
-  const grouped = new Map<string, string[]>();
+async function importEpisodeCharacters(rows: Array<{ episodeId: string; characterId: string; sortOrder: number }>) {
+  const grouped = new Map<string, Array<{ characterId: string; sortOrder: number }>>();
   for (const row of rows) {
     const list = grouped.get(row.episodeId) ?? [];
-    list.push(row.characterId);
+    list.push({ characterId: row.characterId, sortOrder: row.sortOrder });
     grouped.set(row.episodeId, list);
   }
 
-  for (const [episodeId, characterIds] of grouped) {
+  for (const [episodeId, characterRows] of grouped) {
     await withTransaction(async (client) => {
       await client.query("DELETE FROM episode_characters WHERE episode_id = $1", [episodeId]);
-      for (const characterId of characterIds) {
+      for (const { characterId, sortOrder } of characterRows) {
         await client.query(
-          "INSERT INTO episode_characters (episode_id, character_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-          [episodeId, characterId]
+          "INSERT INTO episode_characters (episode_id, character_id, sort_order) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+          [episodeId, characterId, sortOrder]
         );
       }
     });

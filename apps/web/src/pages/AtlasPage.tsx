@@ -13,7 +13,7 @@ export default function AtlasPage() {
       <Typography variant="h1">Атлас</Typography>
       <div className="page-list">
         {data?.items?.map((entry) => (
-          <Link key={entry.id} to={`/atlas/${entry.slug}`} className="entity-link-block">
+          <Link key={entry.id} to={entry.url} className="entity-link-block">
             <Typography variant="h3">{entry.title_ru}</Typography>
             {entry.summary && <Typography variant="muted">{entry.summary}</Typography>}
           </Link>
