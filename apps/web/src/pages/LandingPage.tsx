@@ -194,10 +194,7 @@ function loadingSections(): HomeSection[] {
       boundaryBefore: "line",
       content: (
         <div className="width-medium">
-          <div className="home-edition-block">
-            <Skeleton className="h-20 w-full rounded-lg" />
-            <Skeleton className="h-10 w-40 rounded-lg" />
-          </div>
+          <Skeleton className="h-20 w-full rounded-lg" />
         </div>
       )
     }
@@ -212,12 +209,12 @@ export default function LandingPage() {
   });
 
   if (isLoading) {
-    return <div className="home-feed home-feed-landing">{renderSectionFlow(loadingSections())}</div>;
+    return <div className="home-feed">{renderSectionFlow(loadingSections())}</div>;
   }
 
   if (isError) {
     return (
-      <div className="home-feed home-feed-landing">
+      <div className="home-feed">
         <Typography variant="h4" as="h1">
           Главная временно недоступна
         </Typography>
@@ -325,19 +322,14 @@ export default function LandingPage() {
     boundaryBefore: "line",
     content: (
       <div className="width-medium">
-        <div className="home-edition-block">
-          <Typography variant="ui" fontRole="heading" as="p" className="home-edition-note">
-            Aeria · издание 2026
-            <br />
-            <em>Roam with You</em>
-          </Typography>
-          <Typography variant="ui" fontRole="ui" as="p" className="tone-tertiary home-amenori-label">
-            amenori
-          </Typography>
-        </div>
+        <Typography variant="ui" fontRole="heading" as="p" className="home-edition-note">
+          Aeria · издание 2026
+          <br />
+          <em>Roam with You</em>
+        </Typography>
       </div>
     )
   });
 
-  return <div className="home-feed home-feed-landing">{renderSectionFlow(sections)}</div>;
+  return <div className="home-feed">{renderSectionFlow(sections)}</div>;
 }

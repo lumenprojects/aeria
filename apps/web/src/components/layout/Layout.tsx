@@ -1,18 +1,21 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
+import { Typography } from "@/components/ui";
 import Navbar from "./Navbar";
 import TapEffectLayer from "./TapEffectLayer";
 
 export default function Layout() {
-  const { pathname } = useLocation();
-  const isLandingRoute = pathname === "/";
-
   return (
-    <div className="min-h-screen bg-background text-text">
+    <div className="layout-shell min-h-screen bg-background text-text">
       <TapEffectLayer />
       <Navbar />
-      <main className={`width-wide layout-main${isLandingRoute ? " layout-main-landing" : ""}`}>
+      <main className="width-wide layout-main">
         <Outlet />
       </main>
+      <footer className="width-wide layout-footer">
+        <Typography variant="ui" fontRole="ui" as="p" className="tone-tertiary layout-footer-label">
+          amenori
+        </Typography>
+      </footer>
     </div>
   );
 }
