@@ -11,24 +11,36 @@ export type FontSet = {
   ui: string;
 };
 
+const fontCatalog = {
+  heading: ["Playfair Display", "Cormorant Garamond"],
+  body: ["Lora", "Noto Serif"],
+  ui: ["IBM Plex Sans", "Manrope", "Golos Text"]
+} as const;
+
 const defaultFonts: FontSet = {
-  heading: "Fraunces",
-  body: "Source Serif 4",
-  ui: "Manrope"
+  heading: "Playfair Display",
+  body: "Lora",
+  ui: "IBM Plex Sans"
 };
 
 const legacyPresets: Record<string, FontSet> = {
   serif: {
-    heading: "Fraunces",
-    body: "Source Serif 4",
-    ui: "Manrope"
+    heading: "Playfair Display",
+    body: "Lora",
+    ui: "IBM Plex Sans"
   },
   editorial: {
     heading: "Playfair Display",
-    body: "Spectral",
+    body: "Lora",
     ui: "IBM Plex Sans"
   }
 };
+
+function normalizeFont<K extends keyof FontSet>(role: K, value: unknown): FontSet[K] {
+  if (typeof value !== "string") return defaultFonts[role];
+  const supported = fontCatalog[role] as readonly string[];
+  return (supported.includes(value) ? value : defaultFonts[role]) as FontSet[K];
+}
 
 type ThemeState = {
   theme: ThemeName;
@@ -77,9 +89,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (cookiePayload) {
       if (cookiePayload.theme) setTheme(cookiePayload.theme as ThemeName);
       if (cookiePayload.mode) setMode(cookiePayload.mode as ThemeMode);
-      if (cookiePayload.fontHeading) setFontHeading(String(cookiePayload.fontHeading));
-      if (cookiePayload.fontBody) setFontBody(String(cookiePayload.fontBody));
-      if (cookiePayload.fontUi) setFontUi(String(cookiePayload.fontUi));
+      setFontHeading(normalizeFont("heading", cookiePayload.fontHeading));
+      setFontBody(normalizeFont("body", cookiePayload.fontBody));
+      setFontUi(normalizeFont("ui", cookiePayload.fontUi));
       if (typeof cookiePayload.noise === "boolean") setNoise(cookiePayload.noise);
       if (cookiePayload.tapEffect) setTapEffect(cookiePayload.tapEffect as TapEffect);
       setHydrated(true);
@@ -97,9 +109,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         setFontBody(preset.body);
         setFontUi(preset.ui);
       }
-      if (parsed.fontHeading) setFontHeading(String(parsed.fontHeading));
-      if (parsed.fontBody) setFontBody(String(parsed.fontBody));
-      if (parsed.fontUi) setFontUi(String(parsed.fontUi));
+      setFontHeading(normalizeFont("heading", parsed.fontHeading));
+      setFontBody(normalizeFont("body", parsed.fontBody));
+      setFontUi(normalizeFont("ui", parsed.fontUi));
       if (typeof parsed.noise === "boolean") setNoise(parsed.noise);
       if (parsed.tapEffect) setTapEffect(parsed.tapEffect as TapEffect);
       localStorage.removeItem(STORAGE_KEY);

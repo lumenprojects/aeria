@@ -103,7 +103,7 @@ Aeria — это SPA-сайт для ранобэ-проекта: эпизоды
   - на детальных страницах: `Назад` + breadcrumbs.
 - Расстояние между первичными разделами nav: `--space-md`.
 - Компактные расстояния внутри связанных control-групп (`Поиск`, счётчик главы, `День/Ночь`, `Aa`, `...`, detail breadcrumbs): `--space-sm`.
-- Центр: логотип `Aeria` (временный шрифт из heading-стека, затем отдельный бренд-шрифт).
+- Центр: брендовый SVG-логотип `Aeria`.
 - Правый блок:
   - `Поиск`
   - индикатор главы `current/total` (только на странице чтения эпизода)
@@ -142,9 +142,9 @@ Aeria — это SPA-сайт для ранобэ-проекта: эпизоды
 - Меню `Aa`:
   - три независимых селектора `UI / Headings / Text`;
   - закреплённые наборы шрифтов:
-    - UI: `Manrope`, `IBM Plex Sans`
-    - Headings: `Fraunces`, `Playfair Display`
-    - Text: `Source Serif 4`, `Spectral`
+    - UI: `IBM Plex Sans`, `Manrope`, `Golos Text`
+    - Headings: `Playfair Display`, `Cormorant Garamond`
+    - Text: `Lora`, `Noto Serif`
 - Меню `...`:
   - `Style`: `Paper`, `Stone`, `Coral`, `Amoled`
   - `Noise`: `On/Off`

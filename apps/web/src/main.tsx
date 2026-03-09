@@ -1,15 +1,3 @@
-﻿import "@fontsource/fraunces/400.css";
-import "@fontsource/fraunces/600.css";
-import "@fontsource/playfair-display/400.css";
-import "@fontsource/playfair-display/600.css";
-import "@fontsource/source-serif-4/400.css";
-import "@fontsource/source-serif-4/600.css";
-import "@fontsource/spectral/400.css";
-import "@fontsource/spectral/600.css";
-import "@fontsource/manrope/400.css";
-import "@fontsource/manrope/600.css";
-import "@fontsource/ibm-plex-sans/400.css";
-import "@fontsource/ibm-plex-sans/600.css";
 import "./index.css";
 
 import React from "react";

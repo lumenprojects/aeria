@@ -50,7 +50,7 @@ export function LatestEpisodeHero({ episode }: LatestEpisodeHeroProps) {
       )}
 
       {episode.summary && (
-        <Typography variant="h3" className="home-latest-summary width-narrow">
+        <Typography variant="h3" fontRole="body" className="home-latest-summary width-narrow">
           {episode.summary}
         </Typography>
       )}

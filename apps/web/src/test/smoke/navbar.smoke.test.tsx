@@ -13,9 +13,9 @@ vi.mock("@/lib/theme", () => ({
   useTheme: () => ({
     theme: "paper",
     mode: "dark",
-    fontHeading: "Fraunces",
-    fontBody: "Source Serif 4",
-    fontUi: "Manrope",
+    fontHeading: "Playfair Display",
+    fontBody: "Lora",
+    fontUi: "IBM Plex Sans",
     noise: false,
     tapEffect: "none",
     setMode: vi.fn(),

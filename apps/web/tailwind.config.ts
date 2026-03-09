@@ -7,9 +7,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        heading: ["Fraunces", "Playfair Display", "serif"],
-        body: ["Source Serif 4", "Spectral", "serif"],
-        ui: ["Manrope", "IBM Plex Sans", "sans-serif"]
+        heading: ["Playfair Display", "Cormorant Garamond", "serif"],
+        body: ["Lora", "Noto Serif", "serif"],
+        ui: ["IBM Plex Sans", "Manrope", "Golos Text", "sans-serif"]
       },
       colors: {
         background: "var(--bg)",

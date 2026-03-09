@@ -1,6 +1,102 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("/assets/fonts/IBM_Plex_Sans/IBMPlexSans-VariableFont_wdth,wght.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("/assets/fonts/IBM_Plex_Sans/IBMPlexSans-Italic-VariableFont_wdth,wght.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 100 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Manrope";
+  src: url("/assets/fonts/Manrope/Manrope-VariableFont_wght.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Golos Text";
+  src: url("/assets/fonts/Golos_Text/GolosText-VariableFont_wght.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Playfair Display";
+  src: url("/assets/fonts/Playfair_Display/PlayfairDisplay-VariableFont_wght.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Playfair Display";
+  src: url("/assets/fonts/Playfair_Display/PlayfairDisplay-Italic-VariableFont_wght.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 400 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("/assets/fonts/Cormorant_Garamond/CormorantGaramond-VariableFont_wght.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("/assets/fonts/Cormorant_Garamond/CormorantGaramond-Italic-VariableFont_wght.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lora";
+  src: url("/assets/fonts/Lora/Lora-VariableFont_wght.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lora";
+  src: url("/assets/fonts/Lora/Lora-Italic-VariableFont_wght.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Noto Serif";
+  src: url("/assets/fonts/Noto_Serif/NotoSerif-VariableFont_wdth,wght.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Noto Serif";
+  src: url("/assets/fonts/Noto_Serif/NotoSerif-Italic-VariableFont_wdth,wght.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+}
 
 :root {
   --radius-lg: 75px;
@@ -151,7 +247,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-body, "Source Serif 4"), serif;
+  font-family: var(--font-body, "Lora"), serif;
 }
 
 a {
@@ -216,7 +312,7 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-ui, "Manrope"), sans-serif;
+  font-family: var(--font-ui, "IBM Plex Sans"), sans-serif;
   font-size: var(--type-normal);
   line-height: var(--lh-body);
   transition: transform var(--accordion-motion-duration) cubic-bezier(0.22, 1, 0.36, 1);
@@ -352,22 +448,22 @@ a {
 
 .role-ui,
 .text-ui {
-  font-family: var(--font-ui, "Manrope"), sans-serif;
+  font-family: var(--font-ui, "IBM Plex Sans"), sans-serif;
   font-size: var(--type-ui);
-  letter-spacing: 0.02em;
+  letter-spacing: -0.04em;
   line-height: var(--lh-ui);
 }
 
 .role-body,
 .text-body {
-  font-family: var(--font-body, "Source Serif 4"), serif;
+  font-family: var(--font-body, "Lora"), serif;
   font-size: var(--type-normal);
   line-height: var(--lh-body);
 }
 
 .role-heading,
 .text-heading {
-  font-family: var(--font-heading, "Fraunces"), serif;
+  font-family: var(--font-heading, "Playfair Display"), serif;
   line-height: var(--lh-heading);
 }
 
@@ -507,10 +603,27 @@ a {
 }
 
 .navbar-logo {
-  font-family: var(--font-heading, "Fraunces"), serif;
-  font-size: var(--type-ui);
-  line-height: var(--lh-ui);
-  letter-spacing: 0.03em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--navbar-control-size);
+  color: var(--text);
+}
+
+.navbar-logo-image {
+  display: inline-block;
+  height: calc(var(--navbar-control-size) + var(--space-xs));
+  width: min(28vw, 180px);
+  flex: 0 0 auto;
+  background-color: currentColor;
+  -webkit-mask-image: url("/assets/icons/aeria-logo.svg");
+  mask-image: url("/assets/icons/aeria-logo.svg");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
 }
 
 .navbar-divider {
@@ -536,7 +649,7 @@ a {
 }
 
 .navbar-icon-text {
-  font-family: var(--font-ui, "Manrope"), sans-serif;
+  font-family: var(--font-ui, "IBM Plex Sans"), sans-serif;
   font-size: var(--space-sm);
   letter-spacing: 0.04em;
   line-height: 1;
@@ -554,7 +667,7 @@ a {
 }
 
 .navbar-reading {
-  font-family: var(--font-ui, "Manrope"), sans-serif;
+  font-family: var(--font-ui, "IBM Plex Sans"), sans-serif;
   font-size: 0.9rem;
   letter-spacing: 0.02em;
   opacity: var(--opacity-64);
@@ -1320,7 +1433,7 @@ a {
   border: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
   border-radius: 999px;
   padding: var(--space-1) var(--space-2);
-  font-family: var(--font-ui, "Manrope"), sans-serif;
+  font-family: var(--font-ui, "IBM Plex Sans"), sans-serif;
   font-size: 0.75rem;
   line-height: 1;
 }
@@ -1365,7 +1478,7 @@ a {
 
 .search-inline-list [cmdk-group-heading] {
   padding: 0 var(--space-sm) var(--space-sm);
-  font-family: var(--font-ui, "Manrope"), sans-serif;
+  font-family: var(--font-ui, "IBM Plex Sans"), sans-serif;
   font-size: 0.72rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1381,7 +1494,7 @@ a {
 }
 
 .search-inline-status {
-  font-family: var(--font-ui, "Manrope"), sans-serif;
+  font-family: var(--font-ui, "IBM Plex Sans"), sans-serif;
   padding: var(--space-sm);
 }
 
@@ -1705,3 +1818,4 @@ body::before {
   background-size: 260px 260px;
   mix-blend-mode: soft-light;
 }
+

@@ -23,9 +23,9 @@ const sectionLabels: Record<string, string> = {
 };
 
 const fontOptions = {
-  ui: ["Manrope", "IBM Plex Sans"],
-  heading: ["Fraunces", "Playfair Display"],
-  body: ["Source Serif 4", "Spectral"]
+  ui: ["IBM Plex Sans", "Manrope", "Golos Text"],
+  heading: ["Playfair Display", "Cormorant Garamond"],
+  body: ["Lora", "Noto Serif"]
 };
 
 const themeOptions = [
@@ -178,8 +178,8 @@ export default function Navbar() {
             </div>
 
             <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              <NavLink to="/" className="pointer-events-auto navbar-logo">
-                Aeria
+              <NavLink to="/" className="pointer-events-auto navbar-logo" aria-label="Aeria">
+                <span className="navbar-logo-image" aria-hidden="true" />
               </NavLink>
             </div>
 
