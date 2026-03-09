@@ -2,6 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+@property --bg {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #fefdfb;
+}
+
+@property --text {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #2a2a2a;
+}
+
+@property --accent {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #ffb44b;
+}
+
+@property --surface {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #f7f4ef;
+}
+
+@property --border {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #ded8cd;
+}
+
 @font-face {
   font-family: "IBM Plex Sans";
   src: url("/assets/fonts/IBM_Plex_Sans/IBMPlexSans-VariableFont_wdth,wght.woff2") format("woff2");
@@ -165,6 +195,8 @@
   --lh-heading: 1.05;
   --lh-body: 1.45;
   --lh-ui: 1.35;
+  --theme-transition-duration: 680ms;
+  --theme-transition-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 [data-theme="paper"][data-mode="light"] {
@@ -243,9 +275,20 @@
   box-sizing: border-box;
 }
 
+html {
+  background-color: var(--bg);
+  color: var(--text);
+  transition:
+    --bg var(--theme-transition-duration) var(--theme-transition-ease),
+    --text var(--theme-transition-duration) var(--theme-transition-ease),
+    --accent var(--theme-transition-duration) var(--theme-transition-ease),
+    --surface var(--theme-transition-duration) var(--theme-transition-ease),
+    --border var(--theme-transition-duration) var(--theme-transition-ease);
+}
+
 body {
   margin: 0;
-  background: var(--bg);
+  background-color: var(--bg);
   color: var(--text);
   font-family: var(--font-body, "Lora"), serif;
 }
@@ -1807,6 +1850,10 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    transition-duration: 1ms !important;
+  }
+
   .tap-effect-core,
   .tap-effect-ring,
   .tap-effect-wave,
