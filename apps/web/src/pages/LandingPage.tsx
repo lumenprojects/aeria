@@ -323,12 +323,11 @@ export default function LandingPage() {
     boundaryBefore: "line",
     content: (
       <div className="width-medium">
-        <Typography variant="ui" fontRole="heading" as="p" className="home-edition-note"><RevealText text="Aeria · издание 2026" mode="words" /><br /><em><RevealText text="Roam with You" mode="words" delay={0.12} /></em></Typography>
+        <Typography variant="ui" fontRole="heading" as="p" className="home-edition-note"><RevealText text="Aeria · издание 2026" mode="words" /><br /><em><RevealText text="Roam with You" mode="words" delay={0.24} /></em></Typography>
       </div>
     )
   });
 
   return <div className="home-feed">{renderSectionFlow(sections)}</div>;
 }
-
 

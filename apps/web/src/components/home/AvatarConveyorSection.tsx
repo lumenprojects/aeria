@@ -31,7 +31,7 @@ const conveyorSeed: ConveyorSeedItem[] = [
 
 const conveyorSpeedPxPerSecond = 42;
 const motionEase = [0.22, 1, 0.36, 1] as const;
-const sectionTransition = { duration: 0.66, ease: motionEase };
+const sectionTransition = { duration: 1.32, ease: motionEase };
 const avatarRevealVariants = {
   hidden: (index: number) => ({
     opacity: 0,
@@ -45,8 +45,8 @@ const avatarRevealVariants = {
     scale: 1,
     filter: "blur(0px)",
     transition: {
-      duration: 0.52,
-      delay: 0.1 + index * 0.06,
+      duration: 1.04,
+      delay: 0.2 + index * 0.12,
       ease: motionEase
     }
   })

@@ -36,7 +36,7 @@ export function HeardQuoteSection({ initialQuote }: HeardQuoteSectionProps) {
       <div className="home-heard-copy">
         <Typography variant="h1" fontRole="body" as="blockquote" className="home-heard-quote"><RevealText key={quote.id} text={`« ${quote.quote} »`} mode="words" /></Typography>
 
-        <Typography variant="body" as="p" className="home-heard-source"><RevealText key={`${quote.id}-source`} text={`— ${quote.source} —`} mode="words" delay={0.12} /></Typography>
+        <Typography variant="body" as="p" className="home-heard-source"><RevealText key={`${quote.id}-source`} text={`— ${quote.source} —`} mode="words" delay={0.24} /></Typography>
       </div>
 
       <button
@@ -53,4 +53,3 @@ export function HeardQuoteSection({ initialQuote }: HeardQuoteSectionProps) {
     </section>
   );
 }
-
