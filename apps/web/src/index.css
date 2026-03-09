@@ -1285,27 +1285,6 @@ a {
   user-select: none;
 }
 
-.home-conveyor-lane::before,
-.home-conveyor-lane::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: clamp(2rem, 8vw, 6rem);
-  z-index: 1;
-  pointer-events: none;
-}
-
-.home-conveyor-lane::before {
-  left: 0;
-  background: linear-gradient(90deg, var(--bg) 0%, color-mix(in srgb, var(--bg) 55%, transparent) 60%, transparent 100%);
-}
-
-.home-conveyor-lane::after {
-  right: 0;
-  background: linear-gradient(270deg, var(--bg) 0%, color-mix(in srgb, var(--bg) 55%, transparent) 60%, transparent 100%);
-}
-
 .home-conveyor-lane::-webkit-scrollbar {
   display: none;
 }

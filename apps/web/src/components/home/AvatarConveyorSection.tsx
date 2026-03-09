@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { useQueries } from "@tanstack/react-query";
 import { EntityAvatar } from "@/components/entities";
-import { RevealText, Typography } from "@/components/ui";
+import { Typography } from "@/components/ui/typography";
 import { getAtlasEntry, getCharacter } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -32,24 +32,21 @@ const conveyorSeed: ConveyorSeedItem[] = [
 const conveyorSpeedPxPerSecond = 42;
 const motionEase = [0.22, 1, 0.36, 1] as const;
 const sectionTransition = { duration: 0.66, ease: motionEase };
-
-const avatarVariants = {
+const avatarRevealVariants = {
   hidden: (index: number) => ({
     opacity: 0,
-    y: 28 + (index % 3) * 6,
-    scale: 0.88,
-    rotate: index % 2 === 0 ? -5 : 5,
+    y: 22 + (index % 3) * 4,
+    scale: 0.92,
     filter: "blur(8px)"
   }),
   visible: (index: number) => ({
     opacity: 1,
     y: 0,
     scale: 1,
-    rotate: 0,
     filter: "blur(0px)",
     transition: {
-      duration: 0.58,
-      delay: 0.12 + index * 0.06,
+      duration: 0.52,
+      delay: 0.1 + index * 0.06,
       ease: motionEase
     }
   })
@@ -93,15 +90,26 @@ export function AvatarConveyorSection() {
   const trackRef = React.useRef<HTMLDivElement | null>(null);
   const firstGroupRef = React.useRef<HTMLDivElement | null>(null);
   const dragStateRef = React.useRef<
-    { pointerId: number; startX: number; startOffset: number; moved: boolean; captured: boolean } | null
+    {
+      pointerId: number;
+      startX: number;
+      startOffset: number;
+      lastX: number;
+      lastTimestamp: number;
+      velocity: number;
+      moved: boolean;
+      captured: boolean;
+    } | null
   >(
     null
   );
+  const inertiaFrameRef = React.useRef<number | null>(null);
   const suppressClickRef = React.useRef(false);
   const cycleWidthRef = React.useRef(0);
   const offsetRef = React.useRef(0);
   const [offset, setOffset] = React.useState(0);
   const [isDragging, setIsDragging] = React.useState(false);
+  const [isInertia, setIsInertia] = React.useState(false);
   const [reduceMotion, setReduceMotion] = React.useState(false);
 
   const queryResults = useQueries({
@@ -170,7 +178,7 @@ export function AvatarConveyorSection() {
   }, [itemSignature, items.length]);
 
   React.useEffect(() => {
-    if (reduceMotion || isDragging || items.length < 2) return;
+    if (reduceMotion || isDragging || isInertia || items.length < 2) return;
 
     let frameId = 0;
     let lastTimestamp = performance.now();
@@ -191,7 +199,52 @@ export function AvatarConveyorSection() {
 
     frameId = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(frameId);
-  }, [items.length, isDragging, reduceMotion]);
+  }, [isDragging, isInertia, items.length, reduceMotion]);
+
+  const stopInertia = React.useCallback(() => {
+    if (inertiaFrameRef.current !== null) {
+      window.cancelAnimationFrame(inertiaFrameRef.current);
+      inertiaFrameRef.current = null;
+    }
+    setIsInertia(false);
+  }, []);
+
+  const startInertia = React.useCallback(
+    (initialVelocity: number) => {
+      stopInertia();
+      if (reduceMotion || Math.abs(initialVelocity) < 24) return;
+
+      setIsInertia(true);
+      let velocity = initialVelocity;
+      let lastTimestamp = performance.now();
+
+      const tick = (timestamp: number) => {
+        const cycleWidth = cycleWidthRef.current;
+        const elapsed = (timestamp - lastTimestamp) / 1000;
+        lastTimestamp = timestamp;
+
+        if (cycleWidth > 0) {
+          const nextOffset = normalizeOffset(offsetRef.current + velocity * elapsed, cycleWidth);
+          offsetRef.current = nextOffset;
+          setOffset(nextOffset);
+        }
+
+        velocity *= Math.exp(-7.5 * elapsed);
+
+        if (Math.abs(velocity) < 8) {
+          stopInertia();
+          return;
+        }
+
+        inertiaFrameRef.current = window.requestAnimationFrame(tick);
+      };
+
+      inertiaFrameRef.current = window.requestAnimationFrame(tick);
+    },
+    [reduceMotion, stopInertia]
+  );
+
+  React.useEffect(() => stopInertia, [stopInertia]);
 
   const finishDrag = React.useCallback((pointerId?: number) => {
     const dragState = dragStateRef.current;
@@ -202,22 +255,29 @@ export function AvatarConveyorSection() {
     }
 
     const moved = dragState?.moved ?? false;
+    const velocity = dragState?.velocity ?? 0;
     dragStateRef.current = null;
     setIsDragging(false);
     if (!moved) return;
+
+    startInertia(velocity);
 
     suppressClickRef.current = true;
     window.setTimeout(() => {
       suppressClickRef.current = false;
     }, 0);
-  }, []);
+  }, [startInertia]);
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (items.length === 0 || event.button !== 0) return;
+    stopInertia();
     dragStateRef.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
       startOffset: offsetRef.current,
+      lastX: event.clientX,
+      lastTimestamp: performance.now(),
+      velocity: 0,
       moved: false,
       captured: false
     };
@@ -243,9 +303,23 @@ export function AvatarConveyorSection() {
     const nextOffset = normalizeOffset(dragState.startOffset - deltaX, cycleWidth);
     offsetRef.current = nextOffset;
     setOffset(nextOffset);
+
+    const timestamp = performance.now();
+    const elapsed = Math.max((timestamp - dragState.lastTimestamp) / 1000, 0.001);
+    const pointerDelta = event.clientX - dragState.lastX;
+    const instantaneousVelocity = -pointerDelta / elapsed;
+
+    dragState.velocity = (dragState.velocity * 0.72) + (instantaneousVelocity * 0.28);
+    dragState.lastX = event.clientX;
+    dragState.lastTimestamp = timestamp;
   };
 
-  const renderConveyorGroup = (groupItems: ConveyorItem[], groupKey: string, hidden = false) => (
+  const renderConveyorGroup = (
+    groupItems: ConveyorItem[],
+    groupKey: string,
+    hidden = false,
+    animateItems = false
+  ) => (
     <div
       ref={hidden ? undefined : firstGroupRef}
       className="home-conveyor-group"
@@ -256,21 +330,10 @@ export function AvatarConveyorSection() {
           key={`${groupKey}:${item.entityType}:${item.slug}`}
           className="home-conveyor-avatar-shell"
           custom={index}
-          initial={reduceMotion ? false : "hidden"}
-          whileInView={reduceMotion ? undefined : "visible"}
-          viewport={{ once: true, amount: 0.55 }}
-          variants={reduceMotion ? undefined : avatarVariants}
-          whileHover={
-            reduceMotion
-              ? undefined
-              : {
-                  y: -10,
-                  scale: 1.04,
-                  rotate: index % 2 === 0 ? -2 : 2,
-                  transition: { duration: 0.22, ease: motionEase }
-                }
-          }
-          whileTap={reduceMotion ? undefined : { scale: 0.985 }}
+          initial={animateItems && !reduceMotion ? "hidden" : false}
+          whileInView={animateItems && !reduceMotion ? "visible" : undefined}
+          viewport={{ once: true, amount: 0.45 }}
+          variants={animateItems && !reduceMotion ? avatarRevealVariants : undefined}
         >
           <EntityAvatar
             entityType={item.entityType}
@@ -296,21 +359,14 @@ export function AvatarConveyorSection() {
       transition={sectionTransition}
     >
       <Typography variant="h2" as="h2" className="home-conveyor-title">
-        <RevealText text="Ваше личное" mode="words" />{" "}
-        <em>
-          <RevealText text="пространство" mode="words" delay={0.08} />
-        </em>
+        Ваше личное <em>пространство</em>
         <br />
-        <RevealText text="для погружения" mode="words" delay={0.18} />
+        для погружения
       </Typography>
 
-      <motion.div
+      <div
         ref={viewportRef}
         className={cn("home-conveyor-lane", isDragging && "home-conveyor-lane-dragging")}
-        initial={reduceMotion ? false : { opacity: 0, y: 18, filter: "blur(10px)" }}
-        whileInView={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
-        viewport={{ once: true, amount: 0.22 }}
-        transition={{ duration: 0.7, delay: 0.08, ease: motionEase }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={(event) => finishDrag(event.pointerId)}
@@ -327,10 +383,10 @@ export function AvatarConveyorSection() {
           className="home-conveyor-track"
           style={{ transform: `translate3d(${-offset}px, 0, 0)` }}
         >
-          {renderConveyorGroup(items, "main")}
-          {renderConveyorGroup(items, "clone", true)}
+          {renderConveyorGroup(items, "main", false, true)}
+          {renderConveyorGroup(items, "clone", true, false)}
         </div>
-      </motion.div>
+      </div>
     </motion.section>
   );
 }
