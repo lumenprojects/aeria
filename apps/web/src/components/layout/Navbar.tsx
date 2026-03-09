@@ -2,6 +2,7 @@
 import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Moon, Sun, Ellipsis } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "../ui/button";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbSeparator } from "../ui/breadcrumb";
 import { useTheme } from "@/lib/theme";
@@ -46,6 +47,13 @@ const tapOptions = [
   { value: "spark", label: "Spark" },
   { value: "pulse", label: "Pulse" }
 ] as const;
+
+const panelMotion = {
+  initial: { opacity: 0, y: -10, scale: 0.985 },
+  animate: { opacity: 1, y: 0, scale: 1 },
+  exit: { opacity: 0, y: -8, scale: 0.985 },
+  transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] as const }
+};
 
 export default function Navbar() {
   const location = useLocation();
@@ -128,227 +136,284 @@ export default function Navbar() {
         <div className="relative">
           {isEpisodeReading && (
             <div className="absolute inset-x-0 top-0 h-0.5 bg-divider">
-              <div className="h-full bg-accent transition-all" style={{ width: `${scrollProgress}%` }} />
+              <motion.div
+                className="h-full bg-accent"
+                animate={{ scaleX: scrollProgress / 100 }}
+                initial={false}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                style={{ transformOrigin: "0% 50%" }}
+              />
             </div>
           )}
           <div className="width-wide relative flex navbar-shell items-center justify-between">
             <div className="navbar-left role-ui">
-              {!isDetail ? (
-                <nav className="navbar-links">
-                  {navItems.map((item) => (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      className={({ isActive }) =>
-                        cn(
-                          "navbar-link role-ui",
-                          isActive ? "navbar-link-active accent-underline" : "tone-secondary hover:text-text"
-                        )
-                      }
-                    >
-                      {item.label}
-                    </NavLink>
-                  ))}
-                </nav>
-              ) : (
-                <div className="navbar-detail">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="navbar-back tone-secondary hover:text-text"
-                    onClick={handleBack}
-                  >
-                    Назад
-                  </Button>
-                  <Breadcrumb>
-                    <BreadcrumbList className="role-ui tone-secondary">
-                      <BreadcrumbItem>
-                        <NavLink to={`/${section}`} className="hover:text-text">
-                          {sectionLabel}
+              <AnimatePresence initial={false} mode="wait">
+                {!isDetail ? (
+                  <motion.nav key="navbar-sections" className="navbar-links" {...panelMotion}>
+                    {navItems.map((item, index) => (
+                      <motion.div
+                        key={item.to}
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ delay: index * 0.03, duration: 0.18 }}
+                        whileHover={{ y: -1.5 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <NavLink
+                          to={item.to}
+                          className={({ isActive }) =>
+                            cn(
+                              "navbar-link role-ui",
+                              isActive ? "navbar-link-active accent-underline" : "tone-secondary hover:text-text"
+                            )
+                          }
+                        >
+                          {item.label}
                         </NavLink>
-                      </BreadcrumbItem>
-                      <BreadcrumbSeparator />
-                      <BreadcrumbItem>
-                        <span className="text-text">{path.split("/").slice(-1)[0]}</span>
-                      </BreadcrumbItem>
-                    </BreadcrumbList>
-                  </Breadcrumb>
-                </div>
-              )}
+                      </motion.div>
+                    ))}
+                  </motion.nav>
+                ) : (
+                  <motion.div key="navbar-detail" className="navbar-detail" {...panelMotion}>
+                    <motion.div whileHover={{ x: -1.5 }} whileTap={{ scale: 0.98 }}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="navbar-back tone-secondary hover:text-text"
+                        onClick={handleBack}
+                      >
+                        Назад
+                      </Button>
+                    </motion.div>
+                    <Breadcrumb>
+                      <BreadcrumbList className="role-ui tone-secondary">
+                        <BreadcrumbItem>
+                          <NavLink to={`/${section}`} className="hover:text-text">
+                            {sectionLabel}
+                          </NavLink>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                          <span className="text-text">{path.split("/").slice(-1)[0]}</span>
+                        </BreadcrumbItem>
+                      </BreadcrumbList>
+                    </Breadcrumb>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              <NavLink to="/" className="pointer-events-auto navbar-logo" aria-label="Aeria">
-                <span className="navbar-logo-image" aria-hidden="true" />
-              </NavLink>
+              <motion.div whileHover={{ y: -1.5, scale: 1.015 }} transition={{ duration: 0.18 }}>
+                <NavLink to="/" className="pointer-events-auto navbar-logo" aria-label="Aeria">
+                  <span className="navbar-logo-image" aria-hidden="true" />
+                </NavLink>
+              </motion.div>
             </div>
 
             <div className="navbar-right role-ui">
               <div className="navbar-tool-cluster">
-                <button
+                <motion.button
                   type="button"
                   aria-label="Поиск"
                   className={cn("navbar-icon", searchOpen && "navbar-icon-active accent-underline")}
+                  whileHover={{ y: -1.5, scale: 1.03 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => {
                     setActivePanel(null);
                     setSearchOpen((value) => !value);
                   }}
                 >
-                  <Search size={20} />
-                </button>
-                {isEpisodeReading && (
-                  <span className="navbar-reading" title={seriesTitle ?? ""}>
-                    {currentEpisode ?? "—"}/{totalEpisodes ?? "—"}
-                  </span>
-                )}
+                  <motion.span animate={{ rotate: searchOpen ? -8 : 0 }} transition={{ duration: 0.2 }}>
+                    <Search size={20} />
+                  </motion.span>
+                </motion.button>
+                <AnimatePresence initial={false}>
+                  {isEpisodeReading && (
+                    <motion.span
+                      key="navbar-reading"
+                      className="navbar-reading"
+                      title={seriesTitle ?? ""}
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 8 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {currentEpisode ?? "—"}/{totalEpisodes ?? "—"}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </div>
               <span className="navbar-divider" aria-hidden="true" />
               <div className="navbar-tool-cluster">
-                <button
+                <motion.button
                   type="button"
                   aria-label={mode === "dark" ? "Переключить на дневной режим" : "Переключить на ночной режим"}
                   className="navbar-icon"
+                  whileHover={{ y: -1.5, scale: 1.03 }}
+                  whileTap={{ rotate: mode === "dark" ? 14 : -14, scale: 0.96 }}
                   onClick={() => setMode(mode === "dark" ? "light" : "dark")}
                 >
-                  {mode === "dark" ? <Moon size={20} /> : <Sun size={20} />}
-                </button>
-                <button
+                  <motion.span
+                    key={mode}
+                    initial={false}
+                    animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    {mode === "dark" ? <Moon size={20} /> : <Sun size={20} />}
+                  </motion.span>
+                </motion.button>
+                <motion.button
                   type="button"
                   aria-label="Шрифты"
                   className={cn(
                     "navbar-icon navbar-icon-text",
                     activePanel === "fonts" && "navbar-icon-active accent-underline"
                   )}
+                  whileHover={{ y: -1.5, scale: 1.03 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => togglePanel("fonts")}
                 >
-                  Aa
-                </button>
-                <button
+                  <motion.span animate={{ letterSpacing: activePanel === "fonts" ? "0.08em" : "0.04em" }} transition={{ duration: 0.18 }}>
+                    Aa
+                  </motion.span>
+                </motion.button>
+                <motion.button
                   type="button"
                   aria-label="Настройки"
                   className={cn("navbar-icon", activePanel === "settings" && "navbar-icon-active accent-underline")}
+                  whileHover={{ y: -1.5, scale: 1.03 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => togglePanel("settings")}
                 >
-                  <Ellipsis size={20} />
-                </button>
+                  <motion.span animate={{ rotate: activePanel === "settings" ? 90 : 0 }} transition={{ duration: 0.2 }}>
+                    <Ellipsis size={20} />
+                  </motion.span>
+                </motion.button>
               </div>
             </div>
           </div>
         </div>
-        {activePanel && (
-          <div className="navbar-subpanel-shell">
-            <div className="width-wide">
-              <div className="navbar-subpanel-inner">
-                <div className="navbar-subpanel-panel role-ui">
-                  {activePanel === "fonts" ? (
-                    <>
-                      <div className="navbar-field">
-                        <span className="navbar-label">UI</span>
-                        <select className="navbar-select" value={fontUi} onChange={(event) => setFontUi(event.target.value)}>
-                          {fontOptions.ui.map((font) => (
-                            <option key={font} value={font}>
-                              {font}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="navbar-field">
-                        <span className="navbar-label">Headings</span>
-                        <select
-                          className="navbar-select"
-                          value={fontHeading}
-                          onChange={(event) => setFontHeading(event.target.value)}
-                        >
-                          {fontOptions.heading.map((font) => (
-                            <option key={font} value={font}>
-                              {font}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="navbar-field">
-                        <span className="navbar-label">Text</span>
-                        <select
-                          className="navbar-select"
-                          value={fontBody}
-                          onChange={(event) => setFontBody(event.target.value)}
-                        >
-                          {fontOptions.body.map((font) => (
-                            <option key={font} value={font}>
-                              {font}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="navbar-field">
-                        <span className="navbar-label">Style</span>
-                        <select
-                          className="navbar-select"
-                          value={theme}
-                          onChange={(event) => setTheme(event.target.value as typeof theme)}
-                        >
-                          {themeOptions.map((item) => (
-                            <option key={item.value} value={item.value}>
-                              {item.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="navbar-field">
-                        <span className="navbar-label">Noise</span>
-                        <select
-                          className="navbar-select"
-                          value={noise ? "on" : "off"}
-                          onChange={(event) => setNoise(event.target.value === "on")}
-                        >
-                          {noiseOptions.map((item) => (
-                            <option key={item.value} value={item.value}>
-                              {item.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="navbar-field">
-                        <span className="navbar-label">Tap Effect</span>
-                        <select
-                          className="navbar-select"
-                          value={tapEffect}
-                          onChange={(event) => setTapEffect(event.target.value as typeof tapEffect)}
-                        >
-                          {tapOptions.map((item) => (
-                            <option key={item.value} value={item.value}>
-                              {item.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </>
-                  )}
+
+        <AnimatePresence initial={false} mode="wait">
+          {activePanel && (
+            <motion.div key={activePanel} className="navbar-subpanel-shell" {...panelMotion}>
+              <div className="width-wide">
+                <div className="navbar-subpanel-inner">
+                  <div className="navbar-subpanel-panel role-ui">
+                    {activePanel === "fonts" ? (
+                      <>
+                        <div className="navbar-field">
+                          <span className="navbar-label">UI</span>
+                          <select className="navbar-select" value={fontUi} onChange={(event) => setFontUi(event.target.value)}>
+                            {fontOptions.ui.map((font) => (
+                              <option key={font} value={font}>
+                                {font}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="navbar-field">
+                          <span className="navbar-label">Headings</span>
+                          <select
+                            className="navbar-select"
+                            value={fontHeading}
+                            onChange={(event) => setFontHeading(event.target.value)}
+                          >
+                            {fontOptions.heading.map((font) => (
+                              <option key={font} value={font}>
+                                {font}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="navbar-field">
+                          <span className="navbar-label">Text</span>
+                          <select
+                            className="navbar-select"
+                            value={fontBody}
+                            onChange={(event) => setFontBody(event.target.value)}
+                          >
+                            {fontOptions.body.map((font) => (
+                              <option key={font} value={font}>
+                                {font}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="navbar-field">
+                          <span className="navbar-label">Style</span>
+                          <select
+                            className="navbar-select"
+                            value={theme}
+                            onChange={(event) => setTheme(event.target.value as typeof theme)}
+                          >
+                            {themeOptions.map((item) => (
+                              <option key={item.value} value={item.value}>
+                                {item.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="navbar-field">
+                          <span className="navbar-label">Noise</span>
+                          <select
+                            className="navbar-select"
+                            value={noise ? "on" : "off"}
+                            onChange={(event) => setNoise(event.target.value === "on")}
+                          >
+                            {noiseOptions.map((item) => (
+                              <option key={item.value} value={item.value}>
+                                {item.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="navbar-field">
+                          <span className="navbar-label">Tap Effect</span>
+                          <select
+                            className="navbar-select"
+                            value={tapEffect}
+                            onChange={(event) => setTapEffect(event.target.value as typeof tapEffect)}
+                          >
+                            {tapOptions.map((item) => (
+                              <option key={item.value} value={item.value}>
+                                {item.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
       </header>
       <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-divider bg-background md:hidden">
         <div className="width-wide flex items-center justify-between navbar-mobile-row role-ui">
           {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                cn(
-                  "navbar-link role-ui",
-                  isActive ? "navbar-link-active accent-underline" : "tone-secondary hover:text-text"
-                )
-              }
-            >
-              {item.label}
-            </NavLink>
+            <motion.div key={item.to} whileHover={{ y: -1.5 }} whileTap={{ scale: 0.98 }}>
+              <NavLink
+                to={item.to}
+                className={({ isActive }) =>
+                  cn(
+                    "navbar-link role-ui",
+                    isActive ? "navbar-link-active accent-underline" : "tone-secondary hover:text-text"
+                  )
+                }
+              >
+                {item.label}
+              </NavLink>
+            </motion.div>
           ))}
         </div>
       </nav>

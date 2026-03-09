@@ -1,6 +1,7 @@
-import React from "react";
+﻿import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "framer-motion";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { Typography } from "../ui/typography";
 import { searchAll } from "@/lib/api";
@@ -122,83 +123,99 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
   const showRecent = query.length === 0 && recent.length > 0;
   const showResultsPanel = isFetching || isError || query.length > 0 || showRecent;
 
-  if (!open) return null;
-
   return (
-    <div className="bg-background">
-      <div className="width-wide search-inline-shell">
-        <Command className="search-inline-command">
-          <CommandInput
-            ref={inputRef}
-            value={query}
-            onValueChange={setQuery}
-            onFocus={queueUnderlineActivation}
-            onBlur={() => {
-              clearActivationTimer();
-              setIsInputUnderlineActive(false);
-            }}
-            placeholder="Поиск по главам, персонажам и миру..."
-            className={`search-inline-input text-text placeholder:text-muted${isInputUnderlineActive ? " search-inline-input-active" : ""}`}
-          />
-          {showResultsPanel && (
-            <div className="search-inline-panel">
-              <CommandList className="search-inline-list">
-                {isFetching && (
-                  <Typography variant="ui" as="div" className="search-inline-status tone-secondary">
-                    Ищем...
-                  </Typography>
+    <AnimatePresence initial={false}>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          className="bg-background"
+        >
+          <div className="width-wide search-inline-shell">
+            <Command className="search-inline-command">
+              <CommandInput
+                ref={inputRef}
+                value={query}
+                onValueChange={setQuery}
+                onFocus={queueUnderlineActivation}
+                onBlur={() => {
+                  clearActivationTimer();
+                  setIsInputUnderlineActive(false);
+                }}
+                placeholder="Поиск по главам, персонажам и миру..."
+                className={`search-inline-input text-text placeholder:text-muted${isInputUnderlineActive ? " search-inline-input-active" : ""}`}
+              />
+              <AnimatePresence initial={false}>
+                {showResultsPanel && (
+                  <motion.div
+                    className="search-inline-panel"
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    <CommandList className="search-inline-list">
+                      {isFetching && (
+                        <Typography variant="ui" as="div" className="search-inline-status tone-secondary">
+                          Ищем...
+                        </Typography>
+                      )}
+                      {isError && (
+                        <Typography variant="ui" as="div" className="search-inline-status tone-secondary">
+                          Поиск временно недоступен. Попробуйте позже.
+                        </Typography>
+                      )}
+                      {!isFetching && !isError && query.length > 0 && (
+                        <CommandEmpty className="search-inline-status role-ui tone-secondary">
+                          Ничего не найдено. Попробуйте другое слово.
+                        </CommandEmpty>
+                      )}
+                      {showRecent && (
+                        <CommandGroup className="search-inline-group" heading={labels.recent}>
+                          {recent.map((hit) => (
+                            <CommandItem key={`${hit.type}:${hit.id}`} className="search-inline-item" onSelect={() => handleSelect(hit)}>
+                              <div className="flex flex-col">
+                                <Typography variant="ui" as="span">
+                                  {hit.title}
+                                </Typography>
+                                {hit.summary && (
+                                  <Typography variant="ui" as="span" className="tone-secondary">
+                                    {hit.summary}
+                                  </Typography>
+                                )}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      )}
+                      {groups.map((group) => (
+                        <CommandGroup key={group.type} className="search-inline-group" heading={labels[group.type] ?? group.type}>
+                          {group.hits.map((hit: SearchHit) => (
+                            <CommandItem key={hit.id} className="search-inline-item" onSelect={() => handleSelect(hit)}>
+                              <div className="flex flex-col">
+                                <Typography variant="ui" as="span">
+                                  {hit.title}
+                                </Typography>
+                                {hit.summary && (
+                                  <Typography variant="ui" as="span" className="tone-secondary">
+                                    {hit.summary}
+                                  </Typography>
+                                )}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      ))}
+                    </CommandList>
+                  </motion.div>
                 )}
-                {isError && (
-                  <Typography variant="ui" as="div" className="search-inline-status tone-secondary">
-                    Поиск временно недоступен. Попробуйте позже.
-                  </Typography>
-                )}
-                {!isFetching && !isError && query.length > 0 && (
-                  <CommandEmpty className="search-inline-status role-ui tone-secondary">
-                    Ничего не найдено. Попробуйте другое слово.
-                  </CommandEmpty>
-                )}
-                {showRecent && (
-                  <CommandGroup className="search-inline-group" heading={labels.recent}>
-                    {recent.map((hit) => (
-                      <CommandItem key={`${hit.type}:${hit.id}`} className="search-inline-item" onSelect={() => handleSelect(hit)}>
-                        <div className="flex flex-col">
-                          <Typography variant="ui" as="span">
-                            {hit.title}
-                          </Typography>
-                          {hit.summary && (
-                            <Typography variant="ui" as="span" className="tone-secondary">
-                              {hit.summary}
-                            </Typography>
-                          )}
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-                {groups.map((group) => (
-                  <CommandGroup key={group.type} className="search-inline-group" heading={labels[group.type] ?? group.type}>
-                    {group.hits.map((hit: SearchHit) => (
-                      <CommandItem key={hit.id} className="search-inline-item" onSelect={() => handleSelect(hit)}>
-                        <div className="flex flex-col">
-                          <Typography variant="ui" as="span">
-                            {hit.title}
-                          </Typography>
-                          {hit.summary && (
-                            <Typography variant="ui" as="span" className="tone-secondary">
-                              {hit.summary}
-                            </Typography>
-                          )}
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                ))}
-              </CommandList>
-            </div>
-          )}
-        </Command>
-      </div>
-    </div>
+              </AnimatePresence>
+            </Command>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

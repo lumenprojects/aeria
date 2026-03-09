@@ -1,5 +1,5 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+﻿import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 
@@ -58,21 +58,25 @@ describe("Navbar smoke", () => {
     expect(screen.queryByText("Введите запрос для поиска")).not.toBeInTheDocument();
   });
 
-  it("toggles inline search with keyboard", () => {
+  it("toggles inline search with keyboard", async () => {
     renderNavbar("/");
     fireEvent.keyDown(window, { key: "k", ctrlKey: true });
     expect(screen.getByPlaceholderText("Поиск по главам, персонажам и миру...")).toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: "Escape" });
-    expect(screen.queryByPlaceholderText("Поиск по главам, персонажам и миру...")).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByPlaceholderText("Поиск по главам, персонажам и миру...")).not.toBeInTheDocument();
+    });
   });
 
-  it("opens fonts and settings popovers", () => {
+  it("opens fonts and settings popovers", async () => {
     renderNavbar("/");
     fireEvent.click(screen.getByRole("button", { name: "Шрифты" }));
     expect(screen.getByText("UI")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Настройки" }));
-    expect(screen.getByText("Style")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Style")).toBeInTheDocument();
+    });
   });
 });
