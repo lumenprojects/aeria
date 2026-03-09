@@ -16,6 +16,7 @@ export * from "./navigation-menu";
 export * from "./pagination";
 export * from "./popover";
 export * from "./progress";
+export * from "./reveal-text";
 export * from "./scroll-area";
 export * from "./section-break";
 export * from "./separator";

@@ -1,6 +1,6 @@
-import * as React from "react";
+﻿import * as React from "react";
 import type { HomeWorldQuoteDTO } from "@aeria/shared";
-import { Typography } from "@/components/ui";
+import { RevealText, Typography } from "@/components/ui";
 import { getRandomHomeWorldQuote } from "@/lib/api";
 
 type HeardQuoteSectionProps = {
@@ -34,13 +34,9 @@ export function HeardQuoteSection({ initialQuote }: HeardQuoteSectionProps) {
   return (
     <section className="home-heard" aria-live="polite">
       <div className="home-heard-copy">
-        <Typography variant="h1" fontRole="body" as="blockquote" className="home-heard-quote">
-          {`« ${quote.quote} »`}
-        </Typography>
+        <Typography variant="h1" fontRole="body" as="blockquote" className="home-heard-quote"><RevealText key={quote.id} text={`« ${quote.quote} »`} mode="words" /></Typography>
 
-        <Typography variant="body" as="p" className="home-heard-source">
-          {`— ${quote.source} —`}
-        </Typography>
+        <Typography variant="body" as="p" className="home-heard-source"><RevealText key={`${quote.id}-source`} text={`— ${quote.source} —`} mode="words" delay={0.12} /></Typography>
       </div>
 
       <button
@@ -57,3 +53,4 @@ export function HeardQuoteSection({ initialQuote }: HeardQuoteSectionProps) {
     </section>
   );
 }
+

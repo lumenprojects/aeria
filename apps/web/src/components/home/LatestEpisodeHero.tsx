@@ -1,8 +1,8 @@
-import type { CSSProperties } from "react";
+﻿import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import type { HomeLatestEpisodeDTO } from "@aeria/shared";
 import { EntityAvatar, Flag } from "@/components/entities";
-import { Typography } from "@/components/ui/typography";
+import { RevealText, Typography } from "@/components/ui";
 
 type LatestEpisodeHeroProps = {
   episode: HomeLatestEpisodeDTO;
@@ -18,13 +18,9 @@ export function LatestEpisodeHero({ episode }: LatestEpisodeHeroProps) {
     <article className="home-latest-hero theme-stroke theme-stroke-accent">
       <div className="home-latest-header">
         <div className="home-latest-heading">
-          <Typography variant="h1" as="h1" className="home-latest-title">
-            {heroTitle}
-          </Typography>
+          <Typography variant="h1" as="h1" className="home-latest-title"><RevealText text={heroTitle} mode="chars" /></Typography>
           {subtitle && (
-            <Typography variant="h3" as="h2" className="home-latest-subtitle tone-secondary">
-              {subtitle}
-            </Typography>
+            <Typography variant="h3" as="h2" className="home-latest-subtitle tone-secondary"><RevealText text={subtitle} mode="words" delay={0.18} /></Typography>
           )}
         </div>
         <Typography variant="h1" as="p" className="home-latest-number">
@@ -87,3 +83,4 @@ export function LatestEpisodeHero({ episode }: LatestEpisodeHeroProps) {
     </article>
   );
 }
+
