@@ -1,7 +1,8 @@
-import * as React from "react";
+﻿import * as React from "react";
+import { motion } from "framer-motion";
 import { useQueries } from "@tanstack/react-query";
 import { EntityAvatar } from "@/components/entities";
-import { Typography } from "@/components/ui/typography";
+import { RevealText, Typography } from "@/components/ui";
 import { getAtlasEntry, getCharacter } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,30 @@ const conveyorSeed: ConveyorSeedItem[] = [
 ];
 
 const conveyorSpeedPxPerSecond = 42;
+const motionEase = [0.22, 1, 0.36, 1] as const;
+const sectionTransition = { duration: 0.66, ease: motionEase };
+
+const avatarVariants = {
+  hidden: (index: number) => ({
+    opacity: 0,
+    y: 28 + (index % 3) * 6,
+    scale: 0.88,
+    rotate: index % 2 === 0 ? -5 : 5,
+    filter: "blur(8px)"
+  }),
+  visible: (index: number) => ({
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    rotate: 0,
+    filter: "blur(0px)",
+    transition: {
+      duration: 0.58,
+      delay: 0.12 + index * 0.06,
+      ease: motionEase
+    }
+  })
+};
 
 function normalizeOffset(value: number, width: number) {
   if (width <= 0) return 0;
@@ -220,17 +245,72 @@ export function AvatarConveyorSection() {
     setOffset(nextOffset);
   };
 
+  const renderConveyorGroup = (groupItems: ConveyorItem[], groupKey: string, hidden = false) => (
+    <div
+      ref={hidden ? undefined : firstGroupRef}
+      className="home-conveyor-group"
+      aria-hidden={hidden ? "true" : undefined}
+    >
+      {groupItems.map((item, index) => (
+        <motion.div
+          key={`${groupKey}:${item.entityType}:${item.slug}`}
+          className="home-conveyor-avatar-shell"
+          custom={index}
+          initial={reduceMotion ? false : "hidden"}
+          whileInView={reduceMotion ? undefined : "visible"}
+          viewport={{ once: true, amount: 0.55 }}
+          variants={reduceMotion ? undefined : avatarVariants}
+          whileHover={
+            reduceMotion
+              ? undefined
+              : {
+                  y: -10,
+                  scale: 1.04,
+                  rotate: index % 2 === 0 ? -2 : 2,
+                  transition: { duration: 0.22, ease: motionEase }
+                }
+          }
+          whileTap={reduceMotion ? undefined : { scale: 0.985 }}
+        >
+          <EntityAvatar
+            entityType={item.entityType}
+            entitySlug={item.slug}
+            imageSrc={item.imageSrc}
+            label={item.label}
+            size="lg"
+            className="home-conveyor-avatar-link"
+            avatarClassName="home-conveyor-avatar"
+          />
+        </motion.div>
+      ))}
+    </div>
+  );
+
   return (
-    <section className="home-conveyor" data-testid="home-avatar-conveyor">
+    <motion.section
+      className="home-conveyor"
+      data-testid="home-avatar-conveyor"
+      initial={reduceMotion ? false : { opacity: 0, y: 28 }}
+      whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.22 }}
+      transition={sectionTransition}
+    >
       <Typography variant="h2" as="h2" className="home-conveyor-title">
-        Ваше личное <em>пространство</em>
+        <RevealText text="Ваше личное" mode="words" />{" "}
+        <em>
+          <RevealText text="пространство" mode="words" delay={0.08} />
+        </em>
         <br />
-        для погружения
+        <RevealText text="для погружения" mode="words" delay={0.18} />
       </Typography>
 
-      <div
+      <motion.div
         ref={viewportRef}
         className={cn("home-conveyor-lane", isDragging && "home-conveyor-lane-dragging")}
+        initial={reduceMotion ? false : { opacity: 0, y: 18, filter: "blur(10px)" }}
+        whileInView={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
+        viewport={{ once: true, amount: 0.22 }}
+        transition={{ duration: 0.7, delay: 0.08, ease: motionEase }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={(event) => finishDrag(event.pointerId)}
@@ -247,38 +327,10 @@ export function AvatarConveyorSection() {
           className="home-conveyor-track"
           style={{ transform: `translate3d(${-offset}px, 0, 0)` }}
         >
-          <div ref={firstGroupRef} className="home-conveyor-group">
-            {items.map((item) => (
-              <EntityAvatar
-                key={`${item.entityType}:${item.slug}`}
-                entityType={item.entityType}
-                entitySlug={item.slug}
-                imageSrc={item.imageSrc}
-                label={item.label}
-                size="lg"
-                className="home-conveyor-avatar-link"
-                avatarClassName="home-conveyor-avatar"
-              />
-            ))}
-          </div>
-
-          <div className="home-conveyor-group" aria-hidden="true">
-            {items.map((item) => (
-              <EntityAvatar
-                key={`clone:${item.entityType}:${item.slug}`}
-                entityType={item.entityType}
-                entitySlug={item.slug}
-                imageSrc={item.imageSrc}
-                label={item.label}
-                size="lg"
-                className="home-conveyor-avatar-link"
-                avatarClassName="home-conveyor-avatar"
-              />
-            ))}
-          </div>
+          {renderConveyorGroup(items, "main")}
+          {renderConveyorGroup(items, "clone", true)}
         </div>
-      </div>
-    </section>
+      </motion.div>
+    </motion.section>
   );
 }
-
