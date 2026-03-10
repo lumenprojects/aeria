@@ -177,6 +177,26 @@ export const CharacterListItemDTO = z.object({
   tagline: z.string().nullable()
 });
 
+export const CharacterFactPersonDTO = z.object({
+  id: Uuid,
+  slug: z.string(),
+  url: z.string(),
+  name_ru: z.string(),
+  avatar_asset_path: z.string()
+});
+
+export const CharacterFactOfDayDTO = z.object({
+  id: z.number().int(),
+  fact_text: z.string(),
+  comment_text: z.string(),
+  subject_character: CharacterFactPersonDTO,
+  comment_author_character: CharacterFactPersonDTO.nullable()
+});
+
+export const CharacterFactOfDayResponseDTO = z.object({
+  fact_of_day: CharacterFactOfDayDTO.nullable()
+});
+
 export const EpisodeCharacterLinkDTO = CharacterListItemDTO;
 
 export const EpisodeLocationLinkDTO = z.object({
@@ -344,3 +364,6 @@ export type HomeLatestEpisodeDTO = z.infer<typeof HomeLatestEpisodeDTO>;
 export type HomeAboutProfileDTO = z.infer<typeof HomeAboutProfileDTO>;
 export type HomeWorldQuoteDTO = z.infer<typeof HomeWorldQuoteDTO>;
 export type HomeWorldQuoteResponseDTO = z.infer<typeof HomeWorldQuoteResponseDTO>;
+export type CharacterFactPersonDTO = z.infer<typeof CharacterFactPersonDTO>;
+export type CharacterFactOfDayDTO = z.infer<typeof CharacterFactOfDayDTO>;
+export type CharacterFactOfDayResponseDTO = z.infer<typeof CharacterFactOfDayResponseDTO>;

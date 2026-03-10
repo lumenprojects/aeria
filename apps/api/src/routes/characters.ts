@@ -3,6 +3,9 @@ import {
   AtlasReferenceDTO,
   CharacterDTO,
   CharacterDetailResponseDTO,
+  CharacterFactOfDayDTO,
+  CharacterFactOfDayResponseDTO,
+  CharacterFactPersonDTO,
   CharacterListItemDTO,
   CharacterQuirkDTO,
   CharacterRumorDTO,
@@ -66,6 +69,101 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
         limit
       },
       "/api/characters"
+    );
+  });
+
+  app.get("/api/characters/fact-of-day", async () => {
+    const totalResult = await pool.query(
+      `SELECT COUNT(*)::int AS count
+       FROM character_facts f
+       JOIN characters subject
+         ON subject.id = f.subject_character_id
+        AND subject.archived_at IS NULL
+       WHERE f.archived_at IS NULL`
+    );
+    const total = Number(totalResult.rows[0]?.count ?? 0);
+    if (total === 0) {
+      return validateResponse(
+        CharacterFactOfDayResponseDTO,
+        {
+          fact_of_day: null
+        },
+        "/api/characters/fact-of-day"
+      );
+    }
+
+    const dayKeyResult = await pool.query(
+      `SELECT FLOOR(EXTRACT(EPOCH FROM DATE_TRUNC('day', now() AT TIME ZONE 'Europe/Moscow')) / 86400)::bigint AS day_key`
+    );
+    const dayKey = Number(dayKeyResult.rows[0]?.day_key ?? 0);
+    const offset = ((dayKey % total) + total) % total;
+
+    const factResult = await pool.query(
+      `SELECT f.id, f.fact_text, f.comment_text,
+              subject.id AS subject_id,
+              subject.slug AS subject_slug,
+              subject.name_ru AS subject_name_ru,
+              subject.avatar_asset_path AS subject_avatar_asset_path,
+              author.id AS author_id,
+              author.slug AS author_slug,
+              author.name_ru AS author_name_ru,
+              author.avatar_asset_path AS author_avatar_asset_path
+       FROM character_facts f
+       JOIN characters subject
+         ON subject.id = f.subject_character_id
+        AND subject.archived_at IS NULL
+       LEFT JOIN characters author
+         ON author.id = f.comment_author_character_id
+        AND author.archived_at IS NULL
+       WHERE f.archived_at IS NULL
+       ORDER BY f.sort_order ASC, f.id ASC
+       LIMIT 1 OFFSET $1`,
+      [offset]
+    );
+
+    const factRow = factResult.rows[0];
+    const factOfDay = factRow
+      ? validateResponse(
+          CharacterFactOfDayDTO,
+          {
+            id: Number(factRow.id),
+            fact_text: factRow.fact_text,
+            comment_text: factRow.comment_text,
+            subject_character: validateResponse(
+              CharacterFactPersonDTO,
+              {
+                id: factRow.subject_id,
+                slug: factRow.subject_slug,
+                url: entityUrl("character", factRow.subject_slug),
+                name_ru: factRow.subject_name_ru,
+                avatar_asset_path: factRow.subject_avatar_asset_path
+              },
+              "/api/characters/fact-of-day:subject_character"
+            ),
+            comment_author_character: factRow.author_id
+              ? validateResponse(
+                  CharacterFactPersonDTO,
+                  {
+                    id: factRow.author_id,
+                    slug: factRow.author_slug,
+                    url: entityUrl("character", factRow.author_slug),
+                    name_ru: factRow.author_name_ru,
+                    avatar_asset_path: factRow.author_avatar_asset_path
+                  },
+                  "/api/characters/fact-of-day:comment_author_character"
+                )
+              : null
+          },
+          "/api/characters/fact-of-day:fact_of_day"
+        )
+      : null;
+
+    return validateResponse(
+      CharacterFactOfDayResponseDTO,
+      {
+        fact_of_day: factOfDay
+      },
+      "/api/characters/fact-of-day"
     );
   });
 

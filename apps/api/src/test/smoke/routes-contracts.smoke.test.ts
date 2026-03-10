@@ -141,6 +141,196 @@ describe("API route contracts smoke", () => {
     await app.close();
   });
 
+  it("returns character fact of day payload with comment author", async () => {
+    queryMock
+      .mockResolvedValueOnce({ rows: [{ count: 2 }] })
+      .mockResolvedValueOnce({ rows: [{ day_key: "20000" }] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: 11,
+            fact_text: "Лилетт однажды попыталась приготовить настоящий шоколатин.",
+            comment_text: "Я до сих пор не понимаю, почему она добавила туда ром.",
+            subject_id: "00000000-0000-0000-0000-000000000031",
+            subject_slug: "character-001",
+            subject_name_ru: "Лилетт",
+            subject_avatar_asset_path: "/assets/images/characters/character-001.png",
+            author_id: "00000000-0000-0000-0000-000000000032",
+            author_slug: "character-002",
+            author_name_ru: "Арно",
+            author_avatar_asset_path: "/assets/images/characters/character-002.png"
+          }
+        ]
+      });
+
+    const { buildApp } = await import("../../app.js");
+    const app = await buildApp();
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/characters/fact-of-day"
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      fact_of_day: {
+        id: 11,
+        fact_text: "Лилетт однажды попыталась приготовить настоящий шоколатин.",
+        comment_text: "Я до сих пор не понимаю, почему она добавила туда ром.",
+        subject_character: {
+          id: "00000000-0000-0000-0000-000000000031",
+          slug: "character-001",
+          url: "/characters/character-001",
+          name_ru: "Лилетт",
+          avatar_asset_path: "/assets/images/characters/character-001.png"
+        },
+        comment_author_character: {
+          id: "00000000-0000-0000-0000-000000000032",
+          slug: "character-002",
+          url: "/characters/character-002",
+          name_ru: "Арно",
+          avatar_asset_path: "/assets/images/characters/character-002.png"
+        }
+      }
+    });
+
+    await app.close();
+  });
+
+  it("returns character fact of day payload with null comment author", async () => {
+    queryMock
+      .mockResolvedValueOnce({ rows: [{ count: 1 }] })
+      .mockResolvedValueOnce({ rows: [{ day_key: "20000" }] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: 12,
+            fact_text: "Лилетт прячет лаванду во всех блокнотах.",
+            comment_text: "Это была не моя идея.",
+            subject_id: "00000000-0000-0000-0000-000000000031",
+            subject_slug: "character-001",
+            subject_name_ru: "Лилетт",
+            subject_avatar_asset_path: "/assets/images/characters/character-001.png",
+            author_id: null,
+            author_slug: null,
+            author_name_ru: null,
+            author_avatar_asset_path: null
+          }
+        ]
+      });
+
+    const { buildApp } = await import("../../app.js");
+    const app = await buildApp();
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/characters/fact-of-day"
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      fact_of_day: {
+        id: 12,
+        fact_text: "Лилетт прячет лаванду во всех блокнотах.",
+        comment_text: "Это была не моя идея.",
+        subject_character: {
+          id: "00000000-0000-0000-0000-000000000031",
+          slug: "character-001",
+          url: "/characters/character-001",
+          name_ru: "Лилетт",
+          avatar_asset_path: "/assets/images/characters/character-001.png"
+        },
+        comment_author_character: null
+      }
+    });
+
+    await app.close();
+  });
+
+  it("returns null fact of day when no visible facts exist", async () => {
+    queryMock.mockResolvedValueOnce({ rows: [{ count: 0 }] });
+
+    const { buildApp } = await import("../../app.js");
+    const app = await buildApp();
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/characters/fact-of-day"
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ fact_of_day: null });
+    await app.close();
+  });
+
+  it("resolves /api/characters/fact-of-day via fact route and not via slug route", async () => {
+    queryMock.mockResolvedValueOnce({ rows: [{ count: 0 }] });
+
+    const { buildApp } = await import("../../app.js");
+    const app = await buildApp();
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/characters/fact-of-day"
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(String(queryMock.mock.calls[0][0])).toContain("FROM character_facts");
+
+    await app.close();
+  });
+
+  it("uses Moscow day key to compute deterministic daily offset", async () => {
+    queryMock
+      .mockResolvedValueOnce({ rows: [{ count: 3 }] })
+      .mockResolvedValueOnce({ rows: [{ day_key: "8" }] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: 13,
+            fact_text: "Факт с offset 2.",
+            comment_text: "Комментарий без автора.",
+            subject_id: "00000000-0000-0000-0000-000000000031",
+            subject_slug: "character-001",
+            subject_name_ru: "Лилетт",
+            subject_avatar_asset_path: "/assets/images/characters/character-001.png",
+            author_id: null,
+            author_slug: null,
+            author_name_ru: null,
+            author_avatar_asset_path: null
+          }
+        ]
+      });
+
+    const { buildApp } = await import("../../app.js");
+    const app = await buildApp();
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/characters/fact-of-day"
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(queryMock.mock.calls[2][1]).toEqual([2]);
+    expect(res.json()).toEqual({
+      fact_of_day: {
+        id: 13,
+        fact_text: "Факт с offset 2.",
+        comment_text: "Комментарий без автора.",
+        subject_character: {
+          id: "00000000-0000-0000-0000-000000000031",
+          slug: "character-001",
+          url: "/characters/character-001",
+          name_ru: "Лилетт",
+          avatar_asset_path: "/assets/images/characters/character-001.png"
+        },
+        comment_author_character: null
+      }
+    });
+
+    await app.close();
+  });
+
   it("returns home snapshot with latest episode", async () => {
     queryMock
       .mockResolvedValueOnce({

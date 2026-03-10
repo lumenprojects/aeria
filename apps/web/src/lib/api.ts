@@ -1,4 +1,4 @@
-import type { HomeSnapshotDTO, HomeWorldQuoteResponseDTO } from "@aeria/shared";
+import type { CharacterFactOfDayResponseDTO, HomeSnapshotDTO, HomeWorldQuoteResponseDTO } from "@aeria/shared";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -43,6 +43,11 @@ export function getSeries(slug: string) {
 
 export function getCharacters() {
   return fetchJson<{ items: any[] }>("/api/characters");
+}
+
+export async function getCharacterFactOfDay() {
+  const payload = await fetchJson<CharacterFactOfDayResponseDTO>("/api/characters/fact-of-day");
+  return payload.fact_of_day;
 }
 
 export function getCharacter(slug: string) {

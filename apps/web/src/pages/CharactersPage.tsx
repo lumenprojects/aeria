@@ -1,16 +1,29 @@
 ﻿import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { getCharacters } from "@/lib/api";
+import { CharacterFactOfDaySection } from "@/components/characters/CharacterFactOfDaySection";
+import { getCharacterFactOfDay, getCharacters } from "@/lib/api";
 import { Typography } from "@/components/ui/typography";
 
 export default function CharactersPage() {
-  const { data } = useQuery({ queryKey: ["characters"], queryFn: getCharacters });
+  const charactersQuery = useQuery({
+    queryKey: ["characters"],
+    queryFn: getCharacters
+  });
+  const factOfDayQuery = useQuery({
+    queryKey: ["characters", "fact-of-day"],
+    queryFn: getCharacterFactOfDay,
+    retry: false
+  });
 
   return (
     <div className="page-stack">
-      <Typography variant="h1">Персонажи</Typography>
+      <CharacterFactOfDaySection
+        factOfDay={factOfDayQuery.data ?? null}
+        isLoading={factOfDayQuery.isLoading}
+        isError={factOfDayQuery.isError}
+      />
       <div className="page-grid">
-        {data?.items?.map((character) => (
+        {charactersQuery.data?.items?.map((character) => (
           <Link key={character.id} to={character.url} className="entity-link-block">
             <Typography variant="h3">{character.name_ru}</Typography>
             {character.tagline && <Typography variant="muted">{character.tagline}</Typography>}
@@ -20,3 +33,4 @@ export default function CharactersPage() {
     </div>
   );
 }
+

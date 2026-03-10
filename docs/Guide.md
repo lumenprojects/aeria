@@ -59,7 +59,7 @@ Aeria — это SPA-сайт для ранобэ-проекта: эпизоды
 - `/api/home`
 - `/api/episodes`, `/api/episodes/:slug`
 - `/api/series`, `/api/series/:slug`
-- `/api/characters`, `/api/characters/:slug`
+- `/api/characters`, `/api/characters/fact-of-day`, `/api/characters/:slug`
 - `/api/atlas`, `/api/atlas/:slug`
 - `/api/countries`, `/api/locations`
 - `/api/search`
@@ -71,6 +71,10 @@ Aeria — это SPA-сайт для ранобэ-проекта: эпизоды
   - `/api/characters/:slug` содержит `country`;
   - `/api/atlas/:slug` содержит `country`.
 - `/api/characters` исключает `listed = false`, но detail `/api/characters/:slug` остаётся доступен по прямому slug.
+- `/api/characters/fact-of-day`:
+  - источник — таблица `character_facts` в PostgreSQL;
+  - выбор записи детерминированно фиксируется на сутки по `Europe/Moscow` (переключение в `00:00 MSK`);
+  - `comment_author_character` может быть `null` (комментарий без автора).
 - `/api/home` отдаёт snapshot для главной:
   - `latest_episode` с `series`, `participants`, `country`;
   - `about_profile` из скрытого персонажа с `home_featured = true`;
@@ -261,6 +265,22 @@ Aeria — это SPA-сайт для ранобэ-проекта: эпизоды
   - подпись и текст кнопки — стандартный `body`;
   - отступ `цитата -> подпись`: `--space-sm`;
   - отступ `подпись -> кнопка`: `--space-lg`.
+
+### Кастомный блок: Факт дня (страница персонажей)
+- Блок размещается на `/characters` сразу под заголовком `Персонажи`.
+- Данные:
+  - источник — таблица `character_facts` в PostgreSQL;
+  - факт дня приходит из `GET /api/characters/fact-of-day`;
+  - ротация фиксирована на сутки по `Europe/Moscow`;
+  - таблица фактов заполняется вручную, отдельно от базы контентных карточек персонажей.
+- Структура:
+  - заголовок рубрики `Рубрика! Факт дня`;
+  - основной текст факта + аватарка персонажа факта (`EntityAvatar`);
+  - комментарий ниже с опциональным автором:
+    - если автор указан — показывается аватарка автора и текст;
+    - если автор не указан — показывается только текст комментария.
+- Fallback:
+  - при загрузке, ошибке или отсутствии доступных фактов блок остаётся в состоянии skeleton (без текстовой ошибки).
 
 ### Motion
 - Framer Motion используется выборочно для editorial-подачи интерфейса, а не как глобальная замена CSS.
