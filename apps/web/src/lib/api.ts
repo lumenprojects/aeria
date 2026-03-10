@@ -1,4 +1,10 @@
-import type { CharacterFactOfDayResponseDTO, HomeSnapshotDTO, HomeWorldQuoteResponseDTO } from "@aeria/shared";
+import type {
+  CharacterFactOfDayResponseDTO,
+  CharacterSort,
+  HomeSnapshotDTO,
+  HomeWorldQuoteResponseDTO,
+  PaginatedCharactersResponseDTO
+} from "@aeria/shared";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -41,8 +47,25 @@ export function getSeries(slug: string) {
   return fetchJson<any>(`/api/series/${slug}`);
 }
 
-export function getCharacters() {
-  return fetchJson<{ items: any[] }>("/api/characters");
+type GetCharactersParams = {
+  page?: number;
+  limit?: number;
+  q?: string;
+  country?: string;
+  affiliation?: string;
+  sort?: CharacterSort;
+};
+
+export function getCharacters(params?: GetCharactersParams) {
+  const query = new URLSearchParams();
+  if (params?.page) query.set("page", String(params.page));
+  if (params?.limit) query.set("limit", String(params.limit));
+  if (params?.q) query.set("q", params.q);
+  if (params?.country) query.set("country", params.country);
+  if (params?.affiliation) query.set("affiliation", params.affiliation);
+  if (params?.sort) query.set("sort", params.sort);
+  const qs = query.toString();
+  return fetchJson<PaginatedCharactersResponseDTO>(`/api/characters${qs ? `?${qs}` : ""}`);
 }
 
 export async function getCharacterFactOfDay() {

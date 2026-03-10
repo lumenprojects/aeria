@@ -20,10 +20,12 @@ export const entityTypeValues = [
 ] as const;
 
 export const characterRumorSourceTypeValues = ["character", "atlas_entry"] as const;
+export const characterSortValues = ["name_asc", "name_desc"] as const;
 
 export const AtlasKind = z.enum(atlasKindValues);
 export const EntityType = z.enum(entityTypeValues);
 export const CharacterRumorSourceType = z.enum(characterRumorSourceTypeValues);
+export const CharacterSort = z.enum(characterSortValues);
 
 export const Uuid = z.string().uuid();
 export const NullableUuid = Uuid.nullable();
@@ -160,6 +162,13 @@ export const AtlasListQueryDTO = PaginationQueryDTO.extend({
   kind: AtlasKind.optional()
 });
 
+export const CharactersListQueryDTO = PaginationQueryDTO.extend({
+  q: z.string().optional(),
+  country: z.string().optional(),
+  affiliation: z.string().optional(),
+  sort: CharacterSort.optional()
+});
+
 export const SearchQueryDTO = z.object({
   q: z.string().optional()
 });
@@ -168,13 +177,19 @@ export const EpisodeListItemDTO = EpisodeDTO.omit({ content_markdown: true }).ex
   country: CountryFlagDTO
 });
 
-export const CharacterListItemDTO = z.object({
+export const CharacterReferenceDTO = z.object({
   id: Uuid,
   slug: z.string(),
   url: z.string(),
   name_ru: z.string(),
   name_native: z.string().nullable(),
   tagline: z.string().nullable()
+});
+
+export const CharacterListItemDTO = CharacterReferenceDTO.extend({
+  avatar_asset_path: z.string(),
+  country: CountryFlagDTO.nullable(),
+  affiliation: AtlasReferenceDTO.nullable()
 });
 
 export const CharacterFactPersonDTO = z.object({
@@ -197,7 +212,7 @@ export const CharacterFactOfDayResponseDTO = z.object({
   fact_of_day: CharacterFactOfDayDTO.nullable()
 });
 
-export const EpisodeCharacterLinkDTO = CharacterListItemDTO;
+export const EpisodeCharacterLinkDTO = CharacterReferenceDTO;
 
 export const EpisodeLocationLinkDTO = z.object({
   id: Uuid,
@@ -358,12 +373,16 @@ export type AtlasEntryDTO = z.infer<typeof AtlasEntryDTO>;
 export type CountryDTO = z.infer<typeof CountryDTO>;
 export type CountryFlagDTO = z.infer<typeof CountryFlagDTO>;
 export type LocationDTO = z.infer<typeof LocationDTO>;
+export type CharacterReferenceDTO = z.infer<typeof CharacterReferenceDTO>;
+export type CharacterListItemDTO = z.infer<typeof CharacterListItemDTO>;
+export type PaginatedCharactersResponseDTO = z.infer<typeof PaginatedCharactersResponseDTO>;
 export type SearchResultDTO = z.infer<typeof SearchResultDTO>;
 export type HomeSnapshotDTO = z.infer<typeof HomeSnapshotDTO>;
 export type HomeLatestEpisodeDTO = z.infer<typeof HomeLatestEpisodeDTO>;
 export type HomeAboutProfileDTO = z.infer<typeof HomeAboutProfileDTO>;
 export type HomeWorldQuoteDTO = z.infer<typeof HomeWorldQuoteDTO>;
 export type HomeWorldQuoteResponseDTO = z.infer<typeof HomeWorldQuoteResponseDTO>;
+export type CharacterSort = z.infer<typeof CharacterSort>;
 export type CharacterFactPersonDTO = z.infer<typeof CharacterFactPersonDTO>;
 export type CharacterFactOfDayDTO = z.infer<typeof CharacterFactOfDayDTO>;
 export type CharacterFactOfDayResponseDTO = z.infer<typeof CharacterFactOfDayResponseDTO>;

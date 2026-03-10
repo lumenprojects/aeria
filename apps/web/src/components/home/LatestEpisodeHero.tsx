@@ -71,7 +71,7 @@ export function LatestEpisodeHero({ episode }: LatestEpisodeHeroProps) {
           <Flag country={episode.country} size="sm" className="home-latest-flag" />
         </div>
 
-        <Link to={episode.url} className="home-latest-read accent-underline">
+        <Link to={episode.url} className="home-latest-read ui-underline">
           <Typography variant="h3" fontRole="ui" as="span" className="home-latest-read-label">
             Читать
           </Typography>

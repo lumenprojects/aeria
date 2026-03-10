@@ -7,12 +7,12 @@ import {
   CharacterFactOfDayResponseDTO,
   CharacterFactPersonDTO,
   CharacterListItemDTO,
+  CharactersListQueryDTO,
   CharacterQuirkDTO,
   CharacterRumorDTO,
   CountryFlagDTO,
   EpisodeListItemDTO,
-  PaginatedCharactersResponseDTO,
-  PaginationQueryDTO
+  PaginatedCharactersResponseDTO
 } from "@aeria/shared";
 import { pool } from "../db.js";
 import {
@@ -20,29 +20,84 @@ import {
   entityUrl,
   parseQuery,
   toNullableIsoDateTime,
-  validateResponse,
-  withArchivedFilter
+  validateResponse
 } from "./utils.js";
 
 export async function registerCharactersRoutes(app: FastifyInstance) {
   app.get("/api/characters", async (req, reply) => {
-    const query = parseQuery(reply, PaginationQueryDTO, req.query);
+    const query = parseQuery(reply, CharactersListQueryDTO, req.query);
     if (!query) {
       return errorPayload("Invalid query parameters");
     }
 
     const { page, limit } = query;
     const offset = (page - 1) * limit;
-    const where = withArchivedFilter(["listed = TRUE"]);
+    const q = query.q?.trim();
+    const country = query.country?.trim();
+    const affiliation = query.affiliation?.trim();
+    const sort = query.sort ?? "name_asc";
 
-    const countResult = await pool.query(`SELECT COUNT(*)::int AS count FROM characters WHERE ${where}`);
+    const whereClauses = ["ch.archived_at IS NULL", "ch.listed = TRUE"];
+    const whereValues: unknown[] = [];
+
+    if (q) {
+      whereValues.push(`%${q}%`);
+      const searchParam = `$${whereValues.length}`;
+      whereClauses.push(`(
+        ch.name_ru ILIKE ${searchParam}
+        OR COALESCE(ch.name_native, '') ILIKE ${searchParam}
+        OR COALESCE(ch.tagline, '') ILIKE ${searchParam}
+        OR COALESCE(ch.bio_markdown, '') ILIKE ${searchParam}
+        OR COALESCE(c.title_ru, '') ILIKE ${searchParam}
+        OR COALESCE(a.title_ru, '') ILIKE ${searchParam}
+        OR COALESCE(ch.gender, '') ILIKE ${searchParam}
+        OR COALESCE(ch.race, '') ILIKE ${searchParam}
+        OR COALESCE(ch.mbti, '') ILIKE ${searchParam}
+        OR COALESCE(ch.favorite_food, '') ILIKE ${searchParam}
+      )`);
+    }
+
+    if (country) {
+      whereValues.push(country);
+      whereClauses.push(`c.slug = $${whereValues.length}`);
+    }
+
+    if (affiliation) {
+      whereValues.push(affiliation);
+      whereClauses.push(`a.slug = $${whereValues.length}`);
+    }
+
+    const where = whereClauses.join(" AND ");
+    const orderBy = sort === "name_desc" ? "ch.name_ru DESC" : "ch.name_ru ASC";
+
+    const countResult = await pool.query(
+      `SELECT COUNT(*)::int AS count
+       FROM characters ch
+       LEFT JOIN countries c ON c.id = ch.country_id AND c.archived_at IS NULL
+       LEFT JOIN atlas_entries a ON a.id = ch.affiliation_id AND a.archived_at IS NULL
+       WHERE ${where}`,
+      whereValues
+    );
+
+    const listValues = [...whereValues, limit, offset];
     const rows = await pool.query(
-      `SELECT id, slug, name_ru, name_native, tagline
-       FROM characters
+      `SELECT ch.id, ch.slug, ch.name_ru, ch.name_native, ch.tagline, ch.avatar_asset_path,
+              c.id AS country_id,
+              c.slug AS country_slug,
+              c.title_ru AS country_title_ru,
+              c.flag_colors AS country_flag_colors,
+              a.id AS affiliation_id,
+              a.slug AS affiliation_slug,
+              a.kind AS affiliation_kind,
+              a.title_ru AS affiliation_title_ru,
+              a.avatar_asset_path AS affiliation_avatar_asset_path
+       FROM characters ch
+       LEFT JOIN countries c ON c.id = ch.country_id AND c.archived_at IS NULL
+       LEFT JOIN atlas_entries a ON a.id = ch.affiliation_id AND a.archived_at IS NULL
        WHERE ${where}
-       ORDER BY name_ru ASC
-       LIMIT $1 OFFSET $2`,
-      [limit, offset]
+       ORDER BY ${orderBy}
+       LIMIT $${whereValues.length + 1} OFFSET $${whereValues.length + 2}`,
+      listValues
     );
 
     const items = rows.rows.map((row) =>
@@ -54,7 +109,37 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
           url: entityUrl("character", row.slug),
           name_ru: row.name_ru,
           name_native: row.name_native ?? null,
-          tagline: row.tagline ?? null
+          tagline: row.tagline ?? null,
+          avatar_asset_path: row.avatar_asset_path,
+          country:
+            row.country_id && row.country_slug && row.country_title_ru
+              ? validateResponse(
+                  CountryFlagDTO,
+                  {
+                    id: row.country_id,
+                    slug: row.country_slug,
+                    url: entityUrl("country", row.country_slug),
+                    title_ru: row.country_title_ru,
+                    flag_colors: row.country_flag_colors ?? null
+                  },
+                  "/api/characters:item:country"
+                )
+              : null,
+          affiliation:
+            row.affiliation_id && row.affiliation_slug && row.affiliation_kind && row.affiliation_title_ru
+              ? validateResponse(
+                  AtlasReferenceDTO,
+                  {
+                    id: row.affiliation_id,
+                    slug: row.affiliation_slug,
+                    url: entityUrl("atlas_entry", row.affiliation_slug),
+                    kind: row.affiliation_kind,
+                    title_ru: row.affiliation_title_ru,
+                    avatar_asset_path: row.affiliation_avatar_asset_path ?? null
+                  },
+                  "/api/characters:item:affiliation"
+                )
+              : null
         },
         "/api/characters:item"
       )

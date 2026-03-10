@@ -41,7 +41,7 @@ export function HeardQuoteSection({ initialQuote }: HeardQuoteSectionProps) {
 
       <button
         type="button"
-        className="home-heard-button accent-underline"
+        className="home-heard-button ui-underline"
         onClick={handleNextQuote}
         aria-label="Подслушать ещё"
         aria-busy={isLoading}

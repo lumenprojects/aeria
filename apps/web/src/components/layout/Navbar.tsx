@@ -165,7 +165,9 @@ export default function Navbar() {
                           className={({ isActive }) =>
                             cn(
                               "navbar-link role-ui",
-                              isActive ? "navbar-link-active accent-underline" : "tone-secondary hover:text-text"
+                              isActive
+                                ? "navbar-link-active ui-underline-click ui-underline-active"
+                                : "tone-secondary hover:text-text"
                             )
                           }
                         >
@@ -217,7 +219,10 @@ export default function Navbar() {
                 <motion.button
                   type="button"
                   aria-label="Поиск"
-                  className={cn("navbar-icon", searchOpen && "navbar-icon-active accent-underline")}
+                  className={cn(
+                    "navbar-icon ui-underline-click",
+                    searchOpen && "navbar-icon-active ui-underline-active"
+                  )}
                   whileHover={{ y: -1.5, scale: 1.03 }}
                   whileTap={{ scale: 0.96 }}
                   onClick={() => {
@@ -268,8 +273,8 @@ export default function Navbar() {
                   type="button"
                   aria-label="Шрифты"
                   className={cn(
-                    "navbar-icon navbar-icon-text",
-                    activePanel === "fonts" && "navbar-icon-active accent-underline"
+                    "navbar-icon navbar-icon-text ui-underline-click",
+                    activePanel === "fonts" && "navbar-icon-active ui-underline-active"
                   )}
                   whileHover={{ y: -1.5, scale: 1.03 }}
                   whileTap={{ scale: 0.96 }}
@@ -282,7 +287,10 @@ export default function Navbar() {
                 <motion.button
                   type="button"
                   aria-label="Настройки"
-                  className={cn("navbar-icon", activePanel === "settings" && "navbar-icon-active accent-underline")}
+                  className={cn(
+                    "navbar-icon ui-underline-click",
+                    activePanel === "settings" && "navbar-icon-active ui-underline-active"
+                  )}
                   whileHover={{ y: -1.5, scale: 1.03 }}
                   whileTap={{ scale: 0.96 }}
                   onClick={() => togglePanel("settings")}
@@ -407,7 +415,9 @@ export default function Navbar() {
                 className={({ isActive }) =>
                   cn(
                     "navbar-link role-ui",
-                    isActive ? "navbar-link-active accent-underline" : "tone-secondary hover:text-text"
+                    isActive
+                      ? "navbar-link-active ui-underline-click ui-underline-active"
+                      : "tone-secondary hover:text-text"
                   )
                 }
               >

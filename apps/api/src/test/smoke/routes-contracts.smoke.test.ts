@@ -106,7 +106,17 @@ describe("API route contracts smoke", () => {
             slug: "character-001",
             name_ru: "Character 001",
             name_native: null,
-            tagline: "Character tagline"
+            tagline: "Character tagline",
+            avatar_asset_path: "/assets/images/characters/character-001.png",
+            country_id: "00000000-0000-0000-0000-000000000021",
+            country_slug: "ru-example",
+            country_title_ru: "Country 01",
+            country_flag_colors: ["#111111", "#ffffff"],
+            affiliation_id: "00000000-0000-0000-0000-000000000051",
+            affiliation_slug: "atlas-001",
+            affiliation_kind: "social",
+            affiliation_title_ru: "Atlas 001",
+            affiliation_avatar_asset_path: "/assets/images/atlas/atlas-001.png"
           }
         ]
       });
@@ -128,7 +138,23 @@ describe("API route contracts smoke", () => {
           url: "/characters/character-001",
           name_ru: "Character 001",
           name_native: null,
-          tagline: "Character tagline"
+          tagline: "Character tagline",
+          avatar_asset_path: "/assets/images/characters/character-001.png",
+          country: {
+            id: "00000000-0000-0000-0000-000000000021",
+            slug: "ru-example",
+            url: "/atlas/ru-example",
+            title_ru: "Country 01",
+            flag_colors: ["#111111", "#ffffff"]
+          },
+          affiliation: {
+            id: "00000000-0000-0000-0000-000000000051",
+            slug: "atlas-001",
+            url: "/atlas/atlas-001",
+            kind: "social",
+            title_ru: "Atlas 001",
+            avatar_asset_path: "/assets/images/atlas/atlas-001.png"
+          }
         }
       ],
       total: 1,
@@ -137,6 +163,51 @@ describe("API route contracts smoke", () => {
     });
     expect(String(queryMock.mock.calls[0][0])).toContain("listed = TRUE");
     expect(String(queryMock.mock.calls[1][0])).toContain("listed = TRUE");
+
+    await app.close();
+  });
+
+  it("supports character list query filters, search and sort", async () => {
+    queryMock
+      .mockResolvedValueOnce({ rows: [{ count: 1 }] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000031",
+            slug: "character-001",
+            name_ru: "Character 001",
+            name_native: null,
+            tagline: "Character tagline",
+            avatar_asset_path: "/assets/images/characters/character-001.png",
+            country_id: "00000000-0000-0000-0000-000000000021",
+            country_slug: "ru-example",
+            country_title_ru: "Country 01",
+            country_flag_colors: ["#111111", "#ffffff"],
+            affiliation_id: "00000000-0000-0000-0000-000000000051",
+            affiliation_slug: "atlas-001",
+            affiliation_kind: "social",
+            affiliation_title_ru: "Atlas 001",
+            affiliation_avatar_asset_path: "/assets/images/atlas/atlas-001.png"
+          }
+        ]
+      });
+
+    const { buildApp } = await import("../../app.js");
+    const app = await buildApp();
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/characters?page=1&limit=100&q=tea&country=ru-example&affiliation=atlas-001&sort=name_desc"
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json().items).toHaveLength(1);
+    expect(String(queryMock.mock.calls[0][0])).toContain("COALESCE(ch.favorite_food, '') ILIKE");
+    expect(String(queryMock.mock.calls[0][0])).toContain("c.slug =");
+    expect(String(queryMock.mock.calls[0][0])).toContain("a.slug =");
+    expect(String(queryMock.mock.calls[1][0])).toContain("ORDER BY ch.name_ru DESC");
+    expect(queryMock.mock.calls[0][1]).toEqual(["%tea%", "ru-example", "atlas-001"]);
+    expect(queryMock.mock.calls[1][1]).toEqual(["%tea%", "ru-example", "atlas-001", 100, 0]);
 
     await app.close();
   });

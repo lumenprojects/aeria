@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { Typography } from "../ui/typography";
 import { searchAll } from "@/lib/api";
+import { useUnderlineActivation } from "./useUnderlineActivation";
 
 type SearchHit = {
   id: string;
@@ -17,7 +18,6 @@ type SearchHit = {
 type RecentHit = SearchHit;
 
 const RECENT_KEY = "aeria-search-recent";
-const SEARCH_UNDERLINE_DELAY_MS = 120;
 
 function loadRecent(): RecentHit[] {
   try {
@@ -38,10 +38,10 @@ function saveRecent(items: RecentHit[]) {
 export default function GlobalSearch({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const navigate = useNavigate();
   const inputRef = React.useRef<HTMLInputElement>(null);
-  const activationTimerRef = React.useRef<number | null>(null);
   const [query, setQuery] = React.useState("");
   const [recent, setRecent] = React.useState<RecentHit[]>([]);
-  const [isInputUnderlineActive, setIsInputUnderlineActive] = React.useState(false);
+  const { isUnderlineActive, setIsUnderlineActive, queueUnderlineActivation, clearUnderlineActivation } =
+    useUnderlineActivation();
   const labels: Record<string, string> = {
     episode: "Эпизоды",
     character: "Персонажи",
@@ -51,20 +51,6 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
     location: "Локации",
     recent: "Недавнее"
   };
-
-  const clearActivationTimer = React.useCallback(() => {
-    if (activationTimerRef.current === null) return;
-    window.clearTimeout(activationTimerRef.current);
-    activationTimerRef.current = null;
-  }, []);
-
-  const queueUnderlineActivation = React.useCallback(() => {
-    clearActivationTimer();
-    activationTimerRef.current = window.setTimeout(() => {
-      setIsInputUnderlineActive(true);
-      activationTimerRef.current = null;
-    }, SEARCH_UNDERLINE_DELAY_MS);
-  }, [clearActivationTimer]);
 
   const { data, isFetching, isError } = useQuery({
     queryKey: ["search", query],
@@ -92,7 +78,7 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
 
   React.useEffect(() => {
     if (open) {
-      setIsInputUnderlineActive(false);
+      setIsUnderlineActive(false);
       requestAnimationFrame(() => {
         inputRef.current?.focus();
         queueUnderlineActivation();
@@ -100,12 +86,10 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
       return;
     }
 
-    clearActivationTimer();
-    setIsInputUnderlineActive(false);
+    clearUnderlineActivation();
+    setIsUnderlineActive(false);
     setQuery("");
-  }, [clearActivationTimer, open, queueUnderlineActivation]);
-
-  React.useEffect(() => clearActivationTimer, [clearActivationTimer]);
+  }, [clearUnderlineActivation, open, queueUnderlineActivation, setIsUnderlineActive]);
 
   function addRecent(hit: SearchHit) {
     const next = [hit, ...recent.filter((item) => item.url !== hit.url)].slice(0, 6);
@@ -141,11 +125,11 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
                 onValueChange={setQuery}
                 onFocus={queueUnderlineActivation}
                 onBlur={() => {
-                  clearActivationTimer();
-                  setIsInputUnderlineActive(false);
+                  clearUnderlineActivation();
+                  setIsUnderlineActive(false);
                 }}
                 placeholder="Поиск по главам, персонажам и миру..."
-                className={`search-inline-input text-text placeholder:text-muted${isInputUnderlineActive ? " search-inline-input-active" : ""}`}
+                className={`search-inline-input interactive-input-underline text-text placeholder:text-muted${isUnderlineActive ? " interactive-input-underline-active" : ""}`}
               />
               <AnimatePresence initial={false}>
                 {showResultsPanel && (
