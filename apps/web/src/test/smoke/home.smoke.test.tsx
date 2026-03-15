@@ -60,45 +60,45 @@ vi.mock("@/lib/api", () => ({
     quote: "Старая лестница знает больше новостей, чем городская площадь.",
     source: "Услышано на лестничной клетке"
   }),
-  getCharacter: vi.fn(async (slug: string) => {
-    const entries: Record<string, { name_ru: string; avatar_asset_path: string }> = {
-      "character-001": {
-        name_ru: "Character 001",
-        avatar_asset_path: "/assets/images/characters/lilette-colombel.png"
-      },
-      ame: {
+  getCharacters: vi.fn().mockResolvedValue({
+    items: [
+      {
+        id: "00000000-0000-0000-0000-000000000101",
+        slug: "ame",
+        url: "/characters/ame",
         name_ru: "Амэ",
-        avatar_asset_path: "/assets/images/characters/ame.png"
+        name_native: null,
+        tagline: null,
+        avatar_asset_path: "/assets/images/characters/ame.png",
+        country: null,
+        affiliation: null
       },
-      "character-003": {
-        name_ru: "Character 003",
-        avatar_asset_path: "/assets/images/characters/margo-varren.png"
+      {
+        id: "00000000-0000-0000-0000-000000000102",
+        slug: "forsil-villet",
+        url: "/characters/forsil-villet",
+        name_ru: "Форсиль Виллет",
+        name_native: null,
+        tagline: null,
+        avatar_asset_path: "/assets/images/characters/forsil-villet.png",
+        country: null,
+        affiliation: null
       },
-      "character-002": {
-        name_ru: "Character 002",
-        avatar_asset_path: "/assets/images/characters/lucien-mariel.png"
+      {
+        id: "00000000-0000-0000-0000-000000000103",
+        slug: "mirai",
+        url: "/characters/mirai",
+        name_ru: "Мирай",
+        name_native: null,
+        tagline: null,
+        avatar_asset_path: "/assets/images/characters/lumendor-placeholder.svg",
+        country: null,
+        affiliation: null
       }
-    };
-
-    const character = entries[slug];
-    if (!character) throw new Error(`Character mock not found for slug: ${slug}`);
-    return { character };
-  }),
-  getAtlasEntry: vi.fn(async (slug: string) => {
-    const entries: Record<string, { title_ru: string; avatar_asset_path: string }> = {
-      "capital-example": {
-        title_ru: "Capital Example",
-        avatar_asset_path: "/assets/images/locations/capital-example.png"
-      },
-      "atlas-001": {
-        title_ru: "Atlas 001",
-        avatar_asset_path: "/assets/images/atlas/bastida-lion-dor.png"
-      }
-    };
-
-    const entry = entries[slug];
-    if (!entry) throw new Error(`Atlas mock not found for slug: ${slug}`);
-    return { entry };
+    ],
+    total: 3,
+    page: 1,
+    limit: 100
   })
 }));
 
@@ -132,7 +132,7 @@ describe("LandingPage smoke", () => {
     expect(screen.getByText("« У нас не было героев. Только сосед, который умел дышать через уши. »")).toBeInTheDocument();
     expect(screen.getByText("— Услышано у костра —")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Подслушать ещё" })).toBeInTheDocument();
-    expect(screen.getByTestId("home-country-carousel-dots").querySelectorAll("button")).toHaveLength(6);
+    expect(screen.getByTestId("home-country-carousel-dots").querySelectorAll("button")).toHaveLength(5);
     expect(view.container.querySelectorAll(".home-country-carousel-dot-active")).toHaveLength(1);
     expect(view.container.querySelectorAll(".section-break-line")).toHaveLength(6);
     expect(view.container.querySelectorAll(".section-break-stars")).toHaveLength(2);
@@ -142,9 +142,10 @@ describe("LandingPage smoke", () => {
     expect(carousel.compareDocumentPosition(conveyorHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     await waitFor(() => {
-      expect(screen.getAllByRole("link", { name: "Capital Example" })[0]).toHaveAttribute("href", "/atlas/capital-example");
+      expect(screen.getAllByRole("link", { name: "Форсиль Виллет" })[0]).toHaveAttribute("href", "/characters/forsil-villet");
     });
 
-    expect(screen.getAllByRole("link", { name: "Character 003" })[0]).toHaveAttribute("href", "/characters/character-003");
+    expect(screen.getAllByRole("link", { name: "Мирай" })[0]).toHaveAttribute("href", "/characters/mirai");
+    expect(screen.queryByRole("link", { name: "Амэ" })).not.toBeInTheDocument();
   });
 });

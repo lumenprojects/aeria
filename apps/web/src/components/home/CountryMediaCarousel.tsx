@@ -44,86 +44,72 @@ const slides: CountryMediaSlide[] = [
     id: "lumendor",
     mediaType: "image",
     src: "/assets/media/countries/lumendor-vista.svg",
-    title: "Lümendor",
+    title: "Lumentia",
     description:
-      "Они говорят, что Люмендор построен раз и навека. Не перестраивался, а доводился до совершенства.",
+      "Люмендор держится на порядке, фасадах и ощущении, будто город всегда был чуть больше любого человека, который в него вошёл.",
     country: {
       id: "country-lumendor",
       slug: "lumendor",
       title_ru: "Люмендор",
-      flag_colors: ["#d72638", "#f5f1ea", "#1d5fa7"]
+      flag_colors: ["#C1272D", "#111111", "#FFFFFF"]
     }
   },
   {
-    id: "avzonia",
+    id: "ausonia",
     mediaType: "video",
     src: "/assets/media/countries/placeholder-loop.mp4",
     poster: "/assets/media/countries/avzonia-meadow.svg",
-    title: "Авзония",
+    title: "Ausonia",
     description:
-      "Земли виноградников и тихих дворов. Здесь даже короткий разговор звучит как обещание, которое нельзя забыть.",
+      "В Авзонии виноградные склоны, тёплый воздух и закрытые дворы делают даже короткий путь похожим на тихую сцену из чьей-то памяти.",
     country: {
-      id: "country-avzonia",
-      slug: "avzonia",
+      id: "country-ausonia",
+      slug: "ausonia",
       title_ru: "Авзония",
-      flag_colors: ["#b73a3a", "#f2eadf", "#2b567a"]
+      flag_colors: ["#CD212A", "#FFFFFF", "#0055A4"]
     }
   },
   {
-    id: "virdan",
+    id: "marijja",
     mediaType: "image",
     src: "/assets/media/countries/virdan-delta.svg",
-    title: "Вирдан",
+    title: "Marijja",
     description:
-      "Дельты и каналы Вирдана работают как память: ничего не теряется, всё возвращается в другой форме.",
+      "Мериджа живёт в солнечном ритме рынков и площадей, где шум никогда не бывает случайным, а тишина всегда временная.",
     country: {
-      id: "country-virdan",
-      slug: "virdan",
-      title_ru: "Вирдан",
-      flag_colors: ["#4f7aa5", "#f4f6fa", "#1f2f4f"]
+      id: "country-marijja",
+      slug: "marijja",
+      title_ru: "Мериджа",
+      flag_colors: ["#FFBF36", "#C1272D", "#FFBF36"]
     }
   },
   {
-    id: "selune",
+    id: "rosmuir",
     mediaType: "video",
     src: "/assets/media/countries/placeholder-loop.mp4",
     poster: "/assets/media/countries/selune-coast.svg",
-    title: "Селюн",
+    title: "Rosmuir",
     description:
-      "Побережье Селюна не подстраивается под чужой ритм. Здесь ветер диктует расписание сильнее календаря.",
+      "Росмюр звучит прохладнее остальных: ветер, берег и камень спорят здесь друг с другом дольше, чем люди.",
     country: {
-      id: "country-selune",
-      slug: "selune",
-      title_ru: "Селюн",
-      flag_colors: ["#e6e9f6", "#5e6f98", "#24334e"]
+      id: "country-rosmuir",
+      slug: "rosmuir",
+      title_ru: "Росмюр",
+      flag_colors: ["#FFFFFF", "#0055A4", "#111111"]
     }
   },
   {
-    id: "norvale",
+    id: "vardfell",
     mediaType: "image",
     src: "/assets/media/countries/norvale-citadel.svg",
-    title: "Норвейл",
+    title: "Vardfell",
     description:
-      "В Норвейле у камня длинная биография. Башни помнят больше правителей, чем официальные хроники.",
+      "Вардфелль не старается понравиться сразу. Сначала в нём чувствуешь силу и холодный порядок, а уже потом замечаешь его ритм.",
     country: {
-      id: "country-norvale",
-      slug: "norvale",
-      title_ru: "Норвейл",
-      flag_colors: ["#c08a63", "#f2ddd0", "#4a3126"]
-    }
-  },
-  {
-    id: "orith",
-    mediaType: "image",
-    src: "/assets/media/countries/orith-plateau.svg",
-    title: "Орит",
-    description:
-      "Плато Орита кажется неподвижным, пока не заметишь маршруты караванов. Здесь движение прячется в паузах.",
-    country: {
-      id: "country-orith",
-      slug: "orith",
-      title_ru: "Орит",
-      flag_colors: ["#d9b984", "#f3e3bf", "#3a2a1f"]
+      id: "country-vardfell",
+      slug: "vardfell",
+      title_ru: "Вардфелль",
+      flag_colors: ["#507AA4", "#FFFFFF", "#203050"]
     }
   }
 ];

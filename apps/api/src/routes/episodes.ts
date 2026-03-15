@@ -42,7 +42,7 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
       filters.push(`c.slug = $${params.length}`);
     }
 
-    const where = withArchivedFilter(filters.length ? [filters.join(" AND ")] : []);
+    const where = withArchivedFilter(filters.length ? [filters.join(" AND ")] : [], "e.archived_at");
 
     const countResult = await pool.query(
       `SELECT COUNT(*)::int AS count
@@ -122,11 +122,11 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
       ]),
       pool.query("SELECT id, slug, title_ru, flag_colors FROM countries WHERE id = $1", [episodeRow.country_id]),
       pool.query(
-        `SELECT c.id, c.slug, c.name_ru, c.name_native, c.tagline
+        `SELECT c.id, c.slug, c.name_ru, c.name_native, c.tagline, c.avatar_asset_path
          FROM characters c
          JOIN episode_characters ec ON ec.character_id = c.id
          WHERE ec.episode_id = $1 AND c.archived_at IS NULL
-         ORDER BY c.name_ru ASC`,
+         ORDER BY ec.sort_order ASC, c.name_ru ASC`,
         [episodeRow.id]
       ),
       pool.query(
@@ -197,7 +197,8 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
           url: entityUrl("character", row.slug),
           name_ru: row.name_ru,
           name_native: row.name_native ?? null,
-          tagline: row.tagline ?? null
+          tagline: row.tagline ?? null,
+          avatar_asset_path: row.avatar_asset_path
         },
         "/api/episodes/:slug:character"
       )

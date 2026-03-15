@@ -10,7 +10,7 @@ type CharacterFactOfDaySectionProps = {
 };
 
 export function CharacterFactOfDaySection({ factOfDay, isLoading, isError }: CharacterFactOfDaySectionProps) {
-  const showSkeleton = isLoading || isError || !factOfDay;
+  const showSkeleton = isLoading || isError;
 
   if (showSkeleton) {
     return (
@@ -30,15 +30,36 @@ export function CharacterFactOfDaySection({ factOfDay, isLoading, isError }: Cha
     );
   }
 
+  if (!factOfDay) {
+    return (
+      <section className="characters-fact" data-testid="characters-fact">
+        <div className="characters-fact-head">
+          <Typography variant="h1" as="h2" className="characters-fact-heading">
+            Рубрика! <em>Факт дня</em>
+          </Typography>
+          <Typography variant="h2" fontRole="body" as="p" className="tone-secondary characters-fact-subtitle">
+            Сегодня у нас..
+          </Typography>
+        </div>
+
+        <div className="characters-fact-body">
+          <Typography variant="body" fontRole="body" as="p" className="characters-fact-text tone-secondary">
+            Блок уже на месте. Как только появятся новые записи фактов, здесь будет ежедневная подборка по персонажам.
+          </Typography>
+        </div>
+      </section>
+    );
+  }
+
   const { subject_character: subjectCharacter, comment_author_character: commentAuthorCharacter } = factOfDay;
 
   return (
     <section className="characters-fact" data-testid="characters-fact">
       <div className="characters-fact-head">
-        <Typography variant="h2" as="h2" className="characters-fact-heading">
+        <Typography variant="h1" as="h2" className="characters-fact-heading">
           Рубрика! <em>Факт дня</em>
         </Typography>
-        <Typography variant="body" as="p" className="tone-secondary characters-fact-subtitle">
+        <Typography variant="h2" fontRole="body" as="p" className="tone-secondary characters-fact-subtitle">
           Сегодня у нас..
         </Typography>
       </div>
@@ -53,13 +74,13 @@ export function CharacterFactOfDaySection({ factOfDay, isLoading, isError }: Cha
           imageSrc={subjectCharacter.avatar_asset_path}
           label={subjectCharacter.name_ru}
           ariaLabel={`Открыть персонажа ${subjectCharacter.name_ru}`}
-          size="sm"
+          size="md"
           className="characters-fact-subject-avatar-link"
           avatarClassName="characters-fact-subject-avatar"
         />
       </div>
 
-      <Separator className="characters-fact-divider" />
+      <Separator className="section-break-line width-narrow characters-fact-divider" />
 
       <div className={cn("characters-fact-comment", !commentAuthorCharacter && "characters-fact-comment-no-author")}>
         {commentAuthorCharacter ? (
@@ -69,7 +90,7 @@ export function CharacterFactOfDaySection({ factOfDay, isLoading, isError }: Cha
             imageSrc={commentAuthorCharacter.avatar_asset_path}
             label={commentAuthorCharacter.name_ru}
             ariaLabel={`Открыть персонажа ${commentAuthorCharacter.name_ru}`}
-            size="sm"
+            size="md"
             className="characters-fact-comment-avatar-link"
             avatarClassName="characters-fact-comment-avatar"
           />

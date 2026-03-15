@@ -1,5 +1,6 @@
 import type {
   CharacterFactOfDayResponseDTO,
+  EpisodeDetailResponseDTO,
   CharacterSort,
   HomeSnapshotDTO,
   HomeWorldQuoteResponseDTO,
@@ -40,7 +41,7 @@ export async function getRandomHomeWorldQuote(excludeId?: number) {
 }
 
 export function getEpisode(slug: string) {
-  return fetchJson<any>(`/api/episodes/${slug}`);
+  return fetchJson<EpisodeDetailResponseDTO>(`/api/episodes/${slug}`);
 }
 
 export function getSeries(slug: string) {

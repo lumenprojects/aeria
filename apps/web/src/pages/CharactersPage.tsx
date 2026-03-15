@@ -1,7 +1,8 @@
 ﻿import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { CharacterSort, PaginatedCharactersResponseDTO } from "@aeria/shared";
-import { ChevronRight, Search, SlidersHorizontal } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Flag } from "@/components/entities";
 import { useUnderlineActivation } from "@/components/search/useUnderlineActivation";
@@ -12,6 +13,7 @@ import { cn } from "@/lib/utils";
 
 const DEFAULT_SORT: CharacterSort = "name_asc";
 const SEARCH_DEBOUNCE_MS = 200;
+const MOTION_EASE = [0.22, 1, 0.36, 1] as const;
 
 type CharacterCatalogItem = PaginatedCharactersResponseDTO["items"][number];
 
@@ -57,6 +59,7 @@ function buildAffiliationOptions(items: CharacterCatalogItem[], selectedSlug: st
 }
 
 export default function CharactersPage() {
+  const reduceMotion = useReducedMotion();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isFiltersOpen, setIsFiltersOpen] = React.useState(false);
   const qParam = searchParams.get("q")?.trim() ?? "";
@@ -109,7 +112,8 @@ export default function CharactersPage() {
         country: countryParam || undefined,
         affiliation: affiliationParam || undefined,
         sort: sortParam
-      })
+      }),
+    placeholderData: (previous) => previous
   });
 
   const characterFiltersSourceQuery = useQuery({
@@ -133,6 +137,19 @@ export default function CharactersPage() {
   );
   const hasActiveFilters = Boolean(countryParam || affiliationParam || sortParam !== DEFAULT_SORT);
   const characters = charactersQuery.data?.items ?? [];
+
+  const layoutTransition = React.useMemo(
+    () =>
+      reduceMotion
+        ? { duration: 0 }
+        : ({
+            type: "spring",
+            stiffness: 110,
+            damping: 18,
+            mass: 0.8
+          } as const),
+    [reduceMotion]
+  );
 
   return (
     <div className="page-stack">
@@ -242,7 +259,7 @@ export default function CharactersPage() {
         )}
 
         <div className="characters-catalog-list" data-testid="characters-catalog-list">
-          {charactersQuery.isLoading && (
+          {charactersQuery.isLoading && characters.length === 0 && (
             <>
               <Skeleton className="characters-catalog-skeleton-item" />
               <Skeleton className="characters-catalog-skeleton-item" />
@@ -262,51 +279,53 @@ export default function CharactersPage() {
             </Typography>
           )}
 
-          {characters.map((character) => (
-            <Link
-              key={character.id}
-              to={character.url}
-              className="characters-catalog-item ui-underline-hover"
-              data-testid="characters-catalog-item"
-            >
-              <Avatar size="sm">
-                <AvatarImage src={character.avatar_asset_path} alt={character.name_ru} loading="lazy" decoding="async" />
-                <AvatarFallback>{fallbackText(character.name_ru)}</AvatarFallback>
-              </Avatar>
+          <AnimatePresence initial={false} mode="popLayout">
+            {characters.map((character) => (
+              <motion.div
+                key={character.id}
+                layout
+                initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
+                transition={
+                  reduceMotion
+                    ? { duration: 0 }
+                    : {
+                        opacity: { duration: 0.2, ease: MOTION_EASE },
+                        y: { duration: 0.22, ease: MOTION_EASE },
+                        layout: layoutTransition
+                      }
+                }
+              >
+                <Link to={character.url} className="characters-catalog-item ui-underline-hover" data-testid="characters-catalog-item">
+                  <Avatar size="md">
+                    <AvatarImage src={character.avatar_asset_path} alt={character.name_ru} loading="lazy" decoding="async" />
+                    <AvatarFallback>{fallbackText(character.name_ru)}</AvatarFallback>
+                  </Avatar>
 
-              <div className="characters-catalog-item-copy">
-                <Typography variant="h3" className="characters-catalog-item-name">
-                  {character.name_ru}
-                </Typography>
-
-                <div className="characters-catalog-item-country">
-                  {character.country ? (
-                    <>
-                      <Flag country={character.country} size="xs" />
-                      <Typography variant="ui" className="tone-secondary">
-                        {character.country.title_ru}
-                      </Typography>
-                    </>
-                  ) : (
-                    <Typography variant="ui" className="tone-secondary">
-                      Страна не указана
+                  <div className="characters-catalog-item-copy">
+                    <Typography variant="h2" className="characters-catalog-item-name">
+                      {character.name_ru}
                     </Typography>
-                  )}
-                </div>
 
-                <Typography variant="ui" className="tone-secondary">
-                  {character.affiliation ? character.affiliation.title_ru : "Принадлежность не указана"}
-                </Typography>
-              </div>
+                    <div className="characters-catalog-item-country">
+                      {character.country ? <Flag country={character.country} size="md" /> : null}
+                    </div>
 
-              <span className="characters-catalog-item-chevron" aria-hidden="true">
-                <ChevronRight size={26} />
-              </span>
-            </Link>
-          ))}
+                    <Typography variant="body" fontRole="ui" className="tone-secondary characters-catalog-item-affiliation">
+                      {character.affiliation ? character.affiliation.title_ru : "Принадлежность не указана"}
+                    </Typography>
+                  </div>
+
+                  <span className="characters-catalog-item-chevron role-ui" aria-hidden="true">
+                    {">"}
+                  </span>
+                </Link>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </section>
     </div>
   );
 }
-

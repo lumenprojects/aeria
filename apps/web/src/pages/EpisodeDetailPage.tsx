@@ -1,7 +1,8 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getEpisode } from "@/lib/api";
-import { MarkdownContent, Typography } from "@/components/ui";
+import { EntityAvatar, Flag } from "@/components/entities";
+import { MarkdownContent, Separator, Typography } from "@/components/ui";
 
 export default function EpisodeDetailPage() {
   const { slug } = useParams();
@@ -12,16 +13,49 @@ export default function EpisodeDetailPage() {
   });
 
   if (!data) return null;
+  const titleNative = data.episode.title_native ?? data.episode.title_ru;
+  const showRuTitle = data.episode.title_native && data.episode.title_native !== data.episode.title_ru;
 
   return (
-    <div className="page-stack">
-      <Typography variant="h1">{data.episode.title_ru}</Typography>
-      {data.episode.summary && <Typography variant="lead">{data.episode.summary}</Typography>}
-      <div className="detail-meta">
-        <Typography variant="ui">Серия: {data.series?.title_ru ?? "—"}</Typography>
-        <Typography variant="ui">Страна: {data.country?.title_ru ?? "—"}</Typography>
-      </div>
-      <MarkdownContent source={data.episode.content_markdown || ""} />
+    <div className="episode-detail-page">
+      <section className="episode-detail-hero width-medium" aria-label="Шапка главы">
+        <Separator className="section-break-line width-narrow episode-detail-separator" />
+        <div className="episode-detail-heading">
+          <Flag country={data.country} size="lg" className="episode-detail-flag" />
+          <div className="episode-detail-title-group">
+            <Typography variant="h1" as="h1" className="episode-detail-title-en">
+              {titleNative}
+            </Typography>
+            {showRuTitle && (
+              <Typography variant="h3" fontRole="body" as="p" className="episode-detail-title-ru tone-secondary">
+                {data.episode.title_ru}
+              </Typography>
+            )}
+          </div>
+          {data.characters.length > 0 && (
+            <div className="episode-detail-participants" aria-label="Участники главы">
+              {data.characters.map((character) => (
+                <EntityAvatar
+                  key={character.id}
+                  entityType="character"
+                  entitySlug={character.slug}
+                  imageSrc={character.avatar_asset_path}
+                  label={character.name_ru}
+                  size="sm"
+                  className="episode-detail-avatar-link"
+                  avatarClassName="episode-detail-avatar"
+                />
+              ))}
+            </div>
+          )}
+        </div>
+        <Separator className="section-break-line width-narrow episode-detail-separator" />
+      </section>
+      <MarkdownContent
+        source={data.episode.content_markdown || ""}
+        preset="reading"
+        className="episode-detail-content width-narrow"
+      />
     </div>
   );
 }

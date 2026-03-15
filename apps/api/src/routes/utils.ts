@@ -16,8 +16,8 @@ export function parseQuery<T>(
   return null;
 }
 
-export function withArchivedFilter(clauses: string[]) {
-  return ["archived_at IS NULL", ...clauses].filter(Boolean).join(" AND ");
+export function withArchivedFilter(clauses: string[], archivedColumn = "archived_at") {
+  return [`${archivedColumn} IS NULL`, ...clauses].filter(Boolean).join(" AND ");
 }
 
 export function toNullableIsoDateTime(value: unknown): string | null {

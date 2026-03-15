@@ -5,10 +5,31 @@ import { EntityAvatar, Flag } from "@/components/entities";
 import { RevealText, Typography } from "@/components/ui";
 
 type LatestEpisodeHeroProps = {
-  episode: HomeLatestEpisodeDTO;
+  episode: HomeLatestEpisodeDTO | null;
 };
 
 export function LatestEpisodeHero({ episode }: LatestEpisodeHeroProps) {
+  if (!episode) {
+    return (
+      <article className="home-latest-hero theme-stroke theme-stroke-accent">
+        <div className="home-latest-header">
+          <div className="home-latest-heading">
+            <Typography variant="h1" as="h1" className="home-latest-title">
+              Последняя глава
+            </Typography>
+            <Typography variant="h3" as="h2" className="home-latest-subtitle tone-secondary">
+              Раздел уже собран, ждёт первую актуальную запись.
+            </Typography>
+          </div>
+        </div>
+
+        <Typography variant="h3" fontRole="body" className="home-latest-summary width-narrow tone-secondary">
+          После добавления и импорта новых эпизодов здесь снова появится актуальная глава с участниками и переходом к чтению.
+        </Typography>
+      </article>
+    );
+  }
+
   const heroTitle = episode.title_native ?? episode.title_ru;
   const subtitle = episode.title_native ? episode.title_ru : null;
   const participants = episode.participants.slice(0, 3);
@@ -68,7 +89,7 @@ export function LatestEpisodeHero({ episode }: LatestEpisodeHeroProps) {
         </div>
 
         <div className="home-latest-flag-slot">
-          <Flag country={episode.country} size="sm" className="home-latest-flag" />
+          <Flag country={episode.country} size="lg" className="home-latest-flag" />
         </div>
 
         <Link to={episode.url} className="home-latest-read ui-underline">

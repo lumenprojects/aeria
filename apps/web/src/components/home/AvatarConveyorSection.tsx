@@ -1,33 +1,17 @@
-﻿import * as React from "react";
+import * as React from "react";
 import { motion } from "framer-motion";
-import { useQueries } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { EntityAvatar } from "@/components/entities";
 import { Typography } from "@/components/ui/typography";
-import { getAtlasEntry, getCharacter } from "@/lib/api";
+import { getCharacters } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-type ConveyorEntityType = "character" | "location" | "atlas_entry";
-
-type ConveyorSeedItem = {
-  entityType: ConveyorEntityType;
-  slug: string;
-};
-
 type ConveyorItem = {
-  entityType: ConveyorEntityType;
+  entityType: "character";
   slug: string;
   label: string;
   imageSrc: string;
 };
-
-const conveyorSeed: ConveyorSeedItem[] = [
-  { entityType: "location", slug: "capital-example" },
-  { entityType: "character", slug: "character-001" },
-  { entityType: "atlas_entry", slug: "atlas-001" },
-  { entityType: "character", slug: "ame" },
-  { entityType: "character", slug: "character-003" },
-  { entityType: "character", slug: "character-002" }
-];
 
 const conveyorSpeedPxPerSecond = 42;
 const motionEase = [0.22, 1, 0.36, 1] as const;
@@ -58,33 +42,6 @@ function normalizeOffset(value: number, width: number) {
   return normalized < 0 ? normalized + width : normalized;
 }
 
-async function resolveConveyorItem(seed: ConveyorSeedItem): Promise<ConveyorItem | null> {
-  if (seed.entityType === "character") {
-    const data = await getCharacter(seed.slug);
-    const avatar = data?.character?.avatar_asset_path;
-    const label = data?.character?.name_ru;
-    if (!avatar || !label) return null;
-    return {
-      entityType: "character",
-      slug: seed.slug,
-      label,
-      imageSrc: avatar
-    };
-  }
-
-  const data = await getAtlasEntry(seed.slug);
-  const avatar = data?.entry?.avatar_asset_path;
-  const label = data?.entry?.title_ru;
-  if (!avatar || !label) return null;
-
-  return {
-    entityType: seed.entityType,
-    slug: seed.slug,
-    label,
-    imageSrc: avatar
-  };
-}
-
 export function AvatarConveyorSection() {
   const viewportRef = React.useRef<HTMLDivElement | null>(null);
   const trackRef = React.useRef<HTMLDivElement | null>(null);
@@ -108,24 +65,28 @@ export function AvatarConveyorSection() {
   const cycleWidthRef = React.useRef(0);
   const offsetRef = React.useRef(0);
   const [offset, setOffset] = React.useState(0);
+  const [groupRepeatCount, setGroupRepeatCount] = React.useState(2);
   const [isDragging, setIsDragging] = React.useState(false);
   const [isInertia, setIsInertia] = React.useState(false);
   const [reduceMotion, setReduceMotion] = React.useState(false);
 
-  const queryResults = useQueries({
-    queries: conveyorSeed.map((seed) => ({
-      queryKey: ["home-conveyor", seed.entityType, seed.slug],
-      queryFn: () => resolveConveyorItem(seed),
-      retry: false
-    }))
+  const { data } = useQuery({
+    queryKey: ["home-conveyor", "characters"],
+    queryFn: () => getCharacters({ page: 1, limit: 100, sort: "name_asc" }),
+    retry: false
   });
 
   const items = React.useMemo(
     () =>
-      queryResults
-        .map((result) => result.data)
-        .filter((value): value is ConveyorItem => Boolean(value)),
-    [queryResults]
+      (data?.items ?? [])
+        .filter((item) => item.slug !== "ame" && Boolean(item.avatar_asset_path) && Boolean(item.name_ru))
+        .map((item) => ({
+          entityType: "character" as const,
+          slug: item.slug,
+          label: item.name_ru,
+          imageSrc: item.avatar_asset_path
+        })),
+    [data]
   );
   const itemSignature = React.useMemo(
     () => items.map((item) => `${item.entityType}:${item.slug}:${item.imageSrc}`).join("|"),
@@ -156,9 +117,15 @@ export function AvatarConveyorSection() {
     const recalculateCycleWidth = () => {
       const groupWidth = firstGroup.getBoundingClientRect().width;
       const trackGap = Number.parseFloat(window.getComputedStyle(track).columnGap || "0");
-      cycleWidthRef.current = groupWidth + trackGap;
+      const viewportWidth = viewportRef.current?.getBoundingClientRect().width ?? 0;
+      const cycleWidth = groupWidth + trackGap;
+      cycleWidthRef.current = cycleWidth;
       offsetRef.current = normalizeOffset(offsetRef.current, cycleWidthRef.current);
       setOffset(offsetRef.current);
+
+      if (cycleWidth > 0) {
+        setGroupRepeatCount(Math.max(2, Math.ceil(viewportWidth / cycleWidth) + 2));
+      }
     };
 
     recalculateCycleWidth();
@@ -246,27 +213,30 @@ export function AvatarConveyorSection() {
 
   React.useEffect(() => stopInertia, [stopInertia]);
 
-  const finishDrag = React.useCallback((pointerId?: number) => {
-    const dragState = dragStateRef.current;
-    if (pointerId !== undefined && dragState?.pointerId !== pointerId) return;
+  const finishDrag = React.useCallback(
+    (pointerId?: number) => {
+      const dragState = dragStateRef.current;
+      if (pointerId !== undefined && dragState?.pointerId !== pointerId) return;
 
-    if (dragState?.captured && pointerId !== undefined && viewportRef.current?.hasPointerCapture(pointerId)) {
-      viewportRef.current.releasePointerCapture(pointerId);
-    }
+      if (dragState?.captured && pointerId !== undefined && viewportRef.current?.hasPointerCapture(pointerId)) {
+        viewportRef.current.releasePointerCapture(pointerId);
+      }
 
-    const moved = dragState?.moved ?? false;
-    const velocity = dragState?.velocity ?? 0;
-    dragStateRef.current = null;
-    setIsDragging(false);
-    if (!moved) return;
+      const moved = dragState?.moved ?? false;
+      const velocity = dragState?.velocity ?? 0;
+      dragStateRef.current = null;
+      setIsDragging(false);
+      if (!moved) return;
 
-    startInertia(velocity);
+      startInertia(velocity);
 
-    suppressClickRef.current = true;
-    window.setTimeout(() => {
-      suppressClickRef.current = false;
-    }, 0);
-  }, [startInertia]);
+      suppressClickRef.current = true;
+      window.setTimeout(() => {
+        suppressClickRef.current = false;
+      }, 0);
+    },
+    [startInertia]
+  );
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (items.length === 0 || event.button !== 0) return;
@@ -321,13 +291,14 @@ export function AvatarConveyorSection() {
     animateItems = false
   ) => (
     <div
+      key={groupKey}
       ref={hidden ? undefined : firstGroupRef}
       className="home-conveyor-group"
       aria-hidden={hidden ? "true" : undefined}
     >
       {groupItems.map((item, index) => (
         <motion.div
-          key={`${groupKey}:${item.entityType}:${item.slug}`}
+          key={`${groupKey}:${item.slug}`}
           className="home-conveyor-avatar-shell"
           custom={index}
           initial={animateItems && !reduceMotion ? "hidden" : false}
@@ -383,8 +354,9 @@ export function AvatarConveyorSection() {
           className="home-conveyor-track"
           style={{ transform: `translate3d(${-offset}px, 0, 0)` }}
         >
-          {renderConveyorGroup(items, "main", false, true)}
-          {renderConveyorGroup(items, "clone", true, false)}
+          {Array.from({ length: groupRepeatCount }).map((_, index) =>
+            renderConveyorGroup(items, index === 0 ? "main" : `clone-${index}`, index > 0, index === 0)
+          )}
         </div>
       </div>
     </motion.section>

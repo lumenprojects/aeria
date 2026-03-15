@@ -645,17 +645,18 @@ describe("API route contracts smoke", () => {
           }
         ]
       })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000031",
-            slug: "character-001",
-            name_ru: "Character 001",
-            name_native: null,
-            tagline: "Character tagline"
-          }
-        ]
-      })
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: "00000000-0000-0000-0000-000000000031",
+              slug: "character-001",
+              name_ru: "Character 001",
+              name_native: null,
+              tagline: "Character tagline",
+              avatar_asset_path: "/assets/images/characters/character-001.png"
+            }
+          ]
+        })
       .mockResolvedValueOnce({
         rows: [
           {
@@ -708,16 +709,17 @@ describe("API route contracts smoke", () => {
         title_ru: "Country 01",
         flag_colors: ["#111111", "#ffffff"]
       },
-      characters: [
-        {
-          id: "00000000-0000-0000-0000-000000000031",
-          slug: "character-001",
-          url: "/characters/character-001",
-          name_ru: "Character 001",
-          name_native: null,
-          tagline: "Character tagline"
-        }
-      ],
+        characters: [
+          {
+            id: "00000000-0000-0000-0000-000000000031",
+            slug: "character-001",
+            url: "/characters/character-001",
+            name_ru: "Character 001",
+            name_native: null,
+            tagline: "Character tagline",
+            avatar_asset_path: "/assets/images/characters/character-001.png"
+          }
+        ],
       locations: [
         {
           id: "00000000-0000-0000-0000-000000000041",

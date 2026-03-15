@@ -117,7 +117,7 @@ describe("CharactersPage catalog smoke", () => {
     expect(screen.getAllByTestId("characters-catalog-item")[0]).toHaveAttribute("href", "/characters/character-001");
   });
 
-  it("keeps persistent fact skeleton and renders catalog fallback labels", async () => {
+  it("renders fact empty state and catalog fallback labels when no fact is available", async () => {
     getCharactersMock.mockResolvedValue(
       paginated([
         {
@@ -142,8 +142,8 @@ describe("CharactersPage catalog smoke", () => {
       expect(screen.getByRole("link", { name: /Лилетт/i })).toBeInTheDocument();
     });
 
-    expect(screen.getByTestId("characters-fact-skeleton")).toBeInTheDocument();
-    expect(screen.getByText("Страна не указана")).toBeInTheDocument();
+    expect(screen.getByText(/Блок уже на месте\./i)).toBeInTheDocument();
+    expect(screen.queryByText("Страна не указана")).not.toBeInTheDocument();
     expect(screen.getByText("Принадлежность не указана")).toBeInTheDocument();
   });
 

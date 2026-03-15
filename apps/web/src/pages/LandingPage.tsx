@@ -228,16 +228,14 @@ export default function LandingPage() {
 
   const sections: HomeSection[] = [];
 
-  if (data?.latest_episode) {
-    sections.push({
-      key: "latest",
-      content: (
-        <div className="width-wide">
-          <LatestEpisodeHero episode={data.latest_episode} />
-        </div>
-      )
-    });
-  }
+  sections.push({
+    key: "latest",
+    content: (
+      <div className="width-wide">
+        <LatestEpisodeHero episode={data?.latest_episode ?? null} />
+      </div>
+    )
+  });
 
   if (data?.about_profile) {
     sections.push({
@@ -330,4 +328,3 @@ export default function LandingPage() {
 
   return <div className="home-feed">{renderSectionFlow(sections)}</div>;
 }
-

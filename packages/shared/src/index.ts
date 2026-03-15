@@ -212,7 +212,9 @@ export const CharacterFactOfDayResponseDTO = z.object({
   fact_of_day: CharacterFactOfDayDTO.nullable()
 });
 
-export const EpisodeCharacterLinkDTO = CharacterReferenceDTO;
+export const EpisodeCharacterLinkDTO = CharacterReferenceDTO.extend({
+  avatar_asset_path: z.string()
+});
 
 export const EpisodeLocationLinkDTO = z.object({
   id: Uuid,
@@ -376,6 +378,8 @@ export type LocationDTO = z.infer<typeof LocationDTO>;
 export type CharacterReferenceDTO = z.infer<typeof CharacterReferenceDTO>;
 export type CharacterListItemDTO = z.infer<typeof CharacterListItemDTO>;
 export type PaginatedCharactersResponseDTO = z.infer<typeof PaginatedCharactersResponseDTO>;
+export type EpisodeCharacterLinkDTO = z.infer<typeof EpisodeCharacterLinkDTO>;
+export type EpisodeDetailResponseDTO = z.infer<typeof EpisodeDetailResponseDTO>;
 export type SearchResultDTO = z.infer<typeof SearchResultDTO>;
 export type HomeSnapshotDTO = z.infer<typeof HomeSnapshotDTO>;
 export type HomeLatestEpisodeDTO = z.infer<typeof HomeLatestEpisodeDTO>;
