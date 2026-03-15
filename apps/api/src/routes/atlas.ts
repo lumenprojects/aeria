@@ -4,6 +4,7 @@ import {
   AtlasEntryDTO,
   AtlasListItemDTO,
   AtlasLinkDTO,
+  AtlasPreviewDTO,
   CountryFlagDTO,
   AtlasListQueryDTO,
   PaginatedAtlasResponseDTO
@@ -73,6 +74,126 @@ export async function registerAtlasRoutes(app: FastifyInstance) {
         limit
       },
       "/api/atlas"
+    );
+  });
+
+  app.get("/api/atlas/:slug/preview", async (req, reply) => {
+    const { slug } = req.params as { slug: string };
+    const entryResult = await pool.query(
+      "SELECT id, slug, kind, title_ru, summary, avatar_asset_path, country_id FROM atlas_entries WHERE slug = $1 AND archived_at IS NULL",
+      [slug]
+    );
+    const entryRow = entryResult.rows[0];
+
+    if (!entryRow) {
+      const countryResult = await pool.query(
+        "SELECT id, slug, title_ru, flag_colors FROM countries WHERE slug = $1 AND archived_at IS NULL",
+        [slug]
+      );
+      const country = countryResult.rows[0];
+      if (country) {
+        const countryItem = validateResponse(
+          CountryFlagDTO,
+          {
+            id: country.id,
+            slug: country.slug,
+            url: entityUrl("country", country.slug),
+            title_ru: country.title_ru,
+            flag_colors: country.flag_colors ?? null
+          },
+          "/api/atlas/:slug/preview:fallback-country:country"
+        );
+
+        return validateResponse(
+          AtlasPreviewDTO,
+          {
+            slug: country.slug,
+            url: entityUrl("country", country.slug),
+            kind: "geography",
+            title_ru: country.title_ru,
+            summary: null,
+            avatar_asset_path: null,
+            country: countryItem
+          },
+          "/api/atlas/:slug/preview:fallback-country"
+        );
+      }
+
+      const locationResult = await pool.query(
+        "SELECT id, slug, title_ru, summary, avatar_asset_path, country_id FROM locations WHERE slug = $1 AND archived_at IS NULL",
+        [slug]
+      );
+      const location = locationResult.rows[0];
+      if (!location) {
+        reply.code(404);
+        return errorPayload("Atlas entry not found");
+      }
+
+      const locationCountry = location.country_id
+        ? await pool.query(
+            "SELECT id, slug, title_ru, flag_colors FROM countries WHERE id = $1 AND archived_at IS NULL",
+            [location.country_id]
+          )
+        : { rows: [] };
+
+      return validateResponse(
+        AtlasPreviewDTO,
+        {
+          slug: location.slug,
+          url: entityUrl("location", location.slug),
+          kind: "geography",
+          title_ru: location.title_ru,
+          summary: location.summary ?? null,
+          avatar_asset_path: location.avatar_asset_path ?? null,
+          country: locationCountry.rows[0]
+            ? validateResponse(
+                CountryFlagDTO,
+                {
+                  id: locationCountry.rows[0].id,
+                  slug: locationCountry.rows[0].slug,
+                  url: entityUrl("country", locationCountry.rows[0].slug),
+                  title_ru: locationCountry.rows[0].title_ru,
+                  flag_colors: locationCountry.rows[0].flag_colors ?? null
+                },
+                "/api/atlas/:slug/preview:fallback-location:country"
+              )
+            : null
+        },
+        "/api/atlas/:slug/preview:fallback-location"
+      );
+    }
+
+    const country = entryRow.country_id
+      ? await pool.query(
+          "SELECT id, slug, title_ru, flag_colors FROM countries WHERE id = $1 AND archived_at IS NULL",
+          [entryRow.country_id]
+        )
+      : { rows: [] };
+
+    return validateResponse(
+      AtlasPreviewDTO,
+      {
+        slug: entryRow.slug,
+        url: entityUrl("atlas_entry", entryRow.slug),
+        kind: entryRow.kind,
+        title_ru: entryRow.title_ru,
+        summary: entryRow.summary ?? null,
+        avatar_asset_path: entryRow.avatar_asset_path ?? null,
+        country: country.rows[0]
+          ? validateResponse(
+              CountryFlagDTO,
+              {
+                id: country.rows[0].id,
+                slug: country.rows[0].slug,
+                url: entityUrl("country", country.rows[0].slug),
+                title_ru: country.rows[0].title_ru,
+                flag_colors: country.rows[0].flag_colors ?? null
+              },
+              "/api/atlas/:slug/preview:country"
+            )
+          : null
+      },
+      "/api/atlas/:slug/preview"
     );
   });
 

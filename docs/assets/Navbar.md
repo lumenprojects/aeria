@@ -21,6 +21,7 @@
 
 ## 4) Surface и ритм
 - Верхний navbar: `sticky`, контент в `width-wide`.
+- Внутренние inset desktop-navbar: сверху `--space-lg`, снизу `--space-md`.
 - Mobile: нижняя панель с теми же разделами.
 - В desktop правой группе один разделитель между `Поиск(+reading)` и `День/Ночь + Aa + ...`.
 - Панели `Aa` и `...` открываются в фиксированной правой зоне под navbar.
@@ -39,12 +40,12 @@
 Локальные копии underline запрещены.
 
 Допустимые классы:
-- `accent-underline`
-- `accent-underline-click`
-- `accent-underline-hover`
+- `ui-underline`
+- `ui-underline-click`
+- `ui-underline-hover`
 
 Активация click underline:
-- `.accent-underline-active`
+- `.ui-underline-active`
 - `data-underline-active="true"`
 - `aria-current="page"`
 - `aria-expanded="true"`

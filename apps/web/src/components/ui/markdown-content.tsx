@@ -2,6 +2,7 @@ import type { ComponentPropsWithoutRef, CSSProperties } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
+import { InlineEntityReference } from "./inline-entity-reference";
 import { RevealRichText } from "./reveal-text";
 import { Typography } from "./typography";
 
@@ -19,8 +20,8 @@ type MarkdownContentProps = {
 };
 
 const readingTextStyle: CSSProperties = {
-  fontSize: "var(--markdown-reading-font-size)",
-  lineHeight: "var(--markdown-reading-line-height)"
+  fontSize: "var(--type-reading)",
+  lineHeight: "var(--lh-reading)"
 };
 
 const readingHeadingStyle: CSSProperties = {
@@ -57,7 +58,12 @@ export function MarkdownContent({
           </Typography>
         ),
         h3: ({ children }) => (
-          <Typography variant="h4" as="h4" className={cn(isReading && "markdown-reading-heading")} style={isReading ? readingHeadingStyle : undefined}>
+          <Typography
+            variant="h4"
+            as="h3"
+            className={cn(isReading ? "markdown-reading-scene-label" : undefined)}
+            style={isReading ? readingHeadingStyle : undefined}
+          >
             {revealInline(children)}
           </Typography>
         ),
@@ -87,9 +93,13 @@ export function MarkdownContent({
         ),
         a: ({ href, children }) =>
           href ? (
-            <a href={href} className="markdown-link">
-              {children}
-            </a>
+            isReading && /^\/(?:characters|atlas)\//.test(href) ? (
+              <InlineEntityReference href={href}>{children}</InlineEntityReference>
+            ) : (
+              <a href={href} className="markdown-link">
+                {children}
+              </a>
+            )
           ) : (
             <>{children}</>
           ),
@@ -103,7 +113,7 @@ export function MarkdownContent({
             {revealInline(children)}
           </blockquote>
         ),
-        hr: () => <div className="markdown-divider" aria-hidden="true" />,
+        hr: () => <div className={cn("markdown-divider", isReading && "markdown-divider-reading")} aria-hidden="true" />,
         pre: ({ children }) => <pre className="markdown-pre">{children}</pre>,
         code: ({ inline, children, className: codeClassName, ...props }: MarkdownCodeProps) =>
           inline ? (

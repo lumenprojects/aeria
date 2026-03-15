@@ -318,6 +318,177 @@ describe("API route contracts smoke", () => {
     await app.close();
   });
 
+  it("returns compact character preview payload", async () => {
+    queryMock
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000031",
+            slug: "forsil-villet",
+            name_ru: "Форсиль Виллет",
+            avatar_asset_path: "/assets/images/characters/forsil-villet.png",
+            name_native: "Forsil Villet",
+            affiliation_id: "00000000-0000-0000-0000-000000000051",
+            country_id: "00000000-0000-0000-0000-000000000021",
+            tagline: "Дом держится на её ритме."
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000021",
+            slug: "ausonia",
+            title_ru: "Авзония",
+            flag_colors: ["#CD212A", "#FFFFFF", "#0055A4"]
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000051",
+            slug: "domaine-des-immortelles",
+            kind: "geography",
+            title_ru: "Бастида де ла Люн д'Ор",
+            avatar_asset_path: "/assets/images/atlas/domaine-des-immortelles.png"
+          }
+        ]
+      });
+
+    const { buildApp } = await import("../../app.js");
+    const app = await buildApp();
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/characters/forsil-villet/preview"
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      slug: "forsil-villet",
+      url: "/characters/forsil-villet",
+      name_ru: "Форсиль Виллет",
+      name_native: "Forsil Villet",
+      avatar_asset_path: "/assets/images/characters/forsil-villet.png",
+      tagline: "Дом держится на её ритме.",
+      country: {
+        id: "00000000-0000-0000-0000-000000000021",
+        slug: "ausonia",
+        url: "/atlas/ausonia",
+        title_ru: "Авзония",
+        flag_colors: ["#CD212A", "#FFFFFF", "#0055A4"]
+      },
+      affiliation: {
+        id: "00000000-0000-0000-0000-000000000051",
+        slug: "domaine-des-immortelles",
+        url: "/atlas/domaine-des-immortelles",
+        kind: "geography",
+        title_ru: "Бастида де ла Люн д'Ор",
+        avatar_asset_path: "/assets/images/atlas/domaine-des-immortelles.png"
+      }
+    });
+
+    await app.close();
+  });
+
+  it("returns atlas preview payload for country fallback slugs", async () => {
+    queryMock
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000021",
+            slug: "ausonia",
+            title_ru: "Авзония",
+            flag_colors: ["#CD212A", "#FFFFFF", "#0055A4"]
+          }
+        ]
+      });
+
+    const { buildApp } = await import("../../app.js");
+    const app = await buildApp();
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/atlas/ausonia/preview"
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      slug: "ausonia",
+      url: "/atlas/ausonia",
+      kind: "geography",
+      title_ru: "Авзония",
+      summary: null,
+      avatar_asset_path: null,
+      country: {
+        id: "00000000-0000-0000-0000-000000000021",
+        slug: "ausonia",
+        url: "/atlas/ausonia",
+        title_ru: "Авзония",
+        flag_colors: ["#CD212A", "#FFFFFF", "#0055A4"]
+      }
+    });
+
+    await app.close();
+  });
+
+  it("returns atlas preview payload for location fallback slugs", async () => {
+    queryMock
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000061",
+            slug: "biblioteka-lorlayt",
+            title_ru: "Библиотека Лорлайт",
+            summary: "Главная библиотека Эверсоула.",
+            avatar_asset_path: "/assets/images/locations/biblioteka-lorlayt.png",
+            country_id: "00000000-0000-0000-0000-000000000021"
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000021",
+            slug: "lumendor",
+            title_ru: "Люмендор",
+            flag_colors: ["#C1272D", "#111111", "#FFFFFF"]
+          }
+        ]
+      });
+
+    const { buildApp } = await import("../../app.js");
+    const app = await buildApp();
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/atlas/biblioteka-lorlayt/preview"
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      slug: "biblioteka-lorlayt",
+      url: "/atlas/biblioteka-lorlayt",
+      kind: "geography",
+      title_ru: "Библиотека Лорлайт",
+      summary: "Главная библиотека Эверсоула.",
+      avatar_asset_path: "/assets/images/locations/biblioteka-lorlayt.png",
+      country: {
+        id: "00000000-0000-0000-0000-000000000021",
+        slug: "lumendor",
+        url: "/atlas/lumendor",
+        title_ru: "Люмендор",
+        flag_colors: ["#C1272D", "#111111", "#FFFFFF"]
+      }
+    });
+
+    await app.close();
+  });
+
   it("returns null fact of day when no visible facts exist", async () => {
     queryMock.mockResolvedValueOnce({ rows: [{ count: 0 }] });
 

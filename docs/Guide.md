@@ -44,8 +44,8 @@
 - `/api/home`
 - `/api/episodes`, `/api/episodes/:slug`
 - `/api/series`, `/api/series/:slug`
-- `/api/characters`, `/api/characters/fact-of-day`, `/api/characters/:slug`
-- `/api/atlas`, `/api/atlas/:slug`
+- `/api/characters`, `/api/characters/fact-of-day`, `/api/characters/:slug`, `/api/characters/:slug/preview`
+- `/api/atlas`, `/api/atlas/:slug`, `/api/atlas/:slug/preview`
 - `/api/countries`, `/api/locations`
 - `/api/search`
 
@@ -91,7 +91,7 @@ Shape item в `/api/characters`:
 ## 6) Навбар (контракт)
 - `sticky` верхний navbar + mobile bottom nav.
 - Верхний navbar живёт в `width-wide`, без full-width контента.
-- Вертикальный inset: `--space-md`.
+- Вертикальный inset: сверху `--space-lg`, снизу `--space-md`.
 - Режимы: разделы / detail breadcrumbs / reading-progress.
 - Поиск открывается inline под navbar (не modal).
 
@@ -104,12 +104,12 @@ Shape item в `/api/characters`:
 Локальные клоны underline запрещены.
 
 Допустимые классы:
-- `accent-underline` — всегда активна.
-- `accent-underline-click` — по активному состоянию.
-- `accent-underline-hover` — по `hover/focus-visible`.
+- `ui-underline` — всегда активна.
+- `ui-underline-click` — по активному состоянию.
+- `ui-underline-hover` — по `hover/focus-visible`.
 
-Активация `accent-underline-click`:
-- `.accent-underline-active`,
+Активация `ui-underline-click`:
+- `.ui-underline-active`,
 - `data-underline-active="true"`,
 - `aria-current="page"`,
 - `aria-expanded="true"`,
@@ -155,10 +155,11 @@ Shape item в `/api/characters`:
 ## 8) Дизайн-система
 Базовые токены:
 - Отступы: `--space-xs/sm/md/lg/xl` (+ микро `--space-1..10`).
-- Типографика: `--type-extra/medium/normal/small`.
+- Типографика: `--type-extra/medium/normal/small` + `--type-reading`.
 - Ширины: `--width-narrow/medium/wide`.
 - Скругления: `--radius-sm/md/lg`.
 - Непрозрачности текста: `--opacity-100/64/36/8`.
+- Reading/preview tokens: `--lh-reading`, `--measure-reading-scene-label`, `--indent-reading-list`, `--width-preview-surface`.
 
 Жёсткие правила:
 - Только системные токены, без page-local чисел.

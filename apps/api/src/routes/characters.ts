@@ -7,6 +7,7 @@ import {
   CharacterFactOfDayResponseDTO,
   CharacterFactPersonDTO,
   CharacterListItemDTO,
+  CharacterPreviewDTO,
   CharactersListQueryDTO,
   CharacterQuirkDTO,
   CharacterRumorDTO,
@@ -249,6 +250,80 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
         fact_of_day: factOfDay
       },
       "/api/characters/fact-of-day"
+    );
+  });
+
+  app.get("/api/characters/:slug/preview", async (req, reply) => {
+    const { slug } = req.params as { slug: string };
+    const characterResult = await pool.query(
+      `SELECT id, slug, name_ru, avatar_asset_path, name_native, affiliation_id, country_id, tagline
+       FROM characters
+       WHERE slug = $1 AND archived_at IS NULL`,
+      [slug]
+    );
+    const characterRow = characterResult.rows[0];
+    if (!characterRow) {
+      reply.code(404);
+      return errorPayload("Character not found");
+    }
+
+    const [country, affiliation] = await Promise.all([
+      characterRow.country_id
+        ? pool.query(
+            "SELECT id, slug, title_ru, flag_colors FROM countries WHERE id = $1 AND archived_at IS NULL",
+            [characterRow.country_id]
+          )
+        : Promise.resolve({ rows: [] }),
+      characterRow.affiliation_id
+        ? pool.query(
+            "SELECT id, slug, kind, title_ru, avatar_asset_path FROM atlas_entries WHERE id = $1 AND archived_at IS NULL",
+            [characterRow.affiliation_id]
+          )
+        : Promise.resolve({ rows: [] })
+    ]);
+
+    const countryItem = country.rows[0]
+      ? validateResponse(
+          CountryFlagDTO,
+          {
+            id: country.rows[0].id,
+            slug: country.rows[0].slug,
+            url: entityUrl("country", country.rows[0].slug),
+            title_ru: country.rows[0].title_ru,
+            flag_colors: country.rows[0].flag_colors ?? null
+          },
+          "/api/characters/:slug/preview:country"
+        )
+      : null;
+
+    const affiliationItem = affiliation.rows[0]
+      ? validateResponse(
+          AtlasReferenceDTO,
+          {
+            id: affiliation.rows[0].id,
+            slug: affiliation.rows[0].slug,
+            url: entityUrl("atlas_entry", affiliation.rows[0].slug),
+            kind: affiliation.rows[0].kind,
+            title_ru: affiliation.rows[0].title_ru,
+            avatar_asset_path: affiliation.rows[0].avatar_asset_path ?? null
+          },
+          "/api/characters/:slug/preview:affiliation"
+        )
+      : null;
+
+    return validateResponse(
+      CharacterPreviewDTO,
+      {
+        slug: characterRow.slug,
+        url: entityUrl("character", characterRow.slug),
+        name_ru: characterRow.name_ru,
+        name_native: characterRow.name_native ?? null,
+        avatar_asset_path: characterRow.avatar_asset_path,
+        tagline: characterRow.tagline ?? null,
+        country: countryItem,
+        affiliation: affiliationItem
+      },
+      "/api/characters/:slug/preview"
     );
   });
 

@@ -145,7 +145,7 @@ export default function Navbar() {
               />
             </div>
           )}
-          <div className="width-wide relative flex navbar-shell items-center justify-between">
+          <div className="width-wide navbar-shell">
             <div className="navbar-left role-ui">
               <AnimatePresence initial={false} mode="wait">
                 {!isDetail ? (
@@ -206,9 +206,9 @@ export default function Navbar() {
               </AnimatePresence>
             </div>
 
-            <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className="navbar-center">
               <motion.div whileHover={{ y: -1.5, scale: 1.015 }} transition={{ duration: 0.18 }}>
-                <NavLink to="/" className="pointer-events-auto navbar-logo" aria-label="Aeria">
+                <NavLink to="/" className="navbar-logo" aria-label="Aeria">
                   <span className="navbar-logo-image" aria-hidden="true" />
                 </NavLink>
               </motion.div>

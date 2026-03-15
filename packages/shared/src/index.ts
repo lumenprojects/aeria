@@ -192,6 +192,27 @@ export const CharacterListItemDTO = CharacterReferenceDTO.extend({
   affiliation: AtlasReferenceDTO.nullable()
 });
 
+export const CharacterPreviewDTO = z.object({
+  slug: z.string(),
+  url: z.string(),
+  name_ru: z.string(),
+  name_native: z.string().nullable(),
+  avatar_asset_path: z.string(),
+  tagline: z.string().nullable(),
+  country: CountryFlagDTO.nullable(),
+  affiliation: AtlasReferenceDTO.nullable()
+});
+
+export const AtlasPreviewDTO = z.object({
+  slug: z.string(),
+  url: z.string(),
+  kind: AtlasKind,
+  title_ru: z.string(),
+  summary: z.string().nullable(),
+  avatar_asset_path: z.string().nullable(),
+  country: CountryFlagDTO.nullable()
+});
+
 export const CharacterFactPersonDTO = z.object({
   id: Uuid,
   slug: z.string(),
@@ -377,6 +398,8 @@ export type CountryFlagDTO = z.infer<typeof CountryFlagDTO>;
 export type LocationDTO = z.infer<typeof LocationDTO>;
 export type CharacterReferenceDTO = z.infer<typeof CharacterReferenceDTO>;
 export type CharacterListItemDTO = z.infer<typeof CharacterListItemDTO>;
+export type CharacterPreviewDTO = z.infer<typeof CharacterPreviewDTO>;
+export type AtlasPreviewDTO = z.infer<typeof AtlasPreviewDTO>;
 export type PaginatedCharactersResponseDTO = z.infer<typeof PaginatedCharactersResponseDTO>;
 export type EpisodeCharacterLinkDTO = z.infer<typeof EpisodeCharacterLinkDTO>;
 export type EpisodeDetailResponseDTO = z.infer<typeof EpisodeDetailResponseDTO>;

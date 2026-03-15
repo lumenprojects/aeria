@@ -15,7 +15,7 @@
 - Страница `/characters` пересобрана:
   - `Факт дня` -> `SectionBreak(stars)` -> `поиск+фильтры` -> список.
   - серверный поиск/фильтры с URL-sync.
-  - единая underline-система (`accent-underline-*`).
+  - единая underline-система (`ui-underline-*`).
 - `/api/characters` расширен параметрами `q/country/affiliation/sort` и item shape.
 
 ## Приоритеты v1 (следующие)

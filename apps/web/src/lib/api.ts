@@ -1,5 +1,7 @@
 import type {
+  AtlasPreviewDTO,
   CharacterFactOfDayResponseDTO,
+  CharacterPreviewDTO,
   EpisodeDetailResponseDTO,
   CharacterSort,
   HomeSnapshotDTO,
@@ -78,6 +80,10 @@ export function getCharacter(slug: string) {
   return fetchJson<any>(`/api/characters/${slug}`);
 }
 
+export function getCharacterPreview(slug: string) {
+  return fetchJson<CharacterPreviewDTO>(`/api/characters/${slug}/preview`);
+}
+
 export function getAtlas(params?: { kind?: string }) {
   const query = new URLSearchParams();
   if (params?.kind) query.set("kind", params.kind);
@@ -87,6 +93,10 @@ export function getAtlas(params?: { kind?: string }) {
 
 export function getAtlasEntry(slug: string) {
   return fetchJson<any>(`/api/atlas/${slug}`);
+}
+
+export function getAtlasPreview(slug: string) {
+  return fetchJson<AtlasPreviewDTO>(`/api/atlas/${slug}/preview`);
 }
 
 export function searchAll(query: string) {

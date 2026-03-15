@@ -11,7 +11,7 @@
 2. В feature-коде использовать только наши компоненты из `components/ui` и `components/entities`.
 3. Типографика только через `Typography` (`ui|heading|body`).
 4. Состояния `hover/focus/active/disabled` фиксировать в компонентах, не в page-local CSS.
-5. Для underline-состояний использовать только общий слой `accent-underline*`.
+5. Для underline-состояний использовать только общий слой `ui-underline*`.
 
 ## 3) Запрещено
 1. Оставлять дефолтный shadcn-визуал как финальный.
