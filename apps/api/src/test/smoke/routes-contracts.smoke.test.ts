@@ -53,6 +53,17 @@ describe("API route contracts smoke", () => {
             country_flag_colors: ["#111111", "#ffffff"]
           }
         ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            episode_id: "00000000-0000-0000-0000-000000000001",
+            id: "00000000-0000-0000-0000-000000000031",
+            slug: "character-001",
+            name_ru: "Character 001",
+            avatar_asset_path: "/assets/images/characters/character-001.png"
+          }
+        ]
       });
 
     const { buildApp } = await import("../../app.js");
@@ -79,6 +90,15 @@ describe("API route contracts smoke", () => {
           summary: "Test episode",
           reading_minutes: 3,
           published_at: "2026-03-04T00:00:00.000Z",
+          participants: [
+            {
+              id: "00000000-0000-0000-0000-000000000031",
+              slug: "character-001",
+              url: "/characters/character-001",
+              name_ru: "Character 001",
+              avatar_asset_path: "/assets/images/characters/character-001.png"
+            }
+          ],
           country: {
             id: "00000000-0000-0000-0000-000000000021",
             slug: "ru-example",
@@ -92,6 +112,106 @@ describe("API route contracts smoke", () => {
       page: 1,
       limit: 20
     });
+
+    await app.close();
+  });
+
+  it("supports atlas list search, kind filter and sort with strict shape", async () => {
+    queryMock
+      .mockResolvedValueOnce({ rows: [{ count: 1 }] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000051",
+            slug: "atlas-001",
+            kind: "geography",
+            title_ru: "Atlas 001",
+            summary: "Atlas summary",
+            country_id: "00000000-0000-0000-0000-000000000021",
+            location_id: "00000000-0000-0000-0000-000000000041"
+          }
+        ]
+      });
+
+    const { buildApp } = await import("../../app.js");
+    const app = await buildApp();
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/atlas?page=1&limit=100&q=atlas&kind=geography&sort=title_desc"
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(queryMock.mock.calls[0][1]).toEqual(["geography", "%atlas%"]);
+    expect(String(queryMock.mock.calls[1][0])).toContain("ORDER BY title_ru DESC");
+    expect(res.json()).toEqual({
+      items: [
+        {
+          id: "00000000-0000-0000-0000-000000000051",
+          slug: "atlas-001",
+          url: "/atlas/atlas-001",
+          kind: "geography",
+          title_ru: "Atlas 001",
+          summary: "Atlas summary",
+          country_id: "00000000-0000-0000-0000-000000000021",
+          location_id: "00000000-0000-0000-0000-000000000041"
+        }
+      ],
+      total: 1,
+      page: 1,
+      limit: 100
+    });
+
+    await app.close();
+  });
+
+  it("supports episodes list character filter and newest sort", async () => {
+    queryMock
+      .mockResolvedValueOnce({ rows: [{ count: 1 }] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000002",
+            slug: "episode-002",
+            series_id: "00000000-0000-0000-0000-000000000011",
+            country_id: "00000000-0000-0000-0000-000000000021",
+            episode_number: 2,
+            global_order: 2,
+            title_native: null,
+            title_ru: "Episode 002",
+            summary: "Filtered episode",
+            reading_minutes: 5,
+            published_at: new Date("2026-03-05T00:00:00Z"),
+            country_slug: "ru-example",
+            country_title_ru: "Country 01",
+            country_flag_colors: ["#111111", "#ffffff"]
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            episode_id: "00000000-0000-0000-0000-000000000002",
+            id: "00000000-0000-0000-0000-000000000031",
+            slug: "character-001",
+            name_ru: "Character 001",
+            avatar_asset_path: "/assets/images/characters/character-001.png"
+          }
+        ]
+      });
+
+    const { buildApp } = await import("../../app.js");
+    const app = await buildApp();
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/episodes?page=1&limit=100&series=series-01&character=character-001&sort=newest"
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(String(queryMock.mock.calls[0][0])).toContain("JOIN episode_characters ec_filter");
+    expect(String(queryMock.mock.calls[1][0])).toContain("ORDER BY e.global_order DESC");
+    expect(queryMock.mock.calls[0][1]).toEqual(["series-01", "character-001"]);
 
     await app.close();
   });

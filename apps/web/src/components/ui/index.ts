@@ -23,6 +23,7 @@ export * from "./scroll-area";
 export * from "./section-break";
 export * from "./separator";
 export * from "./skeleton";
+export * from "./select";
 export * from "./tooltip";
 export * from "./toggle-group";
 export * from "./typography";

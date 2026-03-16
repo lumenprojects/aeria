@@ -3,8 +3,15 @@ import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Moon, Sun, Ellipsis } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Button } from "../ui/button";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbSeparator } from "../ui/breadcrumb";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator
+} from "../ui/breadcrumb";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { useTheme } from "@/lib/theme";
 import { getEpisode, getSeries } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -23,22 +30,29 @@ const sectionLabels: Record<string, string> = {
   atlas: "Атлас"
 };
 
+type NavbarSelectOption = { value: string; label: string; swatch?: string };
+
 const fontOptions = {
-  ui: ["IBM Plex Sans", "Manrope", "Golos Text"],
-  heading: ["Playfair Display", "Cormorant Garamond"],
-  body: ["Lora", "Noto Serif"]
+  ui: [
+    { value: "IBM Plex Sans", label: "IBM Plex Sans" },
+    { value: "Manrope", label: "Manrope" },
+    { value: "Golos Text", label: "Golos Text" }
+  ],
+  heading: [
+    { value: "Playfair Display", label: "Playfair Display" },
+    { value: "Cormorant Garamond", label: "Cormorant Garamond" }
+  ],
+  body: [
+    { value: "Lora", label: "Lora" },
+    { value: "Noto Serif", label: "Noto Serif" }
+  ]
 };
 
 const themeOptions = [
-  { value: "paper", label: "Paper" },
-  { value: "stone", label: "Stone" },
-  { value: "coral", label: "Coral" },
-  { value: "amoled", label: "Amoled" }
-] as const;
-
-const noiseOptions = [
-  { value: "on", label: "On" },
-  { value: "off", label: "Off" }
+  { value: "paper", label: "Paper", swatch: { light: "#ffb44b", dark: "#f2ca86" } },
+  { value: "stone", label: "Stone", swatch: { light: "#8d6b44", dark: "#d0a878" } },
+  { value: "coral", label: "Coral", swatch: { light: "#f95c4b", dark: "#ff7d6f" } },
+  { value: "amoled", label: "Amoled", swatch: { light: "#6ea8ff", dark: "#72a5ff" } }
 ] as const;
 
 const tapOptions = [
@@ -55,6 +69,45 @@ const panelMotion = {
   transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] as const }
 };
 
+function NavbarSelectField({
+  label,
+  value,
+  onValueChange,
+  options
+}: {
+  label: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  options: readonly NavbarSelectOption[];
+}) {
+  return (
+    <div className="navbar-field">
+      <span className="navbar-label">{label}</span>
+      <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger className="navbar-select" aria-label={label}>
+          <SelectValue className="navbar-select-value" />
+        </SelectTrigger>
+        <SelectContent className="navbar-select-content" position="item-aligned">
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value} className="navbar-select-item">
+              <span className="navbar-select-item-content">
+                {option.swatch ? (
+                  <span
+                    className="navbar-theme-dot"
+                    style={{ backgroundColor: option.swatch }}
+                    aria-hidden="true"
+                  />
+                ) : null}
+                <span>{option.label}</span>
+              </span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -68,14 +121,12 @@ export default function Navbar() {
     fontHeading,
     fontBody,
     fontUi,
-    noise,
     tapEffect,
     setMode,
     setTheme,
     setFontHeading,
     setFontBody,
     setFontUi,
-    setNoise,
     setTapEffect
   } = useTheme();
 
@@ -134,17 +185,6 @@ export default function Navbar() {
     <>
       <header className="sticky top-0 z-40 bg-background">
         <div className="relative">
-          {isEpisodeReading && (
-            <div className="absolute inset-x-0 top-0 h-0.5 bg-divider">
-              <motion.div
-                className="h-full bg-accent"
-                animate={{ scaleX: scrollProgress / 100 }}
-                initial={false}
-                transition={{ duration: 0.18, ease: "easeOut" }}
-                style={{ transformOrigin: "0% 50%" }}
-              />
-            </div>
-          )}
           <div className="width-wide navbar-shell">
             <div className="navbar-left role-ui">
               <AnimatePresence initial={false} mode="wait">
@@ -178,26 +218,29 @@ export default function Navbar() {
                   </motion.nav>
                 ) : (
                   <motion.div key="navbar-detail" className="navbar-detail" {...panelMotion}>
-                    <motion.div whileHover={{ x: -1.5 }} whileTap={{ scale: 0.98 }}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="navbar-back tone-secondary hover:text-text"
-                        onClick={handleBack}
-                      >
-                        Назад
-                      </Button>
-                    </motion.div>
+                    <motion.button
+                      type="button"
+                      className="navbar-icon navbar-back"
+                      whileHover={{ x: -1.5, scale: 1.03 }}
+                      whileTap={{ scale: 0.96 }}
+                      aria-label="Назад"
+                      onClick={handleBack}
+                    >
+                      <span className="navbar-icon-text navbar-back-glyph" aria-hidden="true">
+                        {"<"}
+                      </span>
+                    </motion.button>
+                    <span className="navbar-divider" aria-hidden="true" />
                     <Breadcrumb>
                       <BreadcrumbList className="role-ui tone-secondary">
                         <BreadcrumbItem>
-                          <NavLink to={`/${section}`} className="hover:text-text">
-                            {sectionLabel}
-                          </NavLink>
+                          <BreadcrumbLink asChild>
+                            <NavLink to={`/${section}`}>{sectionLabel}</NavLink>
+                          </BreadcrumbLink>
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                          <span className="text-text">{path.split("/").slice(-1)[0]}</span>
+                          <BreadcrumbPage>{path.split("/").slice(-1)[0]}</BreadcrumbPage>
                         </BreadcrumbItem>
                       </BreadcrumbList>
                     </Breadcrumb>
@@ -234,23 +277,25 @@ export default function Navbar() {
                     <Search size={20} />
                   </motion.span>
                 </motion.button>
-                <AnimatePresence initial={false}>
-                  {isEpisodeReading && (
-                    <motion.span
-                      key="navbar-reading"
-                      className="navbar-reading"
-                      title={seriesTitle ?? ""}
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 8 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      {currentEpisode ?? "—"}/{totalEpisodes ?? "—"}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
               </div>
-              <span className="navbar-divider" aria-hidden="true" />
+              {isEpisodeReading ? (
+                <motion.div
+                  key="navbar-reading-shell"
+                  className="navbar-tool-cluster"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <span className="navbar-divider" aria-hidden="true" />
+                  <span className="navbar-reading navbar-icon-text" title={seriesTitle ?? ""}>
+                    <span className="navbar-reading-current">{currentEpisode ?? "—"}</span>
+                    <span className="navbar-reading-total tone-tertiary">{" / "}{totalEpisodes ?? "—"}</span>
+                  </span>
+                  <span className="navbar-divider" aria-hidden="true" />
+                </motion.div>
+              ) : (
+                <span className="navbar-divider" aria-hidden="true" />
+              )}
               <div className="navbar-tool-cluster">
                 <motion.button
                   type="button"
@@ -302,6 +347,17 @@ export default function Navbar() {
               </div>
             </div>
           </div>
+          {isEpisodeReading && (
+            <div className="navbar-progress" aria-hidden="true">
+              <motion.div
+                className="navbar-progress-indicator"
+                animate={{ scaleX: scrollProgress / 100 }}
+                initial={false}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                style={{ transformOrigin: "0% 50%" }}
+              />
+            </div>
+          )}
         </div>
 
         <AnimatePresence initial={false} mode="wait">
@@ -312,89 +368,38 @@ export default function Navbar() {
                   <div className="navbar-subpanel-panel role-ui">
                     {activePanel === "fonts" ? (
                       <>
-                        <div className="navbar-field">
-                          <span className="navbar-label">UI</span>
-                          <select className="navbar-select" value={fontUi} onChange={(event) => setFontUi(event.target.value)}>
-                            {fontOptions.ui.map((font) => (
-                              <option key={font} value={font}>
-                                {font}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="navbar-field">
-                          <span className="navbar-label">Headings</span>
-                          <select
-                            className="navbar-select"
-                            value={fontHeading}
-                            onChange={(event) => setFontHeading(event.target.value)}
-                          >
-                            {fontOptions.heading.map((font) => (
-                              <option key={font} value={font}>
-                                {font}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="navbar-field">
-                          <span className="navbar-label">Text</span>
-                          <select
-                            className="navbar-select"
-                            value={fontBody}
-                            onChange={(event) => setFontBody(event.target.value)}
-                          >
-                            {fontOptions.body.map((font) => (
-                              <option key={font} value={font}>
-                                {font}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                        <NavbarSelectField label="UI" value={fontUi} onValueChange={setFontUi} options={fontOptions.ui} />
+                        <NavbarSelectField
+                          label="Headings"
+                          value={fontHeading}
+                          onValueChange={setFontHeading}
+                          options={fontOptions.heading}
+                        />
+                        <NavbarSelectField
+                          label="Text"
+                          value={fontBody}
+                          onValueChange={setFontBody}
+                          options={fontOptions.body}
+                        />
                       </>
                     ) : (
                       <>
-                        <div className="navbar-field">
-                          <span className="navbar-label">Style</span>
-                          <select
-                            className="navbar-select"
-                            value={theme}
-                            onChange={(event) => setTheme(event.target.value as typeof theme)}
-                          >
-                            {themeOptions.map((item) => (
-                              <option key={item.value} value={item.value}>
-                                {item.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="navbar-field">
-                          <span className="navbar-label">Noise</span>
-                          <select
-                            className="navbar-select"
-                            value={noise ? "on" : "off"}
-                            onChange={(event) => setNoise(event.target.value === "on")}
-                          >
-                            {noiseOptions.map((item) => (
-                              <option key={item.value} value={item.value}>
-                                {item.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="navbar-field">
-                          <span className="navbar-label">Tap Effect</span>
-                          <select
-                            className="navbar-select"
-                            value={tapEffect}
-                            onChange={(event) => setTapEffect(event.target.value as typeof tapEffect)}
-                          >
-                            {tapOptions.map((item) => (
-                              <option key={item.value} value={item.value}>
-                                {item.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                        <NavbarSelectField
+                          label="Style"
+                          value={theme}
+                          onValueChange={(value) => setTheme(value as typeof theme)}
+                          options={themeOptions.map((item) => ({
+                            value: item.value,
+                            label: item.label,
+                            swatch: mode === "dark" ? item.swatch.dark : item.swatch.light
+                          }))}
+                        />
+                        <NavbarSelectField
+                          label="Tap Effect"
+                          value={tapEffect}
+                          onValueChange={(value) => setTapEffect(value as typeof tapEffect)}
+                          options={tapOptions}
+                        />
                       </>
                     )}
                   </div>

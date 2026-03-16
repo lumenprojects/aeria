@@ -1,12 +1,18 @@
 import type {
+  AtlasSort,
   AtlasPreviewDTO,
   CharacterFactOfDayResponseDTO,
   CharacterPreviewDTO,
   EpisodeDetailResponseDTO,
+  EpisodeSort,
   CharacterSort,
   HomeSnapshotDTO,
   HomeWorldQuoteResponseDTO,
-  PaginatedCharactersResponseDTO
+  PaginatedAtlasResponseDTO,
+  PaginatedCharactersResponseDTO,
+  PaginatedEpisodesResponseDTO,
+  PaginatedSeriesResponseDTO,
+  SeriesDetailResponseDTO
 } from "@aeria/shared";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
@@ -19,12 +25,25 @@ async function fetchJson<T>(path: string): Promise<T> {
   return res.json();
 }
 
-export function getEpisodes(params?: { series?: string; country?: string }) {
+type GetEpisodesParams = {
+  page?: number;
+  limit?: number;
+  series?: string;
+  country?: string;
+  character?: string;
+  sort?: EpisodeSort;
+};
+
+export function getEpisodes(params?: GetEpisodesParams) {
   const query = new URLSearchParams();
+  if (params?.page) query.set("page", String(params.page));
+  if (params?.limit) query.set("limit", String(params.limit));
   if (params?.series) query.set("series", params.series);
   if (params?.country) query.set("country", params.country);
+  if (params?.character) query.set("character", params.character);
+  if (params?.sort) query.set("sort", params.sort);
   const qs = query.toString();
-  return fetchJson<{ items: any[] }>(`/api/episodes${qs ? `?${qs}` : ""}`);
+  return fetchJson<PaginatedEpisodesResponseDTO>(`/api/episodes${qs ? `?${qs}` : ""}`);
 }
 
 export function getHomeSnapshot() {
@@ -47,7 +66,15 @@ export function getEpisode(slug: string) {
 }
 
 export function getSeries(slug: string) {
-  return fetchJson<any>(`/api/series/${slug}`);
+  return fetchJson<SeriesDetailResponseDTO>(`/api/series/${slug}`);
+}
+
+export function getSeriesList(params?: { page?: number; limit?: number }) {
+  const query = new URLSearchParams();
+  if (params?.page) query.set("page", String(params.page));
+  if (params?.limit) query.set("limit", String(params.limit));
+  const qs = query.toString();
+  return fetchJson<PaginatedSeriesResponseDTO>(`/api/series${qs ? `?${qs}` : ""}`);
 }
 
 type GetCharactersParams = {
@@ -84,11 +111,15 @@ export function getCharacterPreview(slug: string) {
   return fetchJson<CharacterPreviewDTO>(`/api/characters/${slug}/preview`);
 }
 
-export function getAtlas(params?: { kind?: string }) {
+export function getAtlas(params?: { page?: number; limit?: number; kind?: string; q?: string; sort?: AtlasSort }) {
   const query = new URLSearchParams();
+  if (params?.page) query.set("page", String(params.page));
+  if (params?.limit) query.set("limit", String(params.limit));
   if (params?.kind) query.set("kind", params.kind);
+  if (params?.q) query.set("q", params.q);
+  if (params?.sort) query.set("sort", params.sort);
   const qs = query.toString();
-  return fetchJson<{ items: any[] }>(`/api/atlas${qs ? `?${qs}` : ""}`);
+  return fetchJson<PaginatedAtlasResponseDTO>(`/api/atlas${qs ? `?${qs}` : ""}`);
 }
 
 export function getAtlasEntry(slug: string) {

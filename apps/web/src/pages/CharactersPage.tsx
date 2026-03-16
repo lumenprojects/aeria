@@ -195,68 +195,79 @@ export default function CharactersPage() {
           </button>
         </div>
 
-        {isFiltersOpen && (
-          <div className="characters-filters-panel role-ui" data-testid="characters-filters-panel">
-            <div className="characters-filters-field">
-              <span className="navbar-label">Страна</span>
-              <select
-                className="navbar-select characters-filters-select"
-                value={countryParam}
-                onChange={(event) => updateParams({ country: event.target.value || null })}
-                data-testid="characters-filter-country"
-              >
-                <option value="">Все</option>
-                {countryOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="characters-filters-field">
-              <span className="navbar-label">Принадлежность</span>
-              <select
-                className="navbar-select characters-filters-select"
-                value={affiliationParam}
-                onChange={(event) => updateParams({ affiliation: event.target.value || null })}
-                data-testid="characters-filter-affiliation"
-              >
-                <option value="">Все</option>
-                {affiliationOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="characters-filters-field">
-              <span className="navbar-label">Сортировка</span>
-              <select
-                className="navbar-select characters-filters-select"
-                value={sortParam}
-                onChange={(event) => {
-                  const nextSort = normalizeSort(event.target.value);
-                  updateParams({ sort: nextSort === DEFAULT_SORT ? null : nextSort });
-                }}
-                data-testid="characters-filter-sort"
-              >
-                <option value="name_asc">По имени (А-Я)</option>
-                <option value="name_desc">По имени (Я-А)</option>
-              </select>
-            </div>
-
-            <button
-              type="button"
-              className="characters-filters-reset tone-secondary ui-underline-hover"
-              onClick={() => updateParams({ country: null, affiliation: null, sort: null })}
-              disabled={!hasActiveFilters}
+        <AnimatePresence initial={false}>
+          {isFiltersOpen && (
+            <motion.div
+              initial={reduceMotion ? false : { opacity: 0, y: -8 }}
+              animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
+              transition={reduceMotion ? { duration: 0 } : { duration: 0.22, ease: MOTION_EASE }}
+              className="characters-filters-drawer role-ui"
+              data-testid="characters-filters-panel"
             >
-              Сбросить
-            </button>
-          </div>
-        )}
+              <div className="characters-filters-grid">
+                <div className="characters-filters-field">
+                  <span className="navbar-label">Страна</span>
+                  <select
+                    className="navbar-select characters-filters-select"
+                    value={countryParam}
+                    onChange={(event) => updateParams({ country: event.target.value || null })}
+                    data-testid="characters-filter-country"
+                  >
+                    <option value="">Все</option>
+                    {countryOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="characters-filters-field">
+                  <span className="navbar-label">Принадлежность</span>
+                  <select
+                    className="navbar-select characters-filters-select"
+                    value={affiliationParam}
+                    onChange={(event) => updateParams({ affiliation: event.target.value || null })}
+                    data-testid="characters-filter-affiliation"
+                  >
+                    <option value="">Все</option>
+                    {affiliationOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="characters-filters-field">
+                  <span className="navbar-label">Сортировка</span>
+                  <select
+                    className="navbar-select characters-filters-select"
+                    value={sortParam}
+                    onChange={(event) => {
+                      const nextSort = normalizeSort(event.target.value);
+                      updateParams({ sort: nextSort === DEFAULT_SORT ? null : nextSort });
+                    }}
+                    data-testid="characters-filter-sort"
+                  >
+                    <option value="name_asc">По имени (А-Я)</option>
+                    <option value="name_desc">По имени (Я-А)</option>
+                  </select>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="characters-filters-reset tone-secondary ui-underline-hover"
+                onClick={() => updateParams({ country: null, affiliation: null, sort: null })}
+                disabled={!hasActiveFilters}
+              >
+                Сбросить
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="characters-catalog-list" data-testid="characters-catalog-list">
           {charactersQuery.isLoading && characters.length === 0 && (

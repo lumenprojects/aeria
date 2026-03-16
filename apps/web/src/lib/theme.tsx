@@ -48,14 +48,12 @@ type ThemeState = {
   fontHeading: string;
   fontBody: string;
   fontUi: string;
-  noise: boolean;
   tapEffect: TapEffect;
   setTheme: (theme: ThemeName) => void;
   setMode: (mode: ThemeMode) => void;
   setFontHeading: (font: string) => void;
   setFontBody: (font: string) => void;
   setFontUi: (font: string) => void;
-  setNoise: (value: boolean) => void;
   setTapEffect: (value: TapEffect) => void;
 };
 
@@ -79,7 +77,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [fontHeading, setFontHeading] = useState<string>(defaultFonts.heading);
   const [fontBody, setFontBody] = useState<string>(defaultFonts.body);
   const [fontUi, setFontUi] = useState<string>(defaultFonts.ui);
-  const [noise, setNoise] = useState<boolean>(false);
   const [tapEffect, setTapEffect] = useState<TapEffect>("none");
   const [hydrated, setHydrated] = useState(false);
 
@@ -92,7 +89,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setFontHeading(normalizeFont("heading", cookiePayload.fontHeading));
       setFontBody(normalizeFont("body", cookiePayload.fontBody));
       setFontUi(normalizeFont("ui", cookiePayload.fontUi));
-      if (typeof cookiePayload.noise === "boolean") setNoise(cookiePayload.noise);
       if (cookiePayload.tapEffect) setTapEffect(cookiePayload.tapEffect as TapEffect);
       setHydrated(true);
       return;
@@ -112,7 +108,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setFontHeading(normalizeFont("heading", parsed.fontHeading));
       setFontBody(normalizeFont("body", parsed.fontBody));
       setFontUi(normalizeFont("ui", parsed.fontUi));
-      if (typeof parsed.noise === "boolean") setNoise(parsed.noise);
       if (parsed.tapEffect) setTapEffect(parsed.tapEffect as TapEffect);
       localStorage.removeItem(STORAGE_KEY);
     }
@@ -127,7 +122,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.style.setProperty("--font-heading", fontHeading);
     root.style.setProperty("--font-body", fontBody);
     root.style.setProperty("--font-ui", fontUi);
-    root.style.setProperty("--noise-opacity", noise ? "0.08" : "0");
 
     setCookie(
       STORAGE_KEY,
@@ -137,7 +131,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         fontHeading,
         fontBody,
         fontUi,
-        noise,
         tapEffect
       }),
       {
@@ -147,7 +140,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         secure: typeof window !== "undefined" && window.location.protocol === "https:"
       }
     );
-  }, [theme, mode, fontHeading, fontBody, fontUi, noise, tapEffect, hydrated]);
+  }, [theme, mode, fontHeading, fontBody, fontUi, tapEffect, hydrated]);
 
   const value = useMemo(
     () => ({
@@ -156,17 +149,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       fontHeading,
       fontBody,
       fontUi,
-      noise,
       tapEffect,
       setTheme,
       setMode,
       setFontHeading,
       setFontBody,
       setFontUi,
-      setNoise,
       setTapEffect
     }),
-    [theme, mode, fontHeading, fontBody, fontUi, noise, tapEffect]
+    [theme, mode, fontHeading, fontBody, fontUi, tapEffect]
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

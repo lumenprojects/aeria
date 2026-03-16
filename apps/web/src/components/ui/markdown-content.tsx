@@ -113,7 +113,7 @@ export function MarkdownContent({
             {revealInline(children)}
           </blockquote>
         ),
-        hr: () => <div className={cn("markdown-divider", isReading && "markdown-divider-reading")} aria-hidden="true" />,
+        hr: () => <div className={isReading ? "markdown-divider-reading" : "markdown-divider"} aria-hidden="true" />,
         pre: ({ children }) => <pre className="markdown-pre">{children}</pre>,
         code: ({ inline, children, className: codeClassName, ...props }: MarkdownCodeProps) =>
           inline ? (

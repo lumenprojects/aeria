@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import { Typography } from "@/components/ui";
+import BackToTopAnchor from "./BackToTopAnchor";
 import Navbar from "./Navbar";
 import TapEffectLayer from "./TapEffectLayer";
 
@@ -8,6 +9,7 @@ export default function Layout() {
     <div className="layout-shell min-h-screen bg-background text-text">
       <TapEffectLayer />
       <Navbar />
+      <BackToTopAnchor />
       <main className="width-wide layout-main">
         <Outlet />
       </main>

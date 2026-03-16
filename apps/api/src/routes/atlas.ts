@@ -30,10 +30,15 @@ export async function registerAtlasRoutes(app: FastifyInstance) {
     const offset = (page - 1) * limit;
     const filters: string[] = [];
     const params: Array<string | number> = [];
+    const sortOrder = query.sort === "title_desc" ? "DESC" : "ASC";
 
     if (query.kind) {
       params.push(query.kind);
       filters.push(`kind = $${params.length}`);
+    }
+    if (query.q) {
+      params.push(`%${query.q}%`);
+      filters.push(`(title_ru ILIKE $${params.length} OR COALESCE(summary, '') ILIKE $${params.length})`);
     }
 
     const where = withArchivedFilter(filters.length ? [filters.join(" AND ")] : []);
@@ -44,7 +49,7 @@ export async function registerAtlasRoutes(app: FastifyInstance) {
     );
     const rows = await pool.query(
       `SELECT id, slug, kind, title_ru, summary, country_id, location_id
-       FROM atlas_entries WHERE ${where} ORDER BY title_ru ASC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+       FROM atlas_entries WHERE ${where} ORDER BY title_ru ${sortOrder} LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
       [...params, limit, offset]
     );
 

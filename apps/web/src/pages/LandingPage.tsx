@@ -321,7 +321,14 @@ export default function LandingPage() {
     boundaryBefore: "line",
     content: (
       <div className="width-medium">
-        <Typography variant="ui" fontRole="heading" as="p" className="home-edition-note"><RevealText text="Aeria · издание 2026" mode="words" /><br /><em><RevealText text="Roam with You" mode="words" delay={0.24} /></em></Typography>
+        <figure className="home-edition-note" aria-label="Вдохновляющая цитата">
+          <Typography variant="h3" fontRole="body" as="blockquote" className="home-edition-note-quote">
+            <RevealText text="«A human must create. That's why we were created.»" mode="words" />
+          </Typography>
+          <Typography variant="ui" fontRole="ui" as="figcaption" className="home-edition-note-source tone-secondary">
+            <RevealText text="— Tyler Joseph. December 2009 —" mode="words" delay={0.24} />
+          </Typography>
+        </figure>
       </div>
     )
   });

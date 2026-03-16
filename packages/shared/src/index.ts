@@ -21,11 +21,15 @@ export const entityTypeValues = [
 
 export const characterRumorSourceTypeValues = ["character", "atlas_entry"] as const;
 export const characterSortValues = ["name_asc", "name_desc"] as const;
+export const episodeSortValues = ["oldest", "newest"] as const;
+export const atlasSortValues = ["title_asc", "title_desc"] as const;
 
 export const AtlasKind = z.enum(atlasKindValues);
 export const EntityType = z.enum(entityTypeValues);
 export const CharacterRumorSourceType = z.enum(characterRumorSourceTypeValues);
 export const CharacterSort = z.enum(characterSortValues);
+export const EpisodeSort = z.enum(episodeSortValues);
+export const AtlasSort = z.enum(atlasSortValues);
 
 export const Uuid = z.string().uuid();
 export const NullableUuid = Uuid.nullable();
@@ -155,11 +159,15 @@ export const PaginationQueryDTO = z.object({
 
 export const EpisodesListQueryDTO = PaginationQueryDTO.extend({
   series: z.string().trim().min(1).optional(),
-  country: z.string().trim().min(1).optional()
+  country: z.string().trim().min(1).optional(),
+  character: z.string().trim().min(1).optional(),
+  sort: EpisodeSort.optional()
 });
 
 export const AtlasListQueryDTO = PaginationQueryDTO.extend({
-  kind: AtlasKind.optional()
+  kind: AtlasKind.optional(),
+  q: z.string().trim().min(1).optional(),
+  sort: AtlasSort.optional()
 });
 
 export const CharactersListQueryDTO = PaginationQueryDTO.extend({
@@ -171,10 +179,6 @@ export const CharactersListQueryDTO = PaginationQueryDTO.extend({
 
 export const SearchQueryDTO = z.object({
   q: z.string().optional()
-});
-
-export const EpisodeListItemDTO = EpisodeDTO.omit({ content_markdown: true }).extend({
-  country: CountryFlagDTO
 });
 
 export const CharacterReferenceDTO = z.object({
@@ -235,6 +239,23 @@ export const CharacterFactOfDayResponseDTO = z.object({
 
 export const EpisodeCharacterLinkDTO = CharacterReferenceDTO.extend({
   avatar_asset_path: z.string()
+});
+
+export const EpisodeParticipantDTO = z.object({
+  id: Uuid,
+  slug: z.string(),
+  url: z.string(),
+  name_ru: z.string(),
+  avatar_asset_path: z.string()
+});
+
+export const EpisodeListItemDTO = EpisodeDTO.omit({ content_markdown: true }).extend({
+  country: CountryFlagDTO
+});
+
+export const EpisodeCatalogItemDTO = EpisodeDTO.omit({ content_markdown: true }).extend({
+  country: CountryFlagDTO,
+  participants: z.array(EpisodeParticipantDTO)
 });
 
 export const EpisodeLocationLinkDTO = z.object({
@@ -332,13 +353,7 @@ export const HomeEpisodeSeriesDTO = z.object({
   brand_color: z.string().nullable()
 });
 
-export const HomeEpisodeParticipantDTO = z.object({
-  id: Uuid,
-  slug: z.string(),
-  url: z.string(),
-  name_ru: z.string(),
-  avatar_asset_path: z.string()
-});
+export const HomeEpisodeParticipantDTO = EpisodeParticipantDTO;
 
 export const HomeLatestEpisodeDTO = z.object({
   id: Uuid,
@@ -382,7 +397,7 @@ export const HomeSnapshotDTO = z.object({
   world_quote: HomeWorldQuoteDTO.nullable()
 });
 
-export const PaginatedEpisodesResponseDTO = PaginatedDTO(EpisodeListItemDTO);
+export const PaginatedEpisodesResponseDTO = PaginatedDTO(EpisodeCatalogItemDTO);
 export const PaginatedSeriesResponseDTO = PaginatedDTO(EpisodeSeriesDTO);
 export const PaginatedCharactersResponseDTO = PaginatedDTO(CharacterListItemDTO);
 export const PaginatedAtlasResponseDTO = PaginatedDTO(AtlasListItemDTO);
@@ -400,7 +415,12 @@ export type CharacterReferenceDTO = z.infer<typeof CharacterReferenceDTO>;
 export type CharacterListItemDTO = z.infer<typeof CharacterListItemDTO>;
 export type CharacterPreviewDTO = z.infer<typeof CharacterPreviewDTO>;
 export type AtlasPreviewDTO = z.infer<typeof AtlasPreviewDTO>;
+export type PaginatedEpisodesResponseDTO = z.infer<typeof PaginatedEpisodesResponseDTO>;
+export type PaginatedSeriesResponseDTO = z.infer<typeof PaginatedSeriesResponseDTO>;
+export type SeriesDetailResponseDTO = z.infer<typeof SeriesDetailResponseDTO>;
 export type PaginatedCharactersResponseDTO = z.infer<typeof PaginatedCharactersResponseDTO>;
+export type PaginatedAtlasResponseDTO = z.infer<typeof PaginatedAtlasResponseDTO>;
+export type EpisodeParticipantDTO = z.infer<typeof EpisodeParticipantDTO>;
 export type EpisodeCharacterLinkDTO = z.infer<typeof EpisodeCharacterLinkDTO>;
 export type EpisodeDetailResponseDTO = z.infer<typeof EpisodeDetailResponseDTO>;
 export type SearchResultDTO = z.infer<typeof SearchResultDTO>;
@@ -410,6 +430,8 @@ export type HomeAboutProfileDTO = z.infer<typeof HomeAboutProfileDTO>;
 export type HomeWorldQuoteDTO = z.infer<typeof HomeWorldQuoteDTO>;
 export type HomeWorldQuoteResponseDTO = z.infer<typeof HomeWorldQuoteResponseDTO>;
 export type CharacterSort = z.infer<typeof CharacterSort>;
+export type EpisodeSort = z.infer<typeof EpisodeSort>;
+export type AtlasSort = z.infer<typeof AtlasSort>;
 export type CharacterFactPersonDTO = z.infer<typeof CharacterFactPersonDTO>;
 export type CharacterFactOfDayDTO = z.infer<typeof CharacterFactOfDayDTO>;
 export type CharacterFactOfDayResponseDTO = z.infer<typeof CharacterFactOfDayResponseDTO>;

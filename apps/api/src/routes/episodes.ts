@@ -1,12 +1,13 @@
 import { FastifyInstance } from "fastify";
 import {
+  EpisodeCatalogItemDTO,
   CountryFlagDTO,
   CountryDTO,
   EpisodeCharacterLinkDTO,
   EpisodeDetailResponseDTO,
   EpisodeDTO,
-  EpisodeListItemDTO,
   EpisodeLocationLinkDTO,
+  EpisodeParticipantDTO,
   EpisodeSeriesDTO,
   EpisodesListQueryDTO,
   PaginatedEpisodesResponseDTO
@@ -31,7 +32,9 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
     const { page, limit } = query;
     const offset = (page - 1) * limit;
     const filters: string[] = [];
+    const joins = ["JOIN episode_series s ON s.id = e.series_id", "JOIN countries c ON c.id = e.country_id"];
     const params: Array<string | number> = [];
+    const sortOrder = query.sort === "newest" ? "DESC" : "ASC";
 
     if (query.series) {
       params.push(query.series);
@@ -41,33 +44,80 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
       params.push(query.country);
       filters.push(`c.slug = $${params.length}`);
     }
+    if (query.character) {
+      joins.push("JOIN episode_characters ec_filter ON ec_filter.episode_id = e.id");
+      joins.push("JOIN characters ch_filter ON ch_filter.id = ec_filter.character_id");
+      params.push(query.character);
+      filters.push(`ch_filter.slug = $${params.length}`);
+      filters.push("ch_filter.archived_at IS NULL");
+    }
 
     const where = withArchivedFilter(filters.length ? [filters.join(" AND ")] : [], "e.archived_at");
 
     const countResult = await pool.query(
-      `SELECT COUNT(*)::int AS count
+      `SELECT COUNT(DISTINCT e.id)::int AS count
        FROM episodes e
-       JOIN episode_series s ON s.id = e.series_id
-       JOIN countries c ON c.id = e.country_id
+       ${joins.join("\n       ")}
        WHERE ${where}`,
       params
     );
 
     const rows = await pool.query(
-      `SELECT e.id, e.slug, e.series_id, e.country_id, e.episode_number, e.global_order, e.title_native, e.title_ru, e.summary, e.reading_minutes, e.published_at,
+      `SELECT DISTINCT e.id, e.slug, e.series_id, e.country_id, e.episode_number, e.global_order, e.title_native, e.title_ru, e.summary, e.reading_minutes, e.published_at,
               c.slug AS country_slug, c.title_ru AS country_title_ru, c.flag_colors AS country_flag_colors
        FROM episodes e
-       JOIN episode_series s ON s.id = e.series_id
-       JOIN countries c ON c.id = e.country_id
+       ${joins.join("\n       ")}
        WHERE ${where}
-       ORDER BY e.global_order ASC
+       ORDER BY e.global_order ${sortOrder}
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
       [...params, limit, offset]
     );
 
+    const episodeIds = rows.rows.map((row) => row.id);
+    const participantsResult =
+      episodeIds.length > 0
+        ? await pool.query(
+            `SELECT ec.episode_id, c.id, c.slug, c.name_ru, c.avatar_asset_path
+             FROM episode_characters ec
+             JOIN characters c ON c.id = ec.character_id
+             WHERE ec.episode_id = ANY($1::uuid[]) AND c.archived_at IS NULL
+             ORDER BY ec.episode_id ASC, ec.sort_order ASC, c.name_ru ASC`,
+            [episodeIds]
+          )
+        : { rows: [] };
+
+    const participantsByEpisode = new Map<
+      string,
+      Array<{
+        id: string;
+        slug: string;
+        url: string;
+        name_ru: string;
+        avatar_asset_path: string;
+      }>
+    >();
+
+    for (const row of participantsResult.rows) {
+      const participant = validateResponse(
+        EpisodeParticipantDTO,
+        {
+          id: row.id,
+          slug: row.slug,
+          url: entityUrl("character", row.slug),
+          name_ru: row.name_ru,
+          avatar_asset_path: row.avatar_asset_path
+        },
+        "/api/episodes:item:participant"
+      );
+
+      const list = participantsByEpisode.get(row.episode_id) ?? [];
+      list.push(participant);
+      participantsByEpisode.set(row.episode_id, list);
+    }
+
     const items = rows.rows.map((row) =>
       validateResponse(
-        EpisodeListItemDTO,
+        EpisodeCatalogItemDTO,
         {
           id: row.id,
           slug: row.slug,
@@ -81,6 +131,7 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
           summary: row.summary ?? null,
           reading_minutes: row.reading_minutes ?? null,
           published_at: toNullableIsoDateTime(row.published_at),
+          participants: participantsByEpisode.get(row.id) ?? [],
           country: validateResponse(
             CountryFlagDTO,
             {
