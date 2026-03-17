@@ -24,7 +24,7 @@ const snapshots: CountrySnapshot[] = [
     id: "lumendor",
     imageSrc: "/assets/media/countries/lumendor-vista.svg",
     imageAlt: "Площадь Люмендора",
-    captions: ["Люмендор", "Lumentia", "Эверсоул"],
+    captions: ["Люмендор", "Lumendor", "Эверсоул"],
     country: {
       id: "country-lumendor",
       slug: "lumendor",

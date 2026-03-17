@@ -43,8 +43,8 @@ const slides: CountryMediaSlide[] = [
   {
     id: "lumendor",
     mediaType: "image",
-    src: "/assets/media/countries/lumendor-vista.svg",
-    title: "Lumentia",
+    src: "/assets/media/countries/Lumendor.jpg",
+    title: "Lumendor",
     description:
       "Люмендор держится на порядке, фасадах и ощущении, будто город всегда был чуть больше любого человека, который в него вошёл.",
     country: {
@@ -56,9 +56,8 @@ const slides: CountryMediaSlide[] = [
   },
   {
     id: "ausonia",
-    mediaType: "video",
-    src: "/assets/media/countries/placeholder-loop.mp4",
-    poster: "/assets/media/countries/avzonia-meadow.svg",
+    mediaType: "image",
+    src: "/assets/media/countries/Ausonia.jpg",
     title: "Ausonia",
     description:
       "В Авзонии виноградные склоны, тёплый воздух и закрытые дворы делают даже короткий путь похожим на тихую сцену из чьей-то памяти.",
@@ -72,7 +71,7 @@ const slides: CountryMediaSlide[] = [
   {
     id: "marijja",
     mediaType: "image",
-    src: "/assets/media/countries/virdan-delta.svg",
+    src: "/assets/media/countries/Marijja.jpg",
     title: "Marijja",
     description:
       "Мериджа живёт в солнечном ритме рынков и площадей, где шум никогда не бывает случайным, а тишина всегда временная.",
@@ -85,9 +84,8 @@ const slides: CountryMediaSlide[] = [
   },
   {
     id: "rosmuir",
-    mediaType: "video",
-    src: "/assets/media/countries/placeholder-loop.mp4",
-    poster: "/assets/media/countries/selune-coast.svg",
+    mediaType: "image",
+    src: "/assets/media/countries/Rosmuir.jpg",
     title: "Rosmuir",
     description:
       "Росмюр звучит прохладнее остальных: ветер, берег и камень спорят здесь друг с другом дольше, чем люди.",
@@ -101,7 +99,7 @@ const slides: CountryMediaSlide[] = [
   {
     id: "vardfell",
     mediaType: "image",
-    src: "/assets/media/countries/norvale-citadel.svg",
+    src: "/assets/media/countries/Vardfell.jpg",
     title: "Vardfell",
     description:
       "Вардфелль не старается понравиться сразу. Сначала в нём чувствуешь силу и холодный порядок, а уже потом замечаешь его ритм.",
@@ -427,7 +425,7 @@ export function CountryMediaCarousel() {
                       exit={shouldReduceMotion ? undefined : { opacity: 0, y: -5, filter: "blur(4px)" }}
                       transition={{ ...copyTransition, delay: 0.12 }}
                     >
-                      <Flag country={activeSlide.country} size="sm" className="home-country-carousel-flag" />
+                      <Flag country={activeSlide.country} size="md" className="home-country-carousel-flag" />
                     </motion.div>
 
                     <motion.div
