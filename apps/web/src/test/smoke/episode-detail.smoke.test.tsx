@@ -101,6 +101,7 @@ describe("EpisodeDetailPage smoke", () => {
     });
 
     getAtlasPreviewMock.mockResolvedValue({
+      node_type: "atlas_entry",
       slug: "domaine-des-immortelles",
       url: "/atlas/domaine-des-immortelles",
       kind: "geography",

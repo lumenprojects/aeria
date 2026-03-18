@@ -14,7 +14,34 @@ export const seriesSchema = z.object({
 export const countrySchema = z.object({
   slug: slugSchema,
   title_ru: z.string().min(1),
-  flag_colors: z.array(z.string()).optional().nullable()
+  flag_colors: z.array(z.string()).optional().nullable(),
+  fact: z
+    .object({
+      title: z.string().min(1),
+      text: z.string().min(1),
+      meta: z.string().optional().nullable()
+    })
+    .optional(),
+  quotes: z
+    .array(
+      z.union([
+        z.object({ text: z.string().min(1), character_slug: slugSchema }).strict(),
+        z.object({
+          text: z.string().min(1),
+          speaker_name: z.string().min(1),
+          speaker_meta: z.string().optional().nullable()
+        }).strict()
+      ])
+    )
+    .max(3)
+    .default([])
+}).superRefine((value, ctx) => {
+  if ((value.quotes ?? []).length > 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "country entries do not support quotes"
+    });
+  }
 });
 
 export const locationSchema = z.object({
@@ -22,7 +49,27 @@ export const locationSchema = z.object({
   title_ru: z.string().min(1),
   country_slug: z.string().optional().nullable(),
   summary: z.string().optional().nullable(),
-  avatar_asset_path: assetWebPathSchema.optional().nullable()
+  avatar_asset_path: assetWebPathSchema.optional().nullable(),
+  fact: z
+    .object({
+      title: z.string().min(1),
+      text: z.string().min(1),
+      meta: z.string().optional().nullable()
+    })
+    .optional(),
+  quotes: z
+    .array(
+      z.union([
+        z.object({ text: z.string().min(1), character_slug: slugSchema }).strict(),
+        z.object({
+          text: z.string().min(1),
+          speaker_name: z.string().min(1),
+          speaker_meta: z.string().optional().nullable()
+        }).strict()
+      ])
+    )
+    .max(3)
+    .default([])
 });
 
 export const episodeSchema = z.object({
@@ -94,6 +141,25 @@ export const atlasLinkSchema = z.object({
   label: z.string().optional().nullable()
 });
 
+export const atlasFactSchema = z.object({
+  title: z.string().min(1),
+  text: z.string().min(1),
+  meta: z.string().optional().nullable()
+});
+
+export const atlasCharacterQuoteSchema = z.object({
+  text: z.string().min(1),
+  character_slug: slugSchema
+}).strict();
+
+export const atlasWorldQuoteSchema = z.object({
+  text: z.string().min(1),
+  speaker_name: z.string().min(1),
+  speaker_meta: z.string().optional().nullable()
+}).strict();
+
+export const atlasQuoteSchema = z.union([atlasCharacterQuoteSchema, atlasWorldQuoteSchema]);
+
 export const atlasSchema = z.object({
   slug: slugSchema,
   kind: z.enum(atlasKindValues),
@@ -102,8 +168,17 @@ export const atlasSchema = z.object({
   avatar_asset_path: assetWebPathSchema.optional().nullable(),
   country_slug: z.string().optional().nullable(),
   location_slug: z.string().optional().nullable(),
+  fact: atlasFactSchema.optional(),
+  quotes: z.array(atlasQuoteSchema).max(3).default([]),
   links: z.array(atlasLinkSchema).default([]),
   published_at: z.string().optional().nullable()
+}).superRefine((value, ctx) => {
+  if (value.kind === "geography" && (value.quotes ?? []).length > 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "geography atlas entries do not support quotes"
+    });
+  }
 });
 
 export type SeriesFrontmatter = z.infer<typeof seriesSchema>;
@@ -114,3 +189,5 @@ export type CharacterFrontmatter = z.infer<typeof characterSchema>;
 export type CharacterRumorFrontmatter = z.infer<typeof characterRumorSchema>;
 export type AtlasFrontmatter = z.infer<typeof atlasSchema>;
 export type AtlasLinkFrontmatter = z.infer<typeof atlasLinkSchema>;
+export type AtlasFactFrontmatter = z.infer<typeof atlasFactSchema>;
+export type AtlasQuoteFrontmatter = z.infer<typeof atlasQuoteSchema>;

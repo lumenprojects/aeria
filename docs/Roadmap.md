@@ -2,7 +2,7 @@
 
 Документ отражает ближайшие этапы после стабилизации базового контура.
 
-## Статус на 10 марта 2026
+## Статус на 17 марта 2026
 Фундамент закрыт:
 - `verify` и `verify:content` зелёные.
 - API контракты валидируются Zod-схемами.
@@ -17,23 +17,28 @@
   - серверный поиск/фильтры с URL-sync.
   - единая underline-система (`ui-underline-*`).
 - `/api/characters` расширен параметрами `q/country/affiliation/sort` и item shape.
+- Atlas production pass закрыт:
+  - `/atlas` стал unified world index для `country/location/atlas_entry`;
+  - добавлен `/api/atlas/catalog` с facets и редакционными фильтрами;
+  - `/atlas/:slug` получил fact strip, outline, editorial-слой (`fact/quotes`) и grouped clickable relations;
+  - legacy atlas list и сырые detail-links удалены из публичного контракта.
 
 ## Приоритеты v1 (следующие)
-1. Characters polish
-- Добавить e2e-сценарии для персонажного каталога (поиск, фильтры, URL-sync, reset).
-- Проверить производительность list без UI-пагинации при 100 записях.
-
-2. Atlas production pass
-- Довести `/atlas` и `/atlas/:slug` до уровня контрактной стабильности UI.
-- Закрепить фильтры/поиск по атласу и smoke/e2e покрытие.
-
-3. Episodes reading polish
+1. Episodes reading polish
 - Дополнить сценарии чтения эпизода (progress, breadcrumbs, deep-link).
 - Проверить регрессии типографики и motion на длинных текстах.
 
-4. Search quality
+2. Search quality
 - Улучшить релевантность глобального поиска (веса/синонимы/опечатки).
 - Зафиксировать метрики качества выдачи для smoke/e2e.
+
+3. Catalog e2e pass
+- Добавить e2e-сценарии для `/characters` и `/atlas`:
+  - поиск,
+  - фильтры,
+  - URL-sync,
+  - reset/apply-filters.
+- Проверить устойчивость list-поверхностей без UI-пагинации при 100 записях.
 
 ## Инженерные рельсы (не нарушать)
 - Изменения БД только миграциями.

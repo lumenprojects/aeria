@@ -23,6 +23,8 @@ import {
   locationSchema,
   seriesSchema,
   type AtlasFrontmatter,
+  type AtlasFactFrontmatter,
+  type AtlasQuoteFrontmatter,
   type CharacterFrontmatter,
   type CountryFrontmatter,
   type EpisodeFrontmatter,
@@ -50,6 +52,21 @@ type LoadedFile<T> = {
   contentHash: string;
   frontmatter: T;
   body: string;
+};
+
+type AtlasEditorialNodeType = "country" | "location" | "atlas_entry";
+
+type AtlasEditorialFrontmatter = {
+  fact?: AtlasFactFrontmatter;
+  quotes?: AtlasQuoteFrontmatter[];
+  kind?: AtlasFrontmatter["kind"];
+};
+
+type AtlasEditorialRecord = {
+  id: string;
+  nodeType: AtlasEditorialNodeType;
+  sourcePath: string;
+  frontmatter: AtlasEditorialFrontmatter;
 };
 
 function isValidAssetPath(value: string) {
@@ -96,6 +113,49 @@ async function validateAvatarAssetPaths(
 
   if (errors.length) {
     throw new Error(`Avatar path validation failed: ${errors.length} issues`);
+  }
+}
+
+function supportsAtlasQuotes(nodeType: AtlasEditorialNodeType, kind?: AtlasFrontmatter["kind"]) {
+  if (nodeType === "country") return false;
+  if (nodeType === "location") return true;
+  return kind !== "geography";
+}
+
+async function validateAtlasEditorialCapabilities(
+  countries: LoadedFile<CountryFrontmatter>[],
+  locations: LoadedFile<LocationFrontmatter>[],
+  atlas: LoadedFile<AtlasFrontmatter>[],
+  runId: number
+) {
+  const errors: string[] = [];
+
+  for (const record of countries) {
+    if ((record.frontmatter.quotes ?? []).length > 0) {
+      errors.push(`[country] ${record.sourcePath}: countries do not support quotes`);
+    }
+  }
+
+  for (const record of locations) {
+    if (!supportsAtlasQuotes("location") && (record.frontmatter.quotes ?? []).length > 0) {
+      errors.push(`[location] ${record.sourcePath}: location quotes are not supported`);
+    }
+  }
+
+  for (const record of atlas) {
+    if (!supportsAtlasQuotes("atlas_entry", record.frontmatter.kind) && (record.frontmatter.quotes ?? []).length > 0) {
+      errors.push(
+        `[atlas_entry] ${record.sourcePath}: atlas entries of kind ${record.frontmatter.kind} do not support quotes`
+      );
+    }
+  }
+
+  for (const error of errors) {
+    await logImportError(runId, null, null, error);
+  }
+
+  if (errors.length) {
+    throw new Error(`Atlas editorial capability validation failed: ${errors.length} issues`);
   }
 }
 
@@ -738,6 +798,51 @@ async function importAtlasLinks(records: LoadedFile<AtlasFrontmatter>[]) {
   }
 }
 
+async function importAtlasFacts(records: AtlasEditorialRecord[]) {
+  for (const record of records) {
+    const fact = record.frontmatter.fact;
+    await withTransaction(async (client) => {
+      await client.query("DELETE FROM atlas_facts WHERE node_type = $1 AND node_id = $2", [record.nodeType, record.id]);
+
+      if (fact) {
+        await client.query(
+          `INSERT INTO atlas_facts (node_type, node_id, title, text, meta)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [record.nodeType, record.id, fact.title, fact.text, fact.meta ?? null]
+        );
+      }
+    });
+  }
+}
+
+async function importAtlasQuotes(records: AtlasEditorialRecord[]) {
+  for (const record of records) {
+    const quotes = record.frontmatter.quotes ?? [];
+    await withTransaction(async (client) => {
+      await client.query("DELETE FROM atlas_quotes WHERE node_type = $1 AND node_id = $2", [record.nodeType, record.id]);
+
+      for (const [index, quote] of quotes.entries()) {
+        const isCharacterQuote = "character_slug" in quote;
+        await client.query(
+          `INSERT INTO atlas_quotes
+             (node_type, node_id, speaker_type, character_id, speaker_name, speaker_meta, text, sort_order)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [
+            record.nodeType,
+            record.id,
+            isCharacterQuote ? "character" : "world",
+            isCharacterQuote ? entityId("character", quote.character_slug) : null,
+            isCharacterQuote ? null : quote.speaker_name,
+            isCharacterQuote ? null : (quote.speaker_meta ?? null),
+            quote.text,
+            index
+          ]
+        );
+      }
+    });
+  }
+}
+
 async function diffSummary(table: string, records: LoadedFile<any>[], summary: ImportSummary) {
   const existing = await queryExistingBySlug(table, records.map((r) => r.slug));
   applyHashDiff(summary, records, existing);
@@ -769,6 +874,7 @@ export async function runImport(options: ImportOptions) {
     ]);
 
     await validateAvatarAssetPaths(locations, characters, atlas, runId);
+    await validateAtlasEditorialCapabilities(countries, locations, atlas, runId);
     await validateReferences(countries, locations, series, episodes, characters, atlas, runId);
 
     if (options.dryRun) {
@@ -792,6 +898,28 @@ export async function runImport(options: ImportOptions) {
     await applyPendingAffiliations(pendingAffiliations, options.batchSize);
     await importEpisodeLocations(episodeLocations);
     await importEpisodeCharacters(episodeCharacters);
+    const atlasEditorialRecords: AtlasEditorialRecord[] = [
+      ...countries.map((record) => ({
+        id: record.id,
+        nodeType: "country" as const,
+        sourcePath: record.sourcePath,
+        frontmatter: record.frontmatter
+      })),
+      ...locations.map((record) => ({
+        id: record.id,
+        nodeType: "location" as const,
+        sourcePath: record.sourcePath,
+        frontmatter: record.frontmatter
+      })),
+      ...atlas.map((record) => ({
+        id: record.id,
+        nodeType: "atlas_entry" as const,
+        sourcePath: record.sourcePath,
+        frontmatter: record.frontmatter
+      }))
+    ];
+    await importAtlasFacts(atlasEditorialRecords);
+    await importAtlasQuotes(atlasEditorialRecords);
     await importAtlasLinks(atlas);
 
     if (options.reindex) {

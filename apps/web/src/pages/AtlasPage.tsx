@@ -1,95 +1,51 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { atlasKindValues, type AtlasSort, type PaginatedAtlasResponseDTO } from "@aeria/shared";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Search, SlidersHorizontal } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
+import { type AtlasCatalogSort, type WorldNodeListItemDTO, type WorldNodeType } from "@aeria/shared";
+import { Search } from "lucide-react";
+import { Typography, SectionBreak, Skeleton, AppliedFiltersBar, WorldNodeRow } from "@/components/ui";
 import { useUnderlineActivation } from "@/components/search/useUnderlineActivation";
-import { SectionBreak, Skeleton, Typography } from "@/components/ui";
-import { getAtlas } from "@/lib/api";
+import { getAtlasCatalog } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useSearchParams } from "react-router-dom";
 
-const DEFAULT_SORT: AtlasSort = "title_asc";
+const DEFAULT_SORT: AtlasCatalogSort = "title_asc";
 const SEARCH_DEBOUNCE_MS = 200;
-const MOTION_EASE = [0.22, 1, 0.36, 1] as const;
+const sectionOrder: WorldNodeType[] = ["country", "location", "atlas_entry"];
+const EMPTY_ITEMS: WorldNodeListItemDTO[] = [];
 
-type AtlasCatalogItem = PaginatedAtlasResponseDTO["items"][number];
-
-const atlasKindLabels: Record<AtlasCatalogItem["kind"], string> = {
-  geography: "География",
-  social: "Социальное",
-  history: "История",
-  belief: "Вера",
-  object: "Объект",
-  event: "Событие",
-  other: "Другое"
-};
-
-const atlasKindMarks: Record<AtlasCatalogItem["kind"], string> = {
-  geography: "GEO",
-  social: "SOC",
-  history: "HIS",
-  belief: "VER",
-  object: "OBJ",
-  event: "EVT",
-  other: "OTH"
-};
-
-function normalizeSort(value: string | null): AtlasSort {
-  return value === "title_desc" ? "title_desc" : DEFAULT_SORT;
+function isDefined<T>(value: T | null): value is T {
+  return value !== null;
 }
 
-function buildKindLegend(items: AtlasCatalogItem[]) {
-  const counts = new Map<AtlasCatalogItem["kind"], number>();
-
-  for (const kind of atlasKindValues) {
-    counts.set(kind, 0);
-  }
-
-  for (const item of items) {
-    counts.set(item.kind, (counts.get(item.kind) ?? 0) + 1);
-  }
-
-  return atlasKindValues.map((kind) => ({
-    kind,
-    label: atlasKindLabels[kind],
-    mark: atlasKindMarks[kind],
-    count: counts.get(kind) ?? 0
-  }));
-}
-
-function describeAtlasEntry(item: AtlasCatalogItem) {
-  if (item.location_id) return "Локальный узел";
-  if (item.country_id) return "Привязка к стране";
-  return "Свободная запись";
+function normalizeSort(value: string | null): AtlasCatalogSort {
+  return value === "title_desc" || value === "recent" ? value : DEFAULT_SORT;
 }
 
 export default function AtlasPage() {
-  const reduceMotion = useReducedMotion();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [isFiltersOpen, setIsFiltersOpen] = React.useState(false);
-  const qParam = searchParams.get("q")?.trim() ?? "";
-  const kindParam = searchParams.get("kind")?.trim() ?? "";
-  const sortParam = normalizeSort(searchParams.get("sort"));
-  const [searchInput, setSearchInput] = React.useState(qParam);
+  const [searchInput, setSearchInput] = React.useState(searchParams.get("q")?.trim() ?? "");
   const { isUnderlineActive, setIsUnderlineActive, queueUnderlineActivation, clearUnderlineActivation } =
     useUnderlineActivation();
+
+  const qParam = searchParams.get("q")?.trim() ?? "";
+  const entityParam = searchParams.get("entity")?.trim() ?? "";
+  const countryParam = searchParams.get("country")?.trim() ?? "";
+  const kindParam = searchParams.get("kind")?.trim() ?? "";
+  const anchorParam = searchParams.get("anchor")?.trim() ?? "";
+  const sortParam = normalizeSort(searchParams.get("sort"));
 
   const updateParams = React.useCallback(
     (updates: Record<string, string | null>) => {
       setSearchParams(
         (current) => {
           const next = new URLSearchParams(current);
-
           for (const [key, value] of Object.entries(updates)) {
             if (!value) {
               next.delete(key);
               continue;
             }
-
             next.set(key, value);
           }
-
           return next;
         },
         { replace: true }
@@ -104,106 +60,120 @@ export default function AtlasPage() {
 
   React.useEffect(() => {
     if (searchInput === qParam) return;
-
     const timerId = window.setTimeout(() => {
       updateParams({ q: searchInput.trim() || null });
     }, SEARCH_DEBOUNCE_MS);
-
     return () => window.clearTimeout(timerId);
   }, [qParam, searchInput, updateParams]);
 
-  const atlasQuery = useQuery({
-    queryKey: ["atlas", "catalog", qParam, kindParam, sortParam],
+  const catalogQuery = useQuery({
+    queryKey: ["atlas", "catalog-v2", qParam, entityParam, countryParam, kindParam, anchorParam, sortParam],
     queryFn: () =>
-      getAtlas({
+      getAtlasCatalog({
         page: 1,
         limit: 100,
         q: qParam || undefined,
+        entity: entityParam || undefined,
+        country: countryParam || undefined,
         kind: kindParam || undefined,
+        anchor: anchorParam || undefined,
         sort: sortParam
       }),
     placeholderData: (previous) => previous
   });
 
-  const atlasLegendQuery = useQuery({
-    queryKey: ["atlas", "catalog", "legend"],
-    queryFn: () =>
-      getAtlas({
-        page: 1,
-        limit: 100,
-        sort: DEFAULT_SORT
-      })
-  });
-
-  const legendSourceItems = React.useMemo(
-    () => atlasLegendQuery.data?.items ?? atlasQuery.data?.items ?? [],
-    [atlasLegendQuery.data?.items, atlasQuery.data?.items]
-  );
-  const legendItems = React.useMemo(() => buildKindLegend(legendSourceItems), [legendSourceItems]);
-  const atlasItems = atlasQuery.data?.items ?? [];
-  const totalCount = atlasQuery.data?.total ?? atlasItems.length;
-  const hasActiveFilters = Boolean(kindParam || sortParam !== DEFAULT_SORT);
-
-  const layoutTransition = React.useMemo(
+  const items = catalogQuery.data?.items ?? EMPTY_ITEMS;
+  const facets = catalogQuery.data?.facets;
+  const groupedItems = React.useMemo(
     () =>
-      reduceMotion
-        ? { duration: 0 }
-        : ({
-            type: "spring",
-            stiffness: 110,
-            damping: 18,
-            mass: 0.8
-          } as const),
-    [reduceMotion]
+      sectionOrder.map((section) => ({
+        section,
+        label: facets?.entity.find((item) => item.value === section)?.label ?? section,
+        items: items.filter((item) => item.node_type === section)
+      })),
+    [facets?.entity, items]
   );
+
+  const activeFilters = [
+    qParam ? { key: "q", label: "Поиск", value: qParam, onClear: () => updateParams({ q: null }) } : null,
+    entityParam
+      ? {
+          key: "entity",
+          label: "Сущность",
+          value: facets?.entity.find((item) => item.value === entityParam)?.label ?? entityParam,
+          onClear: () => updateParams({ entity: null })
+        }
+      : null,
+    countryParam
+      ? {
+          key: "country",
+          label: "Страна",
+          value: facets?.country.find((item) => item.slug === countryParam)?.title_ru ?? countryParam,
+          onClear: () => updateParams({ country: null })
+        }
+      : null,
+    kindParam
+      ? {
+          key: "kind",
+          label: "Слой",
+          value: facets?.kind.find((item) => item.value === kindParam)?.label ?? kindParam,
+          onClear: () => updateParams({ kind: null })
+        }
+      : null,
+    anchorParam
+      ? {
+          key: "anchor",
+          label: "Привязка",
+          value: facets?.anchor.find((item) => item.value === anchorParam)?.label ?? anchorParam,
+          onClear: () => updateParams({ anchor: null })
+        }
+      : null,
+    sortParam !== DEFAULT_SORT
+      ? {
+          key: "sort",
+          label: "Сортировка",
+          value:
+            sortParam === "recent"
+              ? "Сначала новое"
+              : sortParam === "title_desc"
+                ? "Название Я-А"
+                : "Название А-Я",
+          onClear: () => updateParams({ sort: null })
+        }
+      : null
+  ].filter(isDefined);
 
   return (
-    <div className="page-stack">
-      <section className="width-medium atlas-catalog" data-testid="atlas-catalog">
-        <div className="atlas-catalog-head">
-          <div className="atlas-catalog-intro">
-            <Typography variant="h1" as="h1" className="atlas-catalog-title">
-              Атлас
-            </Typography>
-            <Typography variant="body" fontRole="body" className="tone-secondary atlas-catalog-lead">
-              Слои мира собраны как архив: география, объекты, события и социальные узлы лежат рядом, но не теряют
-              своей природы.
-            </Typography>
-          </div>
-
-          <div className="atlas-catalog-map" data-testid="atlas-catalog-map">
-            <Typography variant="ui" as="p" className="tone-secondary atlas-catalog-map-label">
-              Карта каталога
-            </Typography>
-            <div className="atlas-catalog-map-grid">
-              {legendItems.map((item) => (
-                <div key={item.kind} className="atlas-catalog-map-item">
-                  <span className="atlas-catalog-map-mark" aria-hidden="true">
-                    {item.mark}
-                  </span>
-                  <div className="atlas-catalog-map-copy">
-                    <Typography variant="ui" as="p" className="atlas-catalog-map-title">
-                      {item.label}
-                    </Typography>
-                    <Typography variant="h4" as="p" className="atlas-catalog-map-count">
-                      {item.count}
-                    </Typography>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Typography variant="ui" as="p" className="tone-secondary atlas-catalog-map-note">
-              Видимый слой: {atlasItems.length} из {totalCount}.
-            </Typography>
-          </div>
+    <div className="page-stack atlas-world-page">
+      <section className="width-wide atlas-world-hero" data-testid="atlas-world-catalog">
+        <div className="atlas-world-hero-copy">
+          <Typography variant="h1" as="h1" className="atlas-world-title">
+            Атлас
+          </Typography>
+          <Typography variant="body" as="p" fontRole="body" className="tone-secondary atlas-world-lead">
+            Единый вход в мир: страны, локации и записи атласа собраны в одном редакционном индексе, где важнее
+            контекст, связи и маршрут чтения, чем сухая инвентаризация.
+          </Typography>
         </div>
 
-        <SectionBreak variant="line" lineWidthClassName="width-medium" />
+        <nav className="atlas-world-taxonomy" aria-label="Быстрые переходы по разделам">
+          {groupedItems.map((group) => (
+            <a key={group.section} href={`#atlas-group-${group.section}`} className="atlas-world-taxonomy-link ui-underline-hover">
+              <span className="atlas-world-taxonomy-label">{group.label}</span>
+              <span className="tone-secondary atlas-world-taxonomy-count">{group.items.length}</span>
+            </a>
+          ))}
+        </nav>
+      </section>
 
-        <div className="atlas-catalog-controls">
-          <label className="atlas-catalog-search-shell" aria-label="Поиск по атласу">
-            <Search size={18} className="atlas-catalog-search-icon" aria-hidden="true" />
+      <SectionBreak variant="line" lineWidthClassName="width-wide" />
+
+      <section className="width-wide atlas-world-controls" aria-label="Фильтры каталога атласа">
+        <div className="atlas-world-controls-primary">
+          <label className="atlas-world-search-shell" aria-label="Поиск по атласу">
+            <Search size={18} className="atlas-world-search-icon" aria-hidden="true" />
             <input
+              data-testid="atlas-world-search"
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
               onFocus={queueUnderlineActivation}
@@ -211,157 +181,150 @@ export default function AtlasPage() {
                 clearUnderlineActivation();
                 setIsUnderlineActive(false);
               }}
-              placeholder="Поиск по атласу..."
+              placeholder="Поиск по миру..."
               className={cn(
-                "atlas-catalog-search-input role-ui interactive-input-underline",
+                "atlas-world-search-input role-ui interactive-input-underline",
                 isUnderlineActive && "interactive-input-underline-active"
               )}
             />
           </label>
 
-          <button
-            type="button"
-            aria-label="Показать фильтры атласа"
-            aria-expanded={isFiltersOpen}
-            className={cn(
-              "navbar-icon atlas-catalog-filter-button ui-underline-click",
-              isFiltersOpen && "navbar-icon-active ui-underline-active"
-            )}
-            onClick={() => setIsFiltersOpen((value) => !value)}
-            data-testid="atlas-filter-button"
-          >
-            <SlidersHorizontal size={18} />
-          </button>
+          <div className="atlas-world-field">
+            <span className="navbar-label">Сущность</span>
+            <select
+              data-testid="atlas-world-filter-entity"
+              className="navbar-select atlas-world-select"
+              value={entityParam}
+              onChange={(event) => updateParams({ entity: event.target.value || null })}
+            >
+              <option value="">Все</option>
+              {facets?.entity.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="atlas-world-field">
+            <span className="navbar-label">Страна</span>
+            <select
+              data-testid="atlas-world-filter-country"
+              className="navbar-select atlas-world-select"
+              value={countryParam}
+              onChange={(event) => updateParams({ country: event.target.value || null })}
+            >
+              <option value="">Все</option>
+              {facets?.country.map((item) => (
+                <option key={item.slug} value={item.slug}>
+                  {item.title_ru}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        <AnimatePresence initial={false}>
-          {isFiltersOpen && (
-            <motion.div
-              initial={reduceMotion ? false : { opacity: 0, y: -8 }}
-              animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
-              transition={reduceMotion ? { duration: 0 } : { duration: 0.22, ease: MOTION_EASE }}
-              className="atlas-filters-drawer role-ui"
-              data-testid="atlas-filters-panel"
+        <div className="atlas-world-controls-secondary">
+          <div className="atlas-world-field">
+            <span className="navbar-label">Слой</span>
+            <select
+              data-testid="atlas-world-filter-kind"
+              className="navbar-select atlas-world-select"
+              value={kindParam}
+              onChange={(event) => updateParams({ kind: event.target.value || null })}
             >
-              <div className="atlas-filters-grid">
-                <div className="atlas-filters-field">
-                  <span className="navbar-label">Слой</span>
-                  <select
-                    className="navbar-select atlas-filters-select"
-                    value={kindParam}
-                    onChange={(event) => updateParams({ kind: event.target.value || null })}
-                    data-testid="atlas-filter-kind"
-                  >
-                    <option value="">Все</option>
-                    {atlasKindValues.map((kind) => (
-                      <option key={kind} value={kind}>
-                        {atlasKindLabels[kind]}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <option value="">Все</option>
+              {facets?.kind.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
-                <div className="atlas-filters-field">
-                  <span className="navbar-label">Порядок</span>
-                  <select
-                    className="navbar-select atlas-filters-select"
-                    value={sortParam}
-                    onChange={(event) => {
-                      const nextSort = normalizeSort(event.target.value);
-                      updateParams({ sort: nextSort === DEFAULT_SORT ? null : nextSort });
-                    }}
-                    data-testid="atlas-filter-sort"
-                  >
-                    <option value="title_asc">По названию (А-Я)</option>
-                    <option value="title_desc">По названию (Я-А)</option>
-                  </select>
-                </div>
+          <div className="atlas-world-field">
+            <span className="navbar-label">Привязка</span>
+            <select
+              data-testid="atlas-world-filter-anchor"
+              className="navbar-select atlas-world-select"
+              value={anchorParam}
+              onChange={(event) => updateParams({ anchor: event.target.value || null })}
+            >
+              <option value="">Все</option>
+              {facets?.anchor.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="atlas-world-field">
+            <span className="navbar-label">Сортировка</span>
+            <select
+              data-testid="atlas-world-filter-sort"
+              className="navbar-select atlas-world-select"
+              value={sortParam}
+              onChange={(event) => {
+                const nextSort = normalizeSort(event.target.value);
+                updateParams({ sort: nextSort === DEFAULT_SORT ? null : nextSort });
+              }}
+            >
+              <option value="title_asc">Название А-Я</option>
+              <option value="title_desc">Название Я-А</option>
+              <option value="recent">Сначала новое</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <AppliedFiltersBar
+        className="width-wide"
+        items={activeFilters}
+        onClearAll={() => updateParams({ q: null, entity: null, country: null, kind: null, anchor: null, sort: null })}
+      />
+
+      <section className="width-wide atlas-world-groups" data-testid="atlas-world-list">
+        {catalogQuery.isLoading && items.length === 0 && (
+          <>
+            <Skeleton className="world-node-row-skeleton" />
+            <Skeleton className="world-node-row-skeleton" />
+            <Skeleton className="world-node-row-skeleton" />
+          </>
+        )}
+
+        {catalogQuery.isError && (
+          <Typography variant="ui" as="p" className="tone-secondary">
+            Не удалось собрать атлас. Попробуйте позже.
+          </Typography>
+        )}
+
+        {!catalogQuery.isLoading && !catalogQuery.isError && items.length === 0 && (
+          <Typography variant="ui" as="p" className="tone-secondary">
+            Ничего не найдено. Попробуйте ослабить фильтры или изменить запрос.
+          </Typography>
+        )}
+
+        {groupedItems.map((group) =>
+          group.items.length > 0 ? (
+            <section key={group.section} id={`atlas-group-${group.section}`} className="atlas-world-group" data-testid={`atlas-group-${group.section}`}>
+              <div className="atlas-world-group-head">
+                <Typography variant="h2" as="h2" className="atlas-world-group-title">
+                  {group.label}
+                </Typography>
+                <Typography variant="ui" as="p" className="tone-secondary atlas-world-group-count">
+                  {group.items.length}
+                </Typography>
               </div>
 
-              <button
-                type="button"
-                className="atlas-filters-reset tone-secondary ui-underline-hover"
-                onClick={() => updateParams({ kind: null, sort: null })}
-                disabled={!hasActiveFilters}
-              >
-                Сбросить фильтры
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="atlas-catalog-list" data-testid="atlas-catalog-list">
-          {atlasQuery.isLoading && atlasItems.length === 0 && (
-            <>
-              <Skeleton className="atlas-catalog-skeleton-item" />
-              <Skeleton className="atlas-catalog-skeleton-item" />
-              <Skeleton className="atlas-catalog-skeleton-item" />
-            </>
-          )}
-
-          {atlasQuery.isError && !atlasQuery.isLoading && (
-            <Typography variant="ui" className="tone-secondary">
-              Не удалось загрузить Атлас. Попробуйте позже.
-            </Typography>
-          )}
-
-          {!atlasQuery.isLoading && !atlasQuery.isError && atlasItems.length === 0 && (
-            <Typography variant="ui" className="tone-secondary">
-              Ничего не найдено. Попробуйте изменить запрос или фильтры.
-            </Typography>
-          )}
-
-          <AnimatePresence initial={false} mode="popLayout">
-            {atlasItems.map((entry) => (
-              <motion.div
-                key={entry.id}
-                layout
-                initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-                animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-                exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
-                transition={
-                  reduceMotion
-                    ? { duration: 0 }
-                    : {
-                        opacity: { duration: 0.2, ease: MOTION_EASE },
-                        y: { duration: 0.22, ease: MOTION_EASE },
-                        layout: layoutTransition
-                      }
-                }
-              >
-                <Link to={entry.url} className="atlas-catalog-item ui-underline-hover" data-testid="atlas-catalog-item">
-                  <div className="atlas-catalog-item-sigil" aria-hidden="true">
-                    <span className="atlas-catalog-item-mark">{atlasKindMarks[entry.kind]}</span>
-                  </div>
-
-                  <div className="atlas-catalog-item-copy">
-                    <div className="atlas-catalog-item-head">
-                      <Typography variant="h2" as="h2" className="atlas-catalog-item-title">
-                        {entry.title_ru}
-                      </Typography>
-                      <Typography variant="ui" as="p" className="tone-secondary atlas-catalog-item-kind">
-                        {atlasKindLabels[entry.kind]}
-                      </Typography>
-                    </div>
-
-                    {entry.summary && (
-                      <Typography variant="body" fontRole="body" className="tone-secondary atlas-catalog-item-summary">
-                        {entry.summary}
-                      </Typography>
-                    )}
-
-                    <div className="atlas-catalog-item-meta">
-                      <Typography variant="ui" as="span" className="tone-secondary atlas-catalog-item-meta-label">
-                        {describeAtlasEntry(entry)}
-                      </Typography>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+              <div className="atlas-world-group-list">
+                {group.items.map((item) => (
+                  <WorldNodeRow key={`${item.node_type}-${item.id}`} item={item} />
+                ))}
+              </div>
+            </section>
+          ) : null
+        )}
       </section>
     </div>
   );

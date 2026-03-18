@@ -50,6 +50,7 @@ test("collectLocalMissingReferences returns empty sets for consistent references
         title_ru: "Гильдия",
         country_slug: "fr",
         location_slug: "paris",
+        quotes: [{ text: "Герой отсюда не выходит незамеченным.", character_slug: "hero-1" }],
         links: [
           { type: "episode", slug: "ep-1" },
           { type: "character", slug: "hero-1" }
@@ -119,6 +120,7 @@ test("collectLocalMissingReferences aggregates unknown slugs by entity", () => {
         title_ru: "Entry",
         country_slug: "country-missing",
         location_slug: "loc-missing",
+        quotes: [{ text: "Все уже знают это имя.", character_slug: "char-missing" }],
         links: [
           { type: "episode", slug: "ep-missing" },
           { type: "character", slug: "char-missing" },

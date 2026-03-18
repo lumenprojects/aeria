@@ -21,6 +21,23 @@ export type MissingReferenceBuckets = {
   atlas: Set<string>;
 };
 
+function collectQuoteCharacterReferences(
+  quotes:
+    | Array<
+        | { text: string; character_slug: string }
+        | { text: string; speaker_name: string; speaker_meta?: string | null }
+      >
+    | undefined,
+  characterSlugs: Set<string>,
+  missing: MissingReferenceBuckets
+) {
+  for (const quote of quotes ?? []) {
+    if ("character_slug" in quote && !characterSlugs.has(quote.character_slug)) {
+      missing.characters.add(quote.character_slug);
+    }
+  }
+}
+
 export function collectLocalMissingReferences(
   countries: FileWithFrontmatter<CountryFrontmatter>[],
   locations: FileWithFrontmatter<LocationFrontmatter>[],
@@ -49,6 +66,8 @@ export function collectLocalMissingReferences(
     if (location.frontmatter.country_slug && !countrySlugs.has(location.frontmatter.country_slug)) {
       missing.countries.add(location.frontmatter.country_slug);
     }
+
+    collectQuoteCharacterReferences(location.frontmatter.quotes, characterSlugs, missing);
   }
 
   for (const episode of episodes) {
@@ -106,6 +125,8 @@ export function collectLocalMissingReferences(
       missing.locations.add(entry.frontmatter.location_slug);
     }
 
+    collectQuoteCharacterReferences(entry.frontmatter.quotes, characterSlugs, missing);
+
     for (const link of entry.frontmatter.links ?? []) {
       switch (link.type) {
         case "episode":
@@ -130,6 +151,10 @@ export function collectLocalMissingReferences(
           break;
       }
     }
+  }
+
+  for (const country of countries) {
+    collectQuoteCharacterReferences(country.frontmatter.quotes, characterSlugs, missing);
   }
 
   return missing;

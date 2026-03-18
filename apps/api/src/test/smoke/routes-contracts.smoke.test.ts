@@ -116,19 +116,73 @@ describe("API route contracts smoke", () => {
     await app.close();
   });
 
-  it("supports atlas list search, kind filter and sort with strict shape", async () => {
+  it("returns atlas world catalog payload with mixed entities, facets and modern filters", async () => {
     queryMock
-      .mockResolvedValueOnce({ rows: [{ count: 1 }] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000021",
+            slug: "ausonia",
+            title_ru: "Авзония",
+            flag_colors: ["#CD212A", "#FFFFFF", "#0055A4"]
+          },
+          {
+            id: "00000000-0000-0000-0000-000000000022",
+            slug: "lumendor",
+            title_ru: "Люмендор",
+            flag_colors: ["#C1272D", "#111111", "#FFFFFF"]
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000041",
+            slug: "port-velon",
+            title_ru: "Порт Велон",
+            summary: "Торговая кромка Авзонии.",
+            description_markdown: "У пристаней Велона держится соль и шепот.",
+            avatar_asset_path: null,
+            country_id: "00000000-0000-0000-0000-000000000021"
+          }
+        ]
+      })
       .mockResolvedValueOnce({
         rows: [
           {
             id: "00000000-0000-0000-0000-000000000051",
-            slug: "atlas-001",
-            kind: "geography",
-            title_ru: "Atlas 001",
-            summary: "Atlas summary",
+            slug: "dom-velon",
+            kind: "social",
+            title_ru: "Дом Велон",
+            summary: "Дом с пристанью и долгой памятью.",
+            content_markdown: "Велон держит торговлю в узде.",
+            avatar_asset_path: "/assets/images/atlas/dom-velon.png",
             country_id: "00000000-0000-0000-0000-000000000021",
-            location_id: "00000000-0000-0000-0000-000000000041"
+            location_id: null,
+            published_at: new Date("2026-03-14T00:00:00Z")
+          },
+          {
+            id: "00000000-0000-0000-0000-000000000052",
+            slug: "svobodnaya-hronika",
+            kind: "history",
+            title_ru: "Свободная хроника",
+            summary: "Архив без привязки.",
+            content_markdown: "Свободная запись.",
+            avatar_asset_path: null,
+            country_id: null,
+            location_id: null,
+            published_at: new Date("2026-03-15T00:00:00Z")
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            from_type: "atlas_entry",
+            from_id: "00000000-0000-0000-0000-000000000051",
+            to_type: "character",
+            to_id: "00000000-0000-0000-0000-000000000031",
+            label: "Велон"
           }
         ]
       });
@@ -138,28 +192,67 @@ describe("API route contracts smoke", () => {
 
     const res = await app.inject({
       method: "GET",
-      url: "/api/atlas?page=1&limit=100&q=atlas&kind=geography&sort=title_desc"
+      url: "/api/atlas/catalog?page=1&limit=20&q=%D0%B2%D0%B5%D0%BB%D0%BE%D0%BD&entity=atlas_entry&country=ausonia&anchor=country&sort=recent"
     });
 
     expect(res.statusCode).toBe(200);
-    expect(queryMock.mock.calls[0][1]).toEqual(["geography", "%atlas%"]);
-    expect(String(queryMock.mock.calls[1][0])).toContain("ORDER BY title_ru DESC");
+    expect(queryMock).toHaveBeenCalledTimes(4);
     expect(res.json()).toEqual({
       items: [
         {
+          node_type: "atlas_entry",
           id: "00000000-0000-0000-0000-000000000051",
-          slug: "atlas-001",
-          url: "/atlas/atlas-001",
-          kind: "geography",
-          title_ru: "Atlas 001",
-          summary: "Atlas summary",
-          country_id: "00000000-0000-0000-0000-000000000021",
-          location_id: "00000000-0000-0000-0000-000000000041"
+          slug: "dom-velon",
+          url: "/atlas/dom-velon",
+          title_ru: "Дом Велон",
+          summary: "Дом с пристанью и долгой памятью.",
+          kind: "social",
+          avatar_asset_path: "/assets/images/atlas/dom-velon.png",
+          country: {
+            id: "00000000-0000-0000-0000-000000000021",
+            slug: "ausonia",
+            url: "/atlas/ausonia",
+            title_ru: "Авзония",
+            flag_colors: ["#CD212A", "#FFFFFF", "#0055A4"]
+          },
+          location: null,
+          anchor_mode: "country",
+          related_count: 1,
+          published_at: "2026-03-14T00:00:00.000Z"
         }
       ],
+      facets: {
+        entity: [
+          { value: "country", label: "Страны", count: 0 },
+          { value: "location", label: "Локации", count: 0 },
+          { value: "atlas_entry", label: "Записи атласа", count: 1 }
+        ],
+        kind: [
+          { value: "geography", label: "География", count: 0 },
+          { value: "social", label: "Социальное", count: 1 },
+          { value: "history", label: "История", count: 0 },
+          { value: "belief", label: "Вера", count: 0 },
+          { value: "object", label: "Объект", count: 0 },
+          { value: "event", label: "Событие", count: 0 },
+          { value: "other", label: "Другое", count: 0 }
+        ],
+        country: [
+          {
+            id: "00000000-0000-0000-0000-000000000021",
+            slug: "ausonia",
+            title_ru: "Авзония",
+            count: 1
+          }
+        ],
+        anchor: [
+          { value: "country", label: "Страна", count: 1 },
+          { value: "location", label: "Локация", count: 0 },
+          { value: "free", label: "Свободные", count: 0 }
+        ]
+      },
       total: 1,
       page: 1,
-      limit: 100
+      limit: 20
     });
 
     await app.close();
@@ -536,6 +629,7 @@ describe("API route contracts smoke", () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({
+      node_type: "country",
       slug: "ausonia",
       url: "/atlas/ausonia",
       kind: "geography",
@@ -591,6 +685,7 @@ describe("API route contracts smoke", () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({
+      node_type: "location",
       slug: "biblioteka-lorlayt",
       url: "/atlas/biblioteka-lorlayt",
       kind: "geography",
@@ -1223,11 +1318,11 @@ describe("API route contracts smoke", () => {
       .mockResolvedValueOnce({
         rows: [
           {
-            from_type: "atlas_entry",
-            from_id: "00000000-0000-0000-0000-000000000051",
-            to_type: "episode",
-            to_id: "00000000-0000-0000-0000-000000000001",
-            label: "related"
+            id: "00000000-0000-0000-0000-000000000041",
+            slug: "port-velon",
+            title_ru: "Порт Велон",
+            avatar_asset_path: "/assets/images/locations/port-velon.png",
+            country_id: "00000000-0000-0000-0000-000000000021"
           }
         ]
       })
@@ -1238,6 +1333,67 @@ describe("API route contracts smoke", () => {
             slug: "ru-example",
             title_ru: "Country 01",
             flag_colors: ["#111111", "#ffffff"]
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            from_type: "atlas_entry",
+            from_id: "00000000-0000-0000-0000-000000000051",
+            to_type: "episode_series",
+            to_id: "00000000-0000-0000-0000-000000000011",
+            label: "related"
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            title: "Ключ на тёмной тесьме",
+            text: "Ключ носят не в связке, а отдельно, чтобы его вес всегда чувствовался в ладони.",
+            meta: "Из служебного правила"
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "2",
+            speaker_type: "character",
+            character_id: "00000000-0000-0000-0000-000000000031",
+            speaker_name: null,
+            speaker_meta: null,
+            text: "Эту вещь не прячут глубоко: её смысл в том, что о ней помнят даже молча.",
+            sort_order: 0
+          },
+          {
+            id: "3",
+            speaker_type: "world",
+            character_id: null,
+            speaker_name: "Архивариус северного крыла",
+            speaker_meta: "дежурство у каталога",
+            text: "У этой вещи нет права лежать молча: любая полка вокруг неё начинает казаться временной.",
+            sort_order: 1
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000031",
+            slug: "character-001",
+            name_ru: "Character 001",
+            avatar_asset_path: "/assets/images/characters/character-001.png"
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000011",
+            slug: "yellow-moon",
+            title_ru: "Жёлтая Луна"
           }
         ]
       });
@@ -1252,6 +1408,7 @@ describe("API route contracts smoke", () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({
+      node_type: "atlas_entry",
       entry: {
         id: "00000000-0000-0000-0000-000000000051",
         slug: "atlas-001",
@@ -1272,16 +1429,127 @@ describe("API route contracts smoke", () => {
         title_ru: "Country 01",
         flag_colors: ["#111111", "#ffffff"]
       },
-      links: [
+      location: {
+        id: "00000000-0000-0000-0000-000000000041",
+        slug: "port-velon",
+        url: "/atlas/port-velon",
+        title_ru: "Порт Велон",
+        avatar_asset_path: "/assets/images/locations/port-velon.png",
+        country: {
+          id: "00000000-0000-0000-0000-000000000021",
+          slug: "ru-example",
+          url: "/atlas/ru-example",
+          title_ru: "Country 01",
+          flag_colors: ["#111111", "#ffffff"]
+        }
+      },
+      fact: {
+        title: "Ключ на тёмной тесьме",
+        text: "Ключ носят не в связке, а отдельно, чтобы его вес всегда чувствовался в ладони.",
+        meta: "Из служебного правила"
+      },
+      quotes: [
+        {
+          id: 2,
+          speaker_type: "character",
+          speaker_name: "Character 001",
+          speaker_meta: null,
+          text: "Эту вещь не прячут глубоко: её смысл в том, что о ней помнят даже молча.",
+          sort_order: 0,
+          character: {
+            id: "00000000-0000-0000-0000-000000000031",
+            slug: "character-001",
+            url: "/characters/character-001",
+            name_ru: "Character 001",
+            avatar_asset_path: "/assets/images/characters/character-001.png"
+          }
+        },
+        {
+          id: 3,
+          speaker_type: "world",
+          speaker_name: "Архивариус северного крыла",
+          speaker_meta: "дежурство у каталога",
+          text: "У этой вещи нет права лежать молча: любая полка вокруг неё начинает казаться временной.",
+          sort_order: 1,
+          character: null
+        }
+      ],
+      relations: [
         {
           from_type: "atlas_entry",
           from_id: "00000000-0000-0000-0000-000000000051",
-          to_type: "episode",
-          to_id: "00000000-0000-0000-0000-000000000001",
-          label: "related"
+          to_type: "episode_series",
+          to_id: "00000000-0000-0000-0000-000000000011",
+          label: "related",
+          target: {
+            type: "episode_series",
+            id: "00000000-0000-0000-0000-000000000011",
+            slug: "yellow-moon",
+            url: "/episodes?series=yellow-moon",
+            title: "Жёлтая Луна",
+            avatar_asset_path: null,
+            country: null
+          }
         }
       ]
     });
+    await app.close();
+  });
+
+  it("returns country fallback atlas detail with empty editorial layers", async () => {
+    queryMock
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "00000000-0000-0000-0000-000000000021",
+            slug: "ru-example",
+            title_ru: "Country 01",
+            flag_colors: ["#111111", "#ffffff"]
+          }
+        ]
+      })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const { buildApp } = await import("../../app.js");
+    const app = await buildApp();
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/atlas/ru-example"
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      node_type: "country",
+      entry: {
+        id: "00000000-0000-0000-0000-000000000021",
+        slug: "ru-example",
+        url: "/atlas/ru-example",
+        kind: "geography",
+        title_ru: "Country 01",
+        summary: null,
+        content_markdown: null,
+        avatar_asset_path: null,
+        country_id: "00000000-0000-0000-0000-000000000021",
+        location_id: null,
+        published_at: null
+      },
+      country: {
+        id: "00000000-0000-0000-0000-000000000021",
+        slug: "ru-example",
+        url: "/atlas/ru-example",
+        title_ru: "Country 01",
+        flag_colors: ["#111111", "#ffffff"]
+      },
+      location: null,
+      fact: null,
+      quotes: [],
+      relations: []
+    });
+
     await app.close();
   });
 
