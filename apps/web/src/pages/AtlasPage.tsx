@@ -2,7 +2,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { type AtlasCatalogSort, type WorldNodeListItemDTO, type WorldNodeType } from "@aeria/shared";
 import { Search } from "lucide-react";
-import { Typography, SectionBreak, Skeleton, AppliedFiltersBar, WorldNodeRow } from "@/components/ui";
+import { AppliedFiltersBar, Input, SectionBreak, SelectField, Skeleton, Typography, WorldNodeRow } from "@/components/ui";
 import { useUnderlineActivation } from "@/components/search/useUnderlineActivation";
 import { getAtlasCatalog } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -172,7 +172,8 @@ export default function AtlasPage() {
         <div className="atlas-world-controls-primary">
           <label className="atlas-world-search-shell" aria-label="Поиск по атласу">
             <Search size={18} className="atlas-world-search-icon" aria-hidden="true" />
-            <input
+            <Input
+              appearance="ghost"
               data-testid="atlas-world-search"
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
@@ -189,92 +190,64 @@ export default function AtlasPage() {
             />
           </label>
 
-          <div className="atlas-world-field">
-            <span className="navbar-label">Сущность</span>
-            <select
-              data-testid="atlas-world-filter-entity"
-              className="navbar-select atlas-world-select"
-              value={entityParam}
-              onChange={(event) => updateParams({ entity: event.target.value || null })}
-            >
-              <option value="">Все</option>
-              {facets?.entity.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectField
+            label="Сущность"
+            value={entityParam}
+            onValueChange={(value) => updateParams({ entity: value || null })}
+            options={(facets?.entity ?? []).map((item) => ({ value: item.value, label: item.label }))}
+            fieldClassName="atlas-world-field"
+            triggerClassName="atlas-world-select"
+            triggerTestId="atlas-world-filter-entity"
+          />
 
-          <div className="atlas-world-field">
-            <span className="navbar-label">Страна</span>
-            <select
-              data-testid="atlas-world-filter-country"
-              className="navbar-select atlas-world-select"
-              value={countryParam}
-              onChange={(event) => updateParams({ country: event.target.value || null })}
-            >
-              <option value="">Все</option>
-              {facets?.country.map((item) => (
-                <option key={item.slug} value={item.slug}>
-                  {item.title_ru}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectField
+            label="Страна"
+            value={countryParam}
+            onValueChange={(value) => updateParams({ country: value || null })}
+            options={(facets?.country ?? []).map((item) => ({ value: item.slug, label: item.title_ru }))}
+            fieldClassName="atlas-world-field"
+            triggerClassName="atlas-world-select"
+            triggerTestId="atlas-world-filter-country"
+          />
         </div>
 
         <div className="atlas-world-controls-secondary">
-          <div className="atlas-world-field">
-            <span className="navbar-label">Слой</span>
-            <select
-              data-testid="atlas-world-filter-kind"
-              className="navbar-select atlas-world-select"
-              value={kindParam}
-              onChange={(event) => updateParams({ kind: event.target.value || null })}
-            >
-              <option value="">Все</option>
-              {facets?.kind.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectField
+            label="Слой"
+            value={kindParam}
+            onValueChange={(value) => updateParams({ kind: value || null })}
+            options={(facets?.kind ?? []).map((item) => ({ value: item.value, label: item.label }))}
+            fieldClassName="atlas-world-field"
+            triggerClassName="atlas-world-select"
+            triggerTestId="atlas-world-filter-kind"
+          />
 
-          <div className="atlas-world-field">
-            <span className="navbar-label">Привязка</span>
-            <select
-              data-testid="atlas-world-filter-anchor"
-              className="navbar-select atlas-world-select"
-              value={anchorParam}
-              onChange={(event) => updateParams({ anchor: event.target.value || null })}
-            >
-              <option value="">Все</option>
-              {facets?.anchor.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectField
+            label="Привязка"
+            value={anchorParam}
+            onValueChange={(value) => updateParams({ anchor: value || null })}
+            options={(facets?.anchor ?? []).map((item) => ({ value: item.value, label: item.label }))}
+            fieldClassName="atlas-world-field"
+            triggerClassName="atlas-world-select"
+            triggerTestId="atlas-world-filter-anchor"
+          />
 
-          <div className="atlas-world-field">
-            <span className="navbar-label">Сортировка</span>
-            <select
-              data-testid="atlas-world-filter-sort"
-              className="navbar-select atlas-world-select"
-              value={sortParam}
-              onChange={(event) => {
-                const nextSort = normalizeSort(event.target.value);
-                updateParams({ sort: nextSort === DEFAULT_SORT ? null : nextSort });
-              }}
-            >
-              <option value="title_asc">Название А-Я</option>
-              <option value="title_desc">Название Я-А</option>
-              <option value="recent">Сначала новое</option>
-            </select>
-          </div>
+          <SelectField
+            label="Сортировка"
+            value={sortParam}
+            onValueChange={(value) => {
+              const nextSort = normalizeSort(value);
+              updateParams({ sort: nextSort === DEFAULT_SORT ? null : nextSort });
+            }}
+            options={[
+              { value: "title_asc", label: "Название А-Я" },
+              { value: "title_desc", label: "Название Я-А" },
+              { value: "recent", label: "Сначала новое" }
+            ]}
+            fieldClassName="atlas-world-field"
+            triggerClassName="atlas-world-select"
+            triggerTestId="atlas-world-filter-sort"
+          />
         </div>
       </section>
 

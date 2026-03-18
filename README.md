@@ -11,12 +11,16 @@ Monorepo for the Aeria site.
 
 ## Quick start
 1. `npm install`
-2. `docker-compose up -d`
-3. `cp .env.example .env` and adjust if needed
-4. `npm run migrate`
-5. `npm run content:import -- --dry-run`
-6. `npm run content:import`
-7. `npm run dev`
+2. `cp .env.example .env`
+3. Choose one database flow:
+   - Docker: `docker compose up -d`
+   - Local cluster: `npm run db:up` (requires `initdb`, `pg_ctl`, `createdb` in `PATH`)
+4. If you used `npm run db:up`, replace `DATABASE_URL` in `.env` with the URL printed by the script
+5. `npm run migrate`
+6. `npm run content:dry-run`
+7. `npm run content:import`
+8. `npm run search:worker`
+9. `npm run dev`
 
 ## Content import
 - Content lives in `content/`.

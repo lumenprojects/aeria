@@ -1,5 +1,5 @@
 ﻿import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import type { CharacterSort, PaginatedCharactersResponseDTO } from "@aeria/shared";
 import CharactersPage from "@/pages/CharactersPage";
@@ -36,6 +36,14 @@ function renderCharactersPage(initialEntry = "/characters") {
       </MemoryRouter>
     </QueryClientProvider>
   );
+}
+
+async function chooseSelectOption(testId: string, label: string) {
+  const trigger = screen.getByTestId(testId);
+  fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false });
+  fireEvent.click(trigger);
+  const listbox = await screen.findByRole("listbox");
+  fireEvent.click(within(listbox).getByText(label));
 }
 
 function paginated(items: CharacterItem[]): PaginatedCharactersResponseDTO {
@@ -253,17 +261,13 @@ describe("CharactersPage catalog smoke", () => {
     });
 
     fireEvent.click(screen.getByTestId("characters-filter-button"));
-    fireEvent.change(screen.getByTestId("characters-filter-country"), {
-      target: { value: "jp-example" }
-    });
+    await chooseSelectOption("characters-filter-country", "Страна 02");
 
     await waitFor(() => {
       expect(locationParams().get("country")).toBe("jp-example");
     });
 
-    fireEvent.change(screen.getByTestId("characters-filter-sort"), {
-      target: { value: "name_desc" }
-    });
+    await chooseSelectOption("characters-filter-sort", "По имени (Я-А)");
 
     await waitFor(() => {
       expect(locationParams().get("sort")).toBe("name_desc");

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import type { AtlasCatalogResponseDTO, AtlasCatalogSort, WorldNodeListItemDTO } from "@aeria/shared";
 import AtlasPage from "@/pages/AtlasPage";
@@ -33,6 +33,14 @@ function renderAtlasPage(initialEntry = "/atlas") {
       </MemoryRouter>
     </QueryClientProvider>
   );
+}
+
+async function chooseSelectOption(testId: string, label: string) {
+  const trigger = screen.getByTestId(testId);
+  fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false });
+  fireEvent.click(trigger);
+  const listbox = await screen.findByRole("listbox");
+  fireEvent.click(within(listbox).getByText(label));
 }
 
 function buildResponse(items: WorldNodeListItemDTO[]): AtlasCatalogResponseDTO {
@@ -261,15 +269,9 @@ describe("AtlasPage catalog smoke", () => {
       expect(screen.getAllByTestId("world-node-row")).toHaveLength(1);
     });
 
-    fireEvent.change(screen.getByTestId("atlas-world-filter-entity"), {
-      target: { value: "location" }
-    });
-    fireEvent.change(screen.getByTestId("atlas-world-filter-country"), {
-      target: { value: "ausonia" }
-    });
-    fireEvent.change(screen.getByTestId("atlas-world-filter-sort"), {
-      target: { value: "recent" }
-    });
+    await chooseSelectOption("atlas-world-filter-entity", "Локации");
+    await chooseSelectOption("atlas-world-filter-country", "Авзония");
+    await chooseSelectOption("atlas-world-filter-sort", "Сначала новое");
 
     await waitFor(() => {
       expect(locationParams().get("entity")).toBe("location");

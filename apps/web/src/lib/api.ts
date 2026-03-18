@@ -3,6 +3,7 @@ import type {
   AtlasCatalogSort,
   AtlasDetailResponseDTO,
   AtlasPreviewDTO,
+  CharacterDetailResponseDTO,
   CharacterFactOfDayResponseDTO,
   CharacterPreviewDTO,
   EpisodeDetailResponseDTO,
@@ -13,6 +14,7 @@ import type {
   PaginatedCharactersResponseDTO,
   PaginatedEpisodesResponseDTO,
   PaginatedSeriesResponseDTO,
+  SearchGroupsDTO,
   SeriesDetailResponseDTO
 } from "@aeria/shared";
 
@@ -105,7 +107,7 @@ export async function getCharacterFactOfDay() {
 }
 
 export function getCharacter(slug: string) {
-  return fetchJson<any>(`/api/characters/${slug}`);
+  return fetchJson<CharacterDetailResponseDTO>(`/api/characters/${slug}`);
 }
 
 export function getCharacterPreview(slug: string) {
@@ -144,5 +146,5 @@ export function getAtlasPreview(slug: string) {
 }
 
 export function searchAll(query: string) {
-  return fetchJson<{ groups: Array<{ type: string; hits: any[] }> }>(`/api/search?q=${encodeURIComponent(query)}`);
+  return fetchJson<SearchGroupsDTO>(`/api/search?q=${encodeURIComponent(query)}`);
 }

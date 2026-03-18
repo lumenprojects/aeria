@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import type {
   PaginatedCharactersResponseDTO,
@@ -46,6 +46,14 @@ function renderEpisodesPage(initialEntry = "/episodes") {
       </MemoryRouter>
     </QueryClientProvider>
   );
+}
+
+async function chooseSelectOption(testId: string, label: string) {
+  const trigger = screen.getByTestId(testId);
+  fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false });
+  fireEvent.click(trigger);
+  const listbox = await screen.findByRole("listbox");
+  fireEvent.click(within(listbox).getByText(label));
 }
 
 function paginated(items: EpisodeItem[]): PaginatedEpisodesResponseDTO {
@@ -233,25 +241,19 @@ describe("EpisodesPage smoke", () => {
     });
 
     fireEvent.click(screen.getByTestId("episodes-filter-button"));
-    fireEvent.change(screen.getByTestId("episodes-filter-character"), {
-      target: { value: "ame" }
-    });
+    await chooseSelectOption("episodes-filter-character", "Амэ");
 
     await waitFor(() => {
       expect(locationParams().get("character")).toBe("ame");
     });
 
-    fireEvent.change(screen.getByTestId("episodes-filter-series"), {
-      target: { value: "yellow-moon" }
-    });
+    await chooseSelectOption("episodes-filter-series", "Жёлтая Луна");
 
     await waitFor(() => {
       expect(locationParams().get("series")).toBe("yellow-moon");
     });
 
-    fireEvent.change(screen.getByTestId("episodes-filter-sort"), {
-      target: { value: "newest" }
-    });
+    await chooseSelectOption("episodes-filter-sort", "Новые -> старые");
 
     await waitFor(() => {
       expect(locationParams().get("sort")).toBe("newest");

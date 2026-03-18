@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Flag } from "@/components/entities";
-import { CharacterDetailFeedConveyor } from "@/components/characters/CharacterDetailFeedConveyor";
+import { CharacterDetailFeedConveyor, type CharacterDetailFeedItem } from "@/components/characters/CharacterDetailFeedConveyor";
 import { Avatar, AvatarFallback, AvatarImage, MarkdownContent, SectionBreak, Typography } from "@/components/ui";
 import { getCharacter } from "@/lib/api";
 
@@ -37,11 +37,12 @@ export default function CharacterDetailPage() {
     queryFn: () => getCharacter(slug || ""),
     enabled: Boolean(slug)
   });
+  const country = data?.country ?? null;
   const nameFlagRef = React.useRef<HTMLSpanElement | null>(null);
   const [isNameFlagVisible, setIsNameFlagVisible] = React.useState(false);
 
   React.useEffect(() => {
-    if (!data?.country) {
+    if (!country) {
       setIsNameFlagVisible(false);
       return;
     }
@@ -76,7 +77,7 @@ export default function CharacterDetailPage() {
       window.removeEventListener("scroll", handleVisibilityFallback);
       window.removeEventListener("resize", handleVisibilityFallback);
     };
-  }, [data?.country?.id]);
+  }, [country]);
 
   if (!data) return null;
 
@@ -96,7 +97,7 @@ export default function CharacterDetailPage() {
       value: data.affiliation?.title_ru ?? null,
       href: data.affiliation?.url
     }
-  ].filter((item) => item.value);
+  ].filter((item): item is CharacterDetailFeedItem => Boolean(item.value));
 
   return (
     <div className="page-stack character-detail-page" data-testid="character-detail-page">
@@ -159,7 +160,7 @@ export default function CharacterDetailPage() {
               Особые приметы
             </Typography>
             <ol className="character-detail-quirks-list">
-              {data.quirks.map((quirk: any) => (
+              {data.quirks.map((quirk) => (
                 <li key={`${quirk.sort_order}-${quirk.text}`} className="character-detail-quirk-item">
                   <span className="character-detail-quirk-index role-ui tone-tertiary">
                     {String(quirk.sort_order + 1).padStart(2, "0")}
@@ -182,7 +183,7 @@ export default function CharacterDetailPage() {
               Что говорят другие?
             </Typography>
             <div className="character-detail-rumors-list">
-              {data.rumors.map((rumor: any) => (
+              {data.rumors.map((rumor) => (
                 <figure key={`${rumor.sort_order}-${rumor.author_name}`} className="character-detail-rumor">
                   <blockquote className="character-detail-rumor-quote">
                     <Typography variant="body" as="p" className="character-detail-rumor-text">
@@ -229,7 +230,7 @@ export default function CharacterDetailPage() {
             </div>
 
             <div className="character-detail-episodes-list">
-              {data.episodes.map((episode: any) => {
+              {data.episodes.map((episode) => {
                 const episodeTitle = episode.title_native ?? episode.title_ru;
                 const showRuTitle = episode.title_native && episode.title_native !== episode.title_ru;
                 const readingLabel = formatReadingMinutesLabel(episode.reading_minutes);

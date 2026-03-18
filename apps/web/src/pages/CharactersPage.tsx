@@ -8,7 +8,7 @@ import { Flag } from "@/components/entities";
 import { useUnderlineActivation } from "@/components/search/useUnderlineActivation";
 import { CharacterFactOfDaySection } from "@/components/characters/CharacterFactOfDaySection";
 import { getCharacterFactOfDay, getCharacters } from "@/lib/api";
-import { Avatar, AvatarFallback, AvatarImage, SectionBreak, Skeleton, Typography } from "@/components/ui";
+import { Avatar, AvatarFallback, AvatarImage, Input, SectionBreak, SelectField, Skeleton, Typography } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_SORT: CharacterSort = "name_asc";
@@ -164,7 +164,8 @@ export default function CharactersPage() {
         <div className="characters-catalog-controls">
           <label className="characters-catalog-search-shell" aria-label="Поиск персонажей">
             <Search size={18} className="characters-catalog-search-icon" aria-hidden="true" />
-            <input
+            <Input
+              appearance="ghost"
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
               onFocus={queueUnderlineActivation}
@@ -206,55 +207,41 @@ export default function CharactersPage() {
               data-testid="characters-filters-panel"
             >
               <div className="characters-filters-grid">
-                <div className="characters-filters-field">
-                  <span className="navbar-label">Страна</span>
-                  <select
-                    className="navbar-select characters-filters-select"
-                    value={countryParam}
-                    onChange={(event) => updateParams({ country: event.target.value || null })}
-                    data-testid="characters-filter-country"
-                  >
-                    <option value="">Все</option>
-                    {countryOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <SelectField
+                  label="Страна"
+                  value={countryParam}
+                  onValueChange={(value) => updateParams({ country: value || null })}
+                  options={countryOptions}
+                  fieldClassName="characters-filters-field"
+                  triggerClassName="characters-filters-select"
+                  triggerTestId="characters-filter-country"
+                />
 
-                <div className="characters-filters-field">
-                  <span className="navbar-label">Принадлежность</span>
-                  <select
-                    className="navbar-select characters-filters-select"
-                    value={affiliationParam}
-                    onChange={(event) => updateParams({ affiliation: event.target.value || null })}
-                    data-testid="characters-filter-affiliation"
-                  >
-                    <option value="">Все</option>
-                    {affiliationOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <SelectField
+                  label="Принадлежность"
+                  value={affiliationParam}
+                  onValueChange={(value) => updateParams({ affiliation: value || null })}
+                  options={affiliationOptions}
+                  fieldClassName="characters-filters-field"
+                  triggerClassName="characters-filters-select"
+                  triggerTestId="characters-filter-affiliation"
+                />
 
-                <div className="characters-filters-field">
-                  <span className="navbar-label">Сортировка</span>
-                  <select
-                    className="navbar-select characters-filters-select"
-                    value={sortParam}
-                    onChange={(event) => {
-                      const nextSort = normalizeSort(event.target.value);
-                      updateParams({ sort: nextSort === DEFAULT_SORT ? null : nextSort });
-                    }}
-                    data-testid="characters-filter-sort"
-                  >
-                    <option value="name_asc">По имени (А-Я)</option>
-                    <option value="name_desc">По имени (Я-А)</option>
-                  </select>
-                </div>
+                <SelectField
+                  label="Сортировка"
+                  value={sortParam}
+                  onValueChange={(value) => {
+                    const nextSort = normalizeSort(value);
+                    updateParams({ sort: nextSort === DEFAULT_SORT ? null : nextSort });
+                  }}
+                  options={[
+                    { value: "name_asc", label: "По имени (А-Я)" },
+                    { value: "name_desc", label: "По имени (Я-А)" }
+                  ]}
+                  fieldClassName="characters-filters-field"
+                  triggerClassName="characters-filters-select"
+                  triggerTestId="characters-filter-sort"
+                />
               </div>
 
               <button

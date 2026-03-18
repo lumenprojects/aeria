@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useUnderlineActivation } from "@/components/search/useUnderlineActivation";
-import { Avatar, AvatarFallback, AvatarImage, SectionBreak, Skeleton, Typography } from "@/components/ui";
+import { Avatar, AvatarFallback, AvatarImage, Input, SectionBreak, SelectField, Skeleton, Typography } from "@/components/ui";
 import { getCharacters, getEpisodes, getSeries, getSeriesList } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -252,7 +252,8 @@ export default function EpisodesPage() {
         <div className="episodes-catalog-controls">
           <label className="episodes-catalog-search-shell" aria-label="Поиск эпизодов">
             <Search size={18} className="episodes-catalog-search-icon" aria-hidden="true" />
-            <input
+            <Input
+              appearance="ghost"
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
               onFocus={queueUnderlineActivation}
@@ -294,55 +295,41 @@ export default function EpisodesPage() {
               data-testid="episodes-filters-panel"
             >
               <div className="episodes-filters-grid">
-                <div className="episodes-filters-field">
-                  <span className="navbar-label">Персонаж</span>
-                  <select
-                    className="navbar-select episodes-filters-select"
-                    value={characterParam}
-                    onChange={(event) => updateParams({ character: event.target.value || null })}
-                    data-testid="episodes-filter-character"
-                  >
-                    <option value="">Все</option>
-                    {characterOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <SelectField
+                  label="Персонаж"
+                  value={characterParam}
+                  onValueChange={(value) => updateParams({ character: value || null })}
+                  options={characterOptions}
+                  fieldClassName="episodes-filters-field"
+                  triggerClassName="episodes-filters-select"
+                  triggerTestId="episodes-filter-character"
+                />
 
-                <div className="episodes-filters-field">
-                  <span className="navbar-label">Серия</span>
-                  <select
-                    className="navbar-select episodes-filters-select"
-                    value={seriesParam}
-                    onChange={(event) => updateParams({ series: event.target.value || null })}
-                    data-testid="episodes-filter-series"
-                  >
-                    <option value="">Все</option>
-                    {seriesOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <SelectField
+                  label="Серия"
+                  value={seriesParam}
+                  onValueChange={(value) => updateParams({ series: value || null })}
+                  options={seriesOptions}
+                  fieldClassName="episodes-filters-field"
+                  triggerClassName="episodes-filters-select"
+                  triggerTestId="episodes-filter-series"
+                />
 
-                <div className="episodes-filters-field">
-                  <span className="navbar-label">Порядок</span>
-                  <select
-                    className="navbar-select episodes-filters-select"
-                    value={sortParam}
-                    onChange={(event) => {
-                      const nextSort = normalizeSort(event.target.value);
-                      updateParams({ sort: nextSort === DEFAULT_SORT ? null : nextSort });
-                    }}
-                    data-testid="episodes-filter-sort"
-                  >
-                    <option value="oldest">Старые -&gt; новые</option>
-                    <option value="newest">Новые -&gt; старые</option>
-                  </select>
-                </div>
+                <SelectField
+                  label="Порядок"
+                  value={sortParam}
+                  onValueChange={(value) => {
+                    const nextSort = normalizeSort(value);
+                    updateParams({ sort: nextSort === DEFAULT_SORT ? null : nextSort });
+                  }}
+                  options={[
+                    { value: "oldest", label: "Старые -> новые" },
+                    { value: "newest", label: "Новые -> старые" }
+                  ]}
+                  fieldClassName="episodes-filters-field"
+                  triggerClassName="episodes-filters-select"
+                  triggerTestId="episodes-filter-sort"
+                />
               </div>
 
               <button

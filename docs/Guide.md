@@ -194,6 +194,7 @@ Reading progress:
 2. `SectionBreak` (`line`).
 3. Каталог: `поиск + фильтры`.
 4. Список строк эпизодов.
+5. Если страница открыта с `series` в URL, сверху появляется context-summary блока серии с отдельным reset.
 
 Контейнер и ритм:
 - каталог живёт в `width-medium`;
@@ -202,9 +203,10 @@ Reading progress:
 - страница наследует общий catalog-ритм, но не копирует силуэт каталога персонажей.
 
 Фильтры v1:
-- `Страна`, `Сбросить фильтры`;
-- если страница открыта с `series` в URL, серия показывается как context block и может быть сброшена отдельно;
-- surface: desktop-панель справа, mobile-полноширинное меню.
+- `Персонаж`, `Серия`, `Порядок`, `Сбросить фильтры`;
+- поиск работает локально по заголовку, описанию и номеру уже загруженных эпизодов;
+- series-context может быть сброшен отдельно через summary block;
+- surface: inline collapsible drawer под поиском, открывается icon-control кнопкой.
 
 Строка эпизода:
 - полностью кликабельна (переход на reading/detail);
@@ -358,10 +360,13 @@ Reading progress:
 
 ## 12) Быстрый старт
 1. `npm install`
-2. `docker compose up -d` (или `npm run db:up`)
-3. `cp .env.example .env`
-4. `npm run migrate`
-5. `npm run content:dry-run`
-6. `npm run content:import`
-7. `npm run search:worker`
-8. `npm run dev`
+2. `cp .env.example .env`
+3. Поднять Postgres одним способом:
+   - Docker: `docker compose up -d`
+   - Локальный кластер: `npm run db:up` (нужны `initdb`, `pg_ctl`, `createdb` в `PATH`)
+4. Если выбран локальный кластер, перенести напечатанный `DATABASE_URL` в `.env` (по умолчанию это порт `55432`)
+5. `npm run migrate`
+6. `npm run content:dry-run`
+7. `npm run content:import`
+8. `npm run search:worker`
+9. `npm run dev`

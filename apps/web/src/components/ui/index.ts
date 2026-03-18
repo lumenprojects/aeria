@@ -25,6 +25,7 @@ export * from "./reveal-text";
 export * from "./scroll-area";
 export * from "./section-break";
 export * from "./select";
+export * from "./select-field";
 export * from "./separator";
 export * from "./skeleton";
 export * from "./toggle-group";
