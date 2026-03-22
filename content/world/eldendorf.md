@@ -1,20 +1,19 @@
 ---
 slug: eldendorf
-kind: geography
+type: location
 title_ru: Элдендорф
 summary: Портовый город Люмендора, крупный, шумный и менее показной, чем столица, но куда теплее в человеческом обращении.
 country_slug: lumendor
-location_slug: eldendorf
 links:
-  - type: country
+  - type: atlas_entity
     slug: lumendor
     label: Люмендор
-  - type: location
-    slug: eldendorf
-    label: Элдендорф
-  - type: atlas_entry
+  - type: atlas_entity
     slug: perekrestok-mirov
     label: Перекрёсток миров
+sections:
+  - key: geography
+    title_ru: География
 ---
 # Элдендорф
 

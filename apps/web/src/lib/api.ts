@@ -118,20 +118,20 @@ export function getAtlasCatalog(params?: {
   page?: number;
   limit?: number;
   q?: string;
-  entity?: string;
-  kind?: string;
+  type?: string;
+  section?: string;
   country?: string;
-  anchor?: string;
+  location?: string;
   sort?: AtlasCatalogSort;
 }) {
   const query = new URLSearchParams();
   if (params?.page) query.set("page", String(params.page));
   if (params?.limit) query.set("limit", String(params.limit));
   if (params?.q) query.set("q", params.q);
-  if (params?.entity) query.set("entity", params.entity);
-  if (params?.kind) query.set("kind", params.kind);
+  if (params?.type) query.set("type", params.type);
+  if (params?.section) query.set("section", params.section);
   if (params?.country) query.set("country", params.country);
-  if (params?.anchor) query.set("anchor", params.anchor);
+  if (params?.location) query.set("location", params.location);
   if (params?.sort) query.set("sort", params.sort);
   const qs = query.toString();
   return fetchJson<AtlasCatalogResponseDTO>(`/api/atlas/catalog${qs ? `?${qs}` : ""}`);

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const atlasKindValues = [
+export const atlasSectionValues = [
   "geography",
   "social",
   "history",
@@ -10,32 +10,38 @@ export const atlasKindValues = [
   "other"
 ] as const;
 
+export const atlasEntityTypeValues = [
+  "country",
+  "location",
+  "organization",
+  "object",
+  "event",
+  "belief",
+  "concept",
+  "other"
+] as const;
+
 export const entityTypeValues = [
   "episode",
   "character",
-  "atlas_entry",
-  "episode_series",
-  "country",
-  "location"
+  "atlas_entity",
+  "episode_series"
 ] as const;
 
-export const characterRumorSourceTypeValues = ["character", "atlas_entry"] as const;
+export const characterRumorSourceTypeValues = ["character", "atlas_entity"] as const;
 export const characterSortValues = ["name_asc", "name_desc"] as const;
 export const episodeSortValues = ["oldest", "newest"] as const;
 export const atlasCatalogSortValues = ["title_asc", "title_desc", "recent"] as const;
 export const atlasQuoteSpeakerTypeValues = ["character", "world"] as const;
-export const worldNodeTypeValues = ["country", "location", "atlas_entry"] as const;
-export const worldNodeAnchorModeValues = ["country", "location", "free"] as const;
 
-export const AtlasKind = z.enum(atlasKindValues);
+export const AtlasSection = z.enum(atlasSectionValues);
+export const AtlasEntityType = z.enum(atlasEntityTypeValues);
 export const EntityType = z.enum(entityTypeValues);
 export const CharacterRumorSourceType = z.enum(characterRumorSourceTypeValues);
 export const CharacterSort = z.enum(characterSortValues);
 export const EpisodeSort = z.enum(episodeSortValues);
 export const AtlasCatalogSort = z.enum(atlasCatalogSortValues);
 export const AtlasQuoteSpeakerType = z.enum(atlasQuoteSpeakerTypeValues);
-export const WorldNodeType = z.enum(worldNodeTypeValues);
-export const WorldNodeAnchorMode = z.enum(worldNodeAnchorModeValues);
 
 export const Uuid = z.string().uuid();
 export const NullableUuid = Uuid.nullable();
@@ -58,40 +64,15 @@ export const EpisodeSeriesDTO = z.object({
   summary: z.string().nullable()
 });
 
-export const CountryDTO = z.object({
+export const AtlasEntityReferenceDTO = z.object({
   id: Uuid,
   slug: z.string(),
   url: z.string(),
+  type: AtlasEntityType,
   title_ru: z.string(),
-  flag_colors: z.array(z.string()).nullable()
-});
-
-export const CountryFlagDTO = z.object({
-  id: Uuid,
-  slug: z.string(),
-  url: z.string(),
-  title_ru: z.string(),
-  flag_colors: z.array(z.string()).nullable()
-});
-
-export const LocationDTO = z.object({
-  id: Uuid,
-  slug: z.string(),
-  url: z.string(),
-  title_ru: z.string(),
-  country_id: NullableUuid,
   summary: z.string().nullable(),
-  description_markdown: z.string().nullable(),
-  avatar_asset_path: z.string().nullable()
-});
-
-export const LocationReferenceDTO = z.object({
-  id: Uuid,
-  slug: z.string(),
-  url: z.string(),
-  title_ru: z.string(),
   avatar_asset_path: z.string().nullable(),
-  country: CountryFlagDTO.nullable()
+  flag_colors: z.array(z.string()).nullable()
 });
 
 export const EpisodeDTO = z.object({
@@ -99,7 +80,7 @@ export const EpisodeDTO = z.object({
   slug: z.string(),
   url: z.string(),
   series_id: Uuid,
-  country_id: Uuid,
+  country_entity_id: Uuid,
   episode_number: z.number().int(),
   global_order: z.number().int(),
   title_native: z.string().nullable(),
@@ -110,15 +91,6 @@ export const EpisodeDTO = z.object({
   published_at: NullableIsoDateTime
 });
 
-export const AtlasReferenceDTO = z.object({
-  id: Uuid,
-  slug: z.string(),
-  url: z.string(),
-  kind: AtlasKind,
-  title_ru: z.string(),
-  avatar_asset_path: z.string().nullable()
-});
-
 export const CharacterDTO = z.object({
   id: Uuid,
   slug: z.string(),
@@ -126,8 +98,8 @@ export const CharacterDTO = z.object({
   name_ru: z.string(),
   avatar_asset_path: z.string(),
   name_native: z.string().nullable(),
-  affiliation_id: NullableUuid,
-  country_id: NullableUuid,
+  affiliation_entity_id: NullableUuid,
+  country_entity_id: NullableUuid,
   tagline: z.string().nullable(),
   gender: z.string().nullable(),
   race: z.string().nullable(),
@@ -137,20 +109,6 @@ export const CharacterDTO = z.object({
   mbti: z.string().nullable(),
   favorite_food: z.string().nullable(),
   bio_markdown: z.string().nullable(),
-  published_at: NullableIsoDateTime
-});
-
-export const AtlasEntryDTO = z.object({
-  id: Uuid,
-  slug: z.string(),
-  url: z.string(),
-  kind: AtlasKind,
-  title_ru: z.string(),
-  summary: z.string().nullable(),
-  content_markdown: z.string().nullable(),
-  avatar_asset_path: z.string().nullable(),
-  country_id: NullableUuid,
-  location_id: NullableUuid,
   published_at: NullableIsoDateTime
 });
 
@@ -181,10 +139,10 @@ export const EpisodesListQueryDTO = PaginationQueryDTO.extend({
 
 export const AtlasCatalogQueryDTO = PaginationQueryDTO.extend({
   q: z.string().trim().min(1).optional(),
-  entity: WorldNodeType.optional(),
-  kind: AtlasKind.optional(),
+  type: AtlasEntityType.optional(),
+  section: AtlasSection.optional(),
   country: z.string().trim().min(1).optional(),
-  anchor: WorldNodeAnchorMode.optional(),
+  location: z.string().trim().min(1).optional(),
   sort: AtlasCatalogSort.optional()
 });
 
@@ -210,8 +168,8 @@ export const CharacterReferenceDTO = z.object({
 
 export const CharacterListItemDTO = CharacterReferenceDTO.extend({
   avatar_asset_path: z.string(),
-  country: CountryFlagDTO.nullable(),
-  affiliation: AtlasReferenceDTO.nullable()
+  country: AtlasEntityReferenceDTO.nullable(),
+  affiliation: AtlasEntityReferenceDTO.nullable()
 });
 
 export const CharacterPreviewDTO = z.object({
@@ -221,19 +179,14 @@ export const CharacterPreviewDTO = z.object({
   name_native: z.string().nullable(),
   avatar_asset_path: z.string(),
   tagline: z.string().nullable(),
-  country: CountryFlagDTO.nullable(),
-  affiliation: AtlasReferenceDTO.nullable()
+  country: AtlasEntityReferenceDTO.nullable(),
+  affiliation: AtlasEntityReferenceDTO.nullable()
 });
 
-export const AtlasPreviewDTO = z.object({
-  node_type: WorldNodeType,
-  slug: z.string(),
-  url: z.string(),
-  kind: AtlasKind,
-  title_ru: z.string(),
-  summary: z.string().nullable(),
-  avatar_asset_path: z.string().nullable(),
-  country: CountryFlagDTO.nullable()
+export const AtlasPreviewDTO = AtlasEntityReferenceDTO.extend({
+  sections: z.array(AtlasSection),
+  country: AtlasEntityReferenceDTO.nullable(),
+  location: AtlasEntityReferenceDTO.nullable()
 });
 
 export const CharacterFactPersonDTO = z.object({
@@ -269,110 +222,12 @@ export const EpisodeParticipantDTO = z.object({
 });
 
 export const EpisodeListItemDTO = EpisodeDTO.omit({ content_markdown: true }).extend({
-  country: CountryFlagDTO
+  country: AtlasEntityReferenceDTO
 });
 
 export const EpisodeCatalogItemDTO = EpisodeDTO.omit({ content_markdown: true }).extend({
-  country: CountryFlagDTO,
+  country: AtlasEntityReferenceDTO,
   participants: z.array(EpisodeParticipantDTO)
-});
-
-export const EpisodeLocationLinkDTO = z.object({
-  id: Uuid,
-  slug: z.string(),
-  url: z.string(),
-  title_ru: z.string(),
-  summary: z.string().nullable(),
-  country_id: NullableUuid
-});
-
-export const CharacterQuirkDTO = z.object({
-  text: z.string(),
-  sort_order: z.number().int()
-});
-
-export const CharacterRumorSourceDTO = z.object({
-  type: CharacterRumorSourceType,
-  id: Uuid,
-  slug: z.string(),
-  url: z.string(),
-  title: z.string(),
-  avatar_asset_path: z.string().nullable()
-});
-
-export const CharacterRumorDTO = z.object({
-  text: z.string(),
-  author_name: z.string(),
-  author_meta: z.string().nullable(),
-  source: CharacterRumorSourceDTO.nullable(),
-  sort_order: z.number().int()
-});
-
-export const WorldNodeListItemDTO = z.object({
-  node_type: WorldNodeType,
-  id: Uuid,
-  slug: z.string(),
-  url: z.string(),
-  title_ru: z.string(),
-  summary: z.string().nullable(),
-  kind: AtlasKind.nullable(),
-  avatar_asset_path: z.string().nullable(),
-  country: CountryFlagDTO.nullable(),
-  location: LocationReferenceDTO.nullable(),
-  anchor_mode: WorldNodeAnchorMode,
-  related_count: z.number().int(),
-  published_at: NullableIsoDateTime
-});
-
-export const AtlasCatalogEntityFacetDTO = z.object({
-  value: WorldNodeType,
-  label: z.string(),
-  count: z.number().int()
-});
-
-export const AtlasCatalogKindFacetDTO = z.object({
-  value: AtlasKind,
-  label: z.string(),
-  count: z.number().int()
-});
-
-export const AtlasCatalogCountryFacetDTO = z.object({
-  id: Uuid,
-  slug: z.string(),
-  title_ru: z.string(),
-  count: z.number().int()
-});
-
-export const AtlasCatalogAnchorFacetDTO = z.object({
-  value: WorldNodeAnchorMode,
-  label: z.string(),
-  count: z.number().int()
-});
-
-export const AtlasCatalogFacetsDTO = z.object({
-  entity: z.array(AtlasCatalogEntityFacetDTO),
-  kind: z.array(AtlasCatalogKindFacetDTO),
-  country: z.array(AtlasCatalogCountryFacetDTO),
-  anchor: z.array(AtlasCatalogAnchorFacetDTO)
-});
-
-export const AtlasResolvedRelationTargetDTO = z.object({
-  type: EntityType,
-  id: Uuid,
-  slug: z.string(),
-  url: z.string(),
-  title: z.string(),
-  avatar_asset_path: z.string().nullable(),
-  country: CountryFlagDTO.nullable()
-});
-
-export const AtlasResolvedRelationDTO = z.object({
-  from_type: EntityType,
-  from_id: Uuid,
-  to_type: EntityType,
-  to_id: Uuid,
-  label: z.string().nullable(),
-  target: AtlasResolvedRelationTargetDTO.nullable()
 });
 
 export const AtlasFactDTO = z.object({
@@ -399,6 +254,97 @@ export const AtlasQuoteDTO = z.object({
   character: AtlasQuoteCharacterDTO.nullable()
 });
 
+export const AtlasEntitySectionDTO = z.object({
+  section: AtlasSection,
+  title_ru: z.string(),
+  summary: z.string().nullable(),
+  body_markdown: z.string().nullable(),
+  fact: AtlasFactDTO.nullable(),
+  quotes: z.array(AtlasQuoteDTO)
+});
+
+export const AtlasEntityDTO = AtlasEntityReferenceDTO.extend({
+  overview_markdown: z.string().nullable(),
+  published_at: NullableIsoDateTime,
+  country: AtlasEntityReferenceDTO.nullable(),
+  location: AtlasEntityReferenceDTO.nullable()
+});
+
+export const CharacterQuirkDTO = z.object({
+  text: z.string(),
+  sort_order: z.number().int()
+});
+
+export const CharacterRumorSourceDTO = z.object({
+  type: CharacterRumorSourceType,
+  id: Uuid,
+  slug: z.string(),
+  url: z.string(),
+  title: z.string(),
+  avatar_asset_path: z.string().nullable()
+});
+
+export const CharacterRumorDTO = z.object({
+  text: z.string(),
+  author_name: z.string(),
+  author_meta: z.string().nullable(),
+  source: CharacterRumorSourceDTO.nullable(),
+  sort_order: z.number().int()
+});
+
+export const AtlasCatalogItemDTO = AtlasEntityReferenceDTO.extend({
+  sections: z.array(AtlasSection),
+  country: AtlasEntityReferenceDTO.nullable(),
+  location: AtlasEntityReferenceDTO.nullable(),
+  related_count: z.number().int(),
+  published_at: NullableIsoDateTime
+});
+
+export const AtlasCatalogTypeFacetDTO = z.object({
+  value: AtlasEntityType,
+  label: z.string(),
+  count: z.number().int()
+});
+
+export const AtlasCatalogSectionFacetDTO = z.object({
+  value: AtlasSection,
+  label: z.string(),
+  count: z.number().int()
+});
+
+export const AtlasCatalogPlaceFacetDTO = z.object({
+  id: Uuid,
+  slug: z.string(),
+  title_ru: z.string(),
+  count: z.number().int()
+});
+
+export const AtlasCatalogFacetsDTO = z.object({
+  type: z.array(AtlasCatalogTypeFacetDTO),
+  section: z.array(AtlasCatalogSectionFacetDTO),
+  country: z.array(AtlasCatalogPlaceFacetDTO),
+  location: z.array(AtlasCatalogPlaceFacetDTO)
+});
+
+export const AtlasResolvedRelationTargetDTO = z.object({
+  type: EntityType,
+  id: Uuid,
+  slug: z.string(),
+  url: z.string(),
+  title: z.string(),
+  avatar_asset_path: z.string().nullable(),
+  country: AtlasEntityReferenceDTO.nullable()
+});
+
+export const AtlasResolvedRelationDTO = z.object({
+  from_type: EntityType,
+  from_id: Uuid,
+  to_type: EntityType,
+  to_id: Uuid,
+  label: z.string().nullable(),
+  target: AtlasResolvedRelationTargetDTO.nullable()
+});
+
 export const SearchGroupDTO = z.object({
   type: EntityType,
   hits: z.array(SearchResultDTO)
@@ -411,27 +357,23 @@ export const SearchGroupsDTO = z.object({
 export const EpisodeDetailResponseDTO = z.object({
   episode: EpisodeDTO,
   series: EpisodeSeriesDTO.nullable(),
-  country: CountryDTO.nullable(),
+  country: AtlasEntityReferenceDTO,
   characters: z.array(EpisodeCharacterLinkDTO),
-  locations: z.array(EpisodeLocationLinkDTO)
+  locations: z.array(AtlasEntityReferenceDTO)
 });
 
 export const CharacterDetailResponseDTO = z.object({
   character: CharacterDTO,
-  country: CountryFlagDTO.nullable(),
-  affiliation: AtlasReferenceDTO.nullable(),
+  country: AtlasEntityReferenceDTO.nullable(),
+  affiliation: AtlasEntityReferenceDTO.nullable(),
   quirks: z.array(CharacterQuirkDTO),
   rumors: z.array(CharacterRumorDTO),
   episodes: z.array(EpisodeListItemDTO)
 });
 
 export const AtlasDetailResponseDTO = z.object({
-  node_type: WorldNodeType,
-  entry: AtlasEntryDTO,
-  country: CountryFlagDTO.nullable(),
-  location: LocationReferenceDTO.nullable(),
-  fact: AtlasFactDTO.nullable(),
-  quotes: z.array(AtlasQuoteDTO),
+  entity: AtlasEntityDTO,
+  sections: z.array(AtlasEntitySectionDTO),
   relations: z.array(AtlasResolvedRelationDTO)
 });
 
@@ -461,7 +403,7 @@ export const HomeLatestEpisodeDTO = z.object({
   summary: z.string().nullable(),
   reading_minutes: z.number().int().nullable(),
   published_at: NullableIsoDateTime,
-  country: CountryFlagDTO,
+  country: AtlasEntityReferenceDTO,
   series: HomeEpisodeSeriesDTO.nullable(),
   participants: z.array(HomeEpisodeParticipantDTO)
 });
@@ -496,23 +438,19 @@ export const PaginatedEpisodesResponseDTO = PaginatedDTO(EpisodeCatalogItemDTO);
 export const PaginatedSeriesResponseDTO = PaginatedDTO(EpisodeSeriesDTO);
 export const PaginatedCharactersResponseDTO = PaginatedDTO(CharacterListItemDTO);
 export const AtlasCatalogResponseDTO = z.object({
-  items: z.array(WorldNodeListItemDTO),
+  items: z.array(AtlasCatalogItemDTO),
   facets: AtlasCatalogFacetsDTO,
   total: z.number().int(),
   page: z.number().int(),
   limit: z.number().int()
 });
-export const PaginatedCountriesResponseDTO = PaginatedDTO(CountryDTO);
-export const PaginatedLocationsResponseDTO = PaginatedDTO(LocationDTO);
 
 export type EpisodeSeriesDTO = z.infer<typeof EpisodeSeriesDTO>;
 export type EpisodeDTO = z.infer<typeof EpisodeDTO>;
 export type CharacterDTO = z.infer<typeof CharacterDTO>;
-export type AtlasEntryDTO = z.infer<typeof AtlasEntryDTO>;
-export type CountryDTO = z.infer<typeof CountryDTO>;
-export type CountryFlagDTO = z.infer<typeof CountryFlagDTO>;
-export type LocationDTO = z.infer<typeof LocationDTO>;
-export type LocationReferenceDTO = z.infer<typeof LocationReferenceDTO>;
+export type AtlasEntityDTO = z.infer<typeof AtlasEntityDTO>;
+export type AtlasEntityReferenceDTO = z.infer<typeof AtlasEntityReferenceDTO>;
+export type AtlasEntitySectionDTO = z.infer<typeof AtlasEntitySectionDTO>;
 export type CharacterReferenceDTO = z.infer<typeof CharacterReferenceDTO>;
 export type CharacterListItemDTO = z.infer<typeof CharacterListItemDTO>;
 export type CharacterPreviewDTO = z.infer<typeof CharacterPreviewDTO>;
@@ -522,6 +460,7 @@ export type PaginatedSeriesResponseDTO = z.infer<typeof PaginatedSeriesResponseD
 export type SeriesDetailResponseDTO = z.infer<typeof SeriesDetailResponseDTO>;
 export type PaginatedCharactersResponseDTO = z.infer<typeof PaginatedCharactersResponseDTO>;
 export type AtlasCatalogResponseDTO = z.infer<typeof AtlasCatalogResponseDTO>;
+export type AtlasCatalogItemDTO = z.infer<typeof AtlasCatalogItemDTO>;
 export type EpisodeParticipantDTO = z.infer<typeof EpisodeParticipantDTO>;
 export type EpisodeCharacterLinkDTO = z.infer<typeof EpisodeCharacterLinkDTO>;
 export type EpisodeDetailResponseDTO = z.infer<typeof EpisodeDetailResponseDTO>;
@@ -538,6 +477,8 @@ export type EpisodeSort = z.infer<typeof EpisodeSort>;
 export type AtlasCatalogSort = z.infer<typeof AtlasCatalogSort>;
 export type AtlasQuoteSpeakerType = z.infer<typeof AtlasQuoteSpeakerType>;
 export type EntityType = z.infer<typeof EntityType>;
+export type AtlasEntityType = z.infer<typeof AtlasEntityType>;
+export type AtlasSection = z.infer<typeof AtlasSection>;
 export type AtlasResolvedRelationTargetDTO = z.infer<typeof AtlasResolvedRelationTargetDTO>;
 export type AtlasResolvedRelationDTO = z.infer<typeof AtlasResolvedRelationDTO>;
 export type AtlasFactDTO = z.infer<typeof AtlasFactDTO>;
@@ -548,6 +489,3 @@ export type CharacterDetailResponseDTO = z.infer<typeof CharacterDetailResponseD
 export type CharacterFactPersonDTO = z.infer<typeof CharacterFactPersonDTO>;
 export type CharacterFactOfDayDTO = z.infer<typeof CharacterFactOfDayDTO>;
 export type CharacterFactOfDayResponseDTO = z.infer<typeof CharacterFactOfDayResponseDTO>;
-export type WorldNodeListItemDTO = z.infer<typeof WorldNodeListItemDTO>;
-export type WorldNodeType = z.infer<typeof WorldNodeType>;
-export type WorldNodeAnchorMode = z.infer<typeof WorldNodeAnchorMode>;

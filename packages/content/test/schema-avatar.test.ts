@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { atlasSchema, characterSchema, countrySchema, locationSchema } from "../src/schema.js";
+import { characterSchema, worldSchema } from "../src/schema.js";
 
 test("character schema requires avatar_asset_path", () => {
   const result = characterSchema.safeParse({
@@ -23,52 +23,45 @@ test("avatar_asset_path must be rooted in /assets", () => {
   assert.equal(result.success, false);
 });
 
-test("location and atlas avatar_asset_path are optional but validated when provided", () => {
-  const validLocation = locationSchema.safeParse({
-    slug: "location-1",
-    title_ru: "Location 1",
-    avatar_asset_path: "/assets/images/location-1.png"
+test("world avatar_asset_path is optional but validated when provided", () => {
+  const validWorld = worldSchema.safeParse({
+    slug: "world-1",
+    type: "location",
+    title_ru: "World 1",
+    avatar_asset_path: "/assets/images/world-1.png",
+    sections: []
   });
-  assert.equal(validLocation.success, true);
+  assert.equal(validWorld.success, true);
 
-  const invalidAtlas = atlasSchema.safeParse({
-    slug: "atlas-1",
-    kind: "other",
-    title_ru: "Atlas 1",
-    avatar_asset_path: "../atlas.png"
+  const invalidWorld = worldSchema.safeParse({
+    slug: "world-1",
+    type: "location",
+    title_ru: "World 1",
+    avatar_asset_path: "../world.png",
+    sections: []
   });
-  assert.equal(invalidAtlas.success, false);
+  assert.equal(invalidWorld.success, false);
 });
 
-test("location and atlas schema accept fact and quotes", () => {
-  const validLocation = locationSchema.safeParse({
-    slug: "location-1",
-    title_ru: "Location 1",
-    fact: {
-      title: "Примета",
-      text: "Вечером окна здесь теплеют раньше мостовой."
-    },
-    quotes: [
-      {
-        text: "Здесь всегда слышно, как город думает.",
-        speaker_name: "Смотритель моста"
-      }
-    ]
-  });
-  assert.equal(validLocation.success, true);
-
-  const result = atlasSchema.safeParse({
+test("world schema accepts sections, facts and quotes", () => {
+  const result = worldSchema.safeParse({
     slug: "atlas-1",
-    kind: "social",
+    type: "organization",
     title_ru: "Atlas 1",
-    fact: {
-      title: "Интересный факт",
-      text: "После полуночи полки звучат иначе."
-    },
-    quotes: [
+    sections: [
       {
-        text: "После полуночи полки звучат иначе.",
-        character_slug: "character-1"
+        key: "social",
+        title_ru: "Социальное",
+        fact: {
+          title: "Интересный факт",
+          text: "После полуночи полки звучат иначе."
+        },
+        quotes: [
+          {
+            text: "После полуночи полки звучат иначе.",
+            character_slug: "character-1"
+          }
+        ]
       }
     ]
   });
@@ -76,60 +69,36 @@ test("location and atlas schema accept fact and quotes", () => {
   assert.equal(result.success, true);
 });
 
-test("country schema rejects quotes and quote source must be exclusive", () => {
-  const invalidCountry = countrySchema.safeParse({
-    slug: "country-1",
-    title_ru: "Country 1",
-    quotes: [
-      {
-        text: "Такое не должно пройти.",
-        speaker_name: "Наблюдатель"
-      }
-    ]
-  });
-  assert.equal(invalidCountry.success, false);
-
-  const invalidQuoteShape = locationSchema.safeParse({
-    slug: "location-1",
-    title_ru: "Location 1",
-    quotes: [
-      {
-        text: "Слишком много источников сразу.",
-        character_slug: "character-1",
-        speaker_name: "Наблюдатель"
-      }
-    ]
-  });
-  assert.equal(invalidQuoteShape.success, false);
-
-  const tooManyQuotes = atlasSchema.safeParse({
+test("world schema rejects duplicate sections and too many quotes", () => {
+  const duplicateSections = worldSchema.safeParse({
     slug: "atlas-1",
-    kind: "social",
+    type: "organization",
     title_ru: "Atlas 1",
-    quotes: [
-      { text: "1", speaker_name: "A" },
-      { text: "2", speaker_name: "B" },
-      { text: "3", speaker_name: "C" },
-      { text: "4", speaker_name: "D" }
+    sections: [
+      { key: "social", title_ru: "Социальное" },
+      { key: "social", title_ru: "Ещё социальное" }
+    ]
+  });
+  assert.equal(duplicateSections.success, false);
+
+  const tooManyQuotes = worldSchema.safeParse({
+    slug: "atlas-1",
+    type: "organization",
+    title_ru: "Atlas 1",
+    sections: [
+      {
+        key: "social",
+        title_ru: "Социальное",
+        quotes: [
+          { text: "1", speaker_name: "A" },
+          { text: "2", speaker_name: "B" },
+          { text: "3", speaker_name: "C" },
+          { text: "4", speaker_name: "D" }
+        ]
+      }
     ]
   });
   assert.equal(tooManyQuotes.success, false);
-});
-
-test("geography atlas entries reject quotes", () => {
-  const result = atlasSchema.safeParse({
-    slug: "atlas-1",
-    kind: "geography",
-    title_ru: "Atlas 1",
-    quotes: [
-      {
-        text: "Такой голос здесь быть не должен.",
-        speaker_name: "Наблюдатель"
-      }
-    ]
-  });
-
-  assert.equal(result.success, false);
 });
 
 test("character rumor source fields must be provided together", () => {

@@ -40,7 +40,7 @@ describe("EpisodeDetailPage smoke", () => {
         slug: "za-predelami-vinogradnikov",
         url: "/episodes/za-predelami-vinogradnikov",
         series_id: "00000000-0000-0000-0000-000000000011",
-        country_id: "00000000-0000-0000-0000-000000000021",
+        country_entity_id: "00000000-0000-0000-0000-000000000021",
         episode_number: 1,
         global_order: 6,
         title_native: "Au-dela des vignes",
@@ -101,14 +101,17 @@ describe("EpisodeDetailPage smoke", () => {
     });
 
     getAtlasPreviewMock.mockResolvedValue({
-      node_type: "atlas_entry",
+      id: "00000000-0000-0000-0000-000000000041",
       slug: "domaine-des-immortelles",
       url: "/atlas/domaine-des-immortelles",
-      kind: "geography",
+      type: "location",
       title_ru: "Бастида де ла Люн д'Ор",
       summary: "Поместье, где Арно начинает новую жизнь.",
       avatar_asset_path: null,
-      country: null
+      flag_colors: null,
+      sections: ["geography"],
+      country: null,
+      location: null
     });
   });
 

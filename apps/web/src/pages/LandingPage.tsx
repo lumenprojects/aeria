@@ -4,7 +4,7 @@ import { AvatarConveyorSection } from "@/components/home/AvatarConveyorSection";
 import { CountryMediaCarousel } from "@/components/home/CountryMediaCarousel";
 import { CountrySnapshotSection } from "@/components/home/CountrySnapshotSection";
 import { HeardQuoteSection } from "@/components/home/HeardQuoteSection";
-import { LatestEpisodeHero } from "@/components/home/LatestEpisodeHero";
+import { LatestEpisode } from "@/components/home/LatestEpisode";
 import {
   Accordion,
   AccordionContent,
@@ -232,7 +232,7 @@ export default function LandingPage() {
     key: "latest",
     content: (
       <div className="width-wide">
-        <LatestEpisodeHero episode={data?.latest_episode ?? null} />
+        <LatestEpisode episode={data?.latest_episode ?? null} />
       </div>
     )
   });

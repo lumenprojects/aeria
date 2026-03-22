@@ -39,9 +39,9 @@ async function writeFixture(rootDir: string, token: string, options: FixtureOpti
     "content/schema.json",
     JSON.stringify(
       {
-        schema_version: 1,
+        schema_version: 2,
         format: "aeria-content",
-        updated_at: "2026-03-04"
+        updated_at: "2026-03-20"
       },
       null,
       2
@@ -50,10 +50,12 @@ async function writeFixture(rootDir: string, token: string, options: FixtureOpti
 
   await writeFile(
     rootDir,
-    `content/countries/integration-${token}-country.md`,
+    `content/world/integration-${token}-country.md`,
     `---
 slug: ${countrySlug}
+type: country
 title_ru: Test Country
+summary: Country used by integration tests.
 flag_colors:
   - "#111111"
   - "#eeeeee"
@@ -65,13 +67,17 @@ flag_colors:
 
   await writeFile(
     rootDir,
-    `content/locations/integration-${token}-location.md`,
+    `content/world/integration-${token}-location.md`,
     `---
 slug: ${locationSlug}
+type: location
 title_ru: Test Location
 country_slug: ${countrySlug}
 summary: Location used by integration tests.
 avatar_asset_path: /assets/images/locations/${locationSlug}.png
+sections:
+  - key: geography
+    title_ru: География
 ---
 
 # Test Location
@@ -138,7 +144,7 @@ quirks:
 rumors:
   - text: "Rumor 1"
     author_name: "Witness"
-    source_type: atlas_entry
+    source_type: atlas_entity
     source_slug: ${atlasMainSlug}
 published_at: "2026-03-04T00:00:00Z"
 ---
@@ -149,11 +155,12 @@ published_at: "2026-03-04T00:00:00Z"
 
   await writeFile(
     rootDir,
-    `content/atlas/integration-${token}-atlas-main.md`,
+    `content/world/integration-${token}-atlas-main.md`,
     `---
 slug: ${atlasMainSlug}
-kind: social
+type: organization
 title_ru: Test Affiliation
+summary: Main world entity used by integration tests.
 avatar_asset_path: /assets/images/atlas/${atlasMainSlug}.png
 country_slug: ${countrySlug}
 location_slug: ${locationSlug}
@@ -162,6 +169,9 @@ links:
     slug: ${episodeSlug}
   - type: character
     slug: ${characterSlug}
+sections:
+  - key: social
+    title_ru: Социальное
 ---
 
 # Test Affiliation
@@ -171,12 +181,15 @@ links:
   if (options.includeExtraAtlas ?? true) {
     await writeFile(
       rootDir,
-      `content/atlas/integration-${token}-atlas-extra.md`,
+      `content/world/integration-${token}-atlas-extra.md`,
       `---
 slug: ${atlasExtraSlug}
-kind: object
+type: object
 title_ru: Temporary Object
 summary: File used to verify archive policy.
+sections:
+  - key: object
+    title_ru: Объект
 ---
 
 # Temporary Object
@@ -204,12 +217,10 @@ test(
         reindex: false
       });
 
-      assert.equal(first.summary.countries.created, 1);
-      assert.equal(first.summary.locations.created, 1);
+      assert.equal(first.summary.world.created, 4);
       assert.equal(first.summary.series.created, 1);
       assert.equal(first.summary.episodes.created, 1);
       assert.equal(first.summary.characters.created, 1);
-      assert.equal(first.summary.atlas.created, 2);
 
       const dry = await runImport({
         rootDir: tmpDir,
@@ -218,14 +229,12 @@ test(
         reindex: false
       });
 
-      assert.equal(dry.summary.countries.unchanged, 1);
-      assert.equal(dry.summary.locations.unchanged, 1);
+      assert.equal(dry.summary.world.unchanged, 4);
       assert.equal(dry.summary.series.unchanged, 1);
       assert.equal(dry.summary.episodes.unchanged, 1);
       assert.equal(dry.summary.characters.unchanged, 1);
-      assert.equal(dry.summary.atlas.unchanged, 2);
 
-      await fs.unlink(path.join(tmpDir, "content", "atlas", `integration-${token}-atlas-extra.md`));
+      await fs.unlink(path.join(tmpDir, "content", "world", `integration-${token}-atlas-extra.md`));
 
       const archived = await runImport({
         rootDir: tmpDir,
@@ -234,7 +243,7 @@ test(
         reindex: false
       });
 
-      assert.equal(archived.summary.atlas.archived, 1);
+      assert.equal(archived.summary.world.archived, 1);
 
       const brokenToken = `${token}-broken`;
       await writeFixture(tmpDir, brokenToken, { brokenCharacterReference: true, includeExtraAtlas: false });
@@ -251,7 +260,7 @@ test(
       );
 
       const brokenCountries = await pool.query(
-        "SELECT COUNT(*)::int AS count FROM countries WHERE slug = $1",
+        "SELECT COUNT(*)::int AS count FROM atlas_entities WHERE slug = $1",
         [`it-${brokenToken}-country`]
       );
       assert.equal(brokenCountries.rows[0]?.count ?? 0, 0);

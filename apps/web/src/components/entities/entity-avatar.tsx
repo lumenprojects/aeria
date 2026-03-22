@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage, type AvatarSize } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
-type EntityAvatarType = "character" | "location" | "atlas_entry";
+type EntityAvatarType = "character" | "location" | "atlas_entity";
 
 type EntityAvatarProps = {
   entityType: EntityAvatarType;
@@ -20,7 +20,7 @@ function resolveEntityHref(type: EntityAvatarType, slug: string) {
     case "character":
       return `/characters/${slug}`;
     case "location":
-    case "atlas_entry":
+    case "atlas_entity":
       return `/atlas/${slug}`;
     default:
       return "/";

@@ -1,20 +1,18 @@
 ---
 slug: ausonia
-kind: geography
+type: country
 title_ru: Авзония
 summary: Небольшая романская страна, где приморский юг, резкие внутренние склоны и более спокойные равнинные земли сосуществуют в одном культурном поле.
-fact:
-  title: Пыль на манжетах
-  text: >-
-    После сухой недели тонкая светлая пыль ложится даже на рукава тех, кто
-    просто вышел за хлебом.
-  meta: Примета континентальной части
+flag_colors:
+  - "#CD212A"
+  - "#FFFFFF"
+  - "#0055A4"
 published_at: "2026-03-15T00:00:00Z"
 links:
-  - type: atlas_entry
+  - type: atlas_entity
     slug: domaine-des-immortelles
     label: Поместье Domaine des Immortelles
-  - type: atlas_entry
+  - type: atlas_entity
     slug: abbaye-des-hautes-roches
     label: Abbaye des Hautes Roches
   - type: character
@@ -29,6 +27,15 @@ links:
   - type: character
     slug: lilette-colombel
     label: Лилетт Коломбель
+sections:
+  - key: geography
+    title_ru: География
+    fact:
+      title: Пыль на манжетах
+      text: >-
+        После сухой недели тонкая светлая пыль ложится даже на рукава тех, кто
+        просто вышел за хлебом.
+      meta: Примета континентальной части
 ---
 # Авзония
 

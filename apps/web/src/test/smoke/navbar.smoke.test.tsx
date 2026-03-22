@@ -6,6 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 const {
   getEpisodeMock,
   getSeriesMock,
+  searchAllMock,
   setModeMock,
   setThemeMock,
   setFontHeadingMock,
@@ -15,6 +16,7 @@ const {
 } = vi.hoisted(() => ({
   getEpisodeMock: vi.fn(),
   getSeriesMock: vi.fn(),
+  searchAllMock: vi.fn(),
   setModeMock: vi.fn(),
   setThemeMock: vi.fn(),
   setFontHeadingMock: vi.fn(),
@@ -26,7 +28,7 @@ const {
 vi.mock("@/lib/api", () => ({
   getEpisode: getEpisodeMock,
   getSeries: getSeriesMock,
-  searchAll: vi.fn().mockResolvedValue({ groups: [] })
+  searchAll: searchAllMock
 }));
 
 vi.mock("@/lib/theme", () => ({
@@ -63,6 +65,7 @@ describe("Navbar smoke", () => {
   beforeEach(() => {
     getEpisodeMock.mockReset();
     getSeriesMock.mockReset();
+    searchAllMock.mockReset();
     setModeMock.mockReset();
     setThemeMock.mockReset();
     setFontHeadingMock.mockReset();
@@ -83,6 +86,8 @@ describe("Navbar smoke", () => {
     getSeriesMock.mockResolvedValue({
       episodes: [{ id: "1" }, { id: "2" }, { id: "3" }]
     });
+
+    searchAllMock.mockResolvedValue({ groups: [] });
   });
 
   it("renders primary nav links", () => {
@@ -114,6 +119,38 @@ describe("Navbar smoke", () => {
     });
   });
 
+  it("renders remote Typesense hits without local refiltering", async () => {
+    searchAllMock.mockResolvedValue({
+      groups: [
+        {
+          type: "character",
+          hits: [
+            {
+              type: "character",
+              id: "00000000-0000-0000-0000-000000000031",
+              slug: "lilett",
+              title: "Лилетт",
+              summary: "Дом держится на её ритме.",
+              url: "/characters/lilett"
+            }
+          ]
+        }
+      ]
+    });
+
+    renderNavbar("/");
+    fireEvent.click(screen.getByRole("button", { name: "Поиск" }));
+
+    const input = screen.getByPlaceholderText("Поиск по главам, персонажам и миру...");
+    fireEvent.input(input, { target: { value: "лаванда" } });
+
+    await waitFor(() => {
+      expect(searchAllMock).toHaveBeenCalledWith("лаванда");
+    });
+    expect(await screen.findByText("Лилетт")).toBeInTheDocument();
+    expect(screen.queryByText("Ничего не найдено. Попробуйте другое слово.")).not.toBeInTheDocument();
+  });
+
   it("opens fonts and settings popovers", async () => {
     const { container } = renderNavbar("/");
     fireEvent.click(screen.getByRole("button", { name: "Шрифты" }));
@@ -129,8 +166,12 @@ describe("Navbar smoke", () => {
 
     fireEvent.click(screen.getByRole("combobox", { name: "Style" }));
     await waitFor(() => {
-      expect(document.body.querySelectorAll(".navbar-theme-dot").length).toBeGreaterThanOrEqual(4);
+      expect(document.body.querySelectorAll(".navbar-theme-dot").length).toBeGreaterThanOrEqual(8);
     });
+    expect(await screen.findByRole("option", { name: "Mint" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Ink" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Arcade" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Dawn" })).toBeInTheDocument();
   });
 
   it("applies select option via radix select interactions", async () => {

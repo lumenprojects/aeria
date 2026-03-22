@@ -76,16 +76,21 @@ describe("CharactersPage catalog smoke", () => {
             id: "00000000-0000-0000-0000-000000000021",
             slug: "ru-example",
             url: "/atlas/ru-example",
+            type: "country",
             title_ru: "Страна 01",
+            summary: null,
+            avatar_asset_path: null,
             flag_colors: ["#111111", "#ffffff"]
           },
           affiliation: {
             id: "00000000-0000-0000-0000-000000000051",
             slug: "atlas-001",
             url: "/atlas/atlas-001",
-            kind: "social",
+            type: "organization",
             title_ru: "Бастида де ла Люн д'Ор",
-            avatar_asset_path: "/assets/images/atlas/atlas-001.png"
+            summary: null,
+            avatar_asset_path: "/assets/images/atlas/atlas-001.png",
+            flag_colors: null
           }
         }
       ])
@@ -169,16 +174,21 @@ describe("CharactersPage catalog smoke", () => {
           id: "00000000-0000-0000-0000-000000000021",
           slug: "ru-example",
           url: "/atlas/ru-example",
+          type: "country",
           title_ru: "Страна 01",
+          summary: null,
+          avatar_asset_path: null,
           flag_colors: ["#111111", "#ffffff"]
         },
         affiliation: {
           id: "00000000-0000-0000-0000-000000000051",
           slug: "atlas-001",
           url: "/atlas/atlas-001",
-          kind: "social",
+          type: "organization",
           title_ru: "Бастида",
-          avatar_asset_path: null
+          summary: null,
+          avatar_asset_path: null,
+          flag_colors: null
         }
       },
       {
@@ -193,16 +203,21 @@ describe("CharactersPage catalog smoke", () => {
           id: "00000000-0000-0000-0000-000000000022",
           slug: "jp-example",
           url: "/atlas/jp-example",
+          type: "country",
           title_ru: "Страна 02",
+          summary: null,
+          avatar_asset_path: null,
           flag_colors: ["#ff0000", "#ffffff"]
         },
         affiliation: {
           id: "00000000-0000-0000-0000-000000000052",
           slug: "atlas-002",
           url: "/atlas/atlas-002",
-          kind: "social",
+          type: "organization",
           title_ru: "Brill.Arc",
-          avatar_asset_path: null
+          summary: null,
+          avatar_asset_path: null,
+          flag_colors: null
         }
       }
     ];

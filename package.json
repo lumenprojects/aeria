@@ -21,6 +21,8 @@
     "content:dry-run": "npm run import -w packages/content -- --dry-run",
     "preflight:content": "node scripts/preflight-content-env.mjs",
     "search:worker": "npm run worker -w packages/content",
+    "search:watch": "npm run worker -w packages/content -- --watch",
+    "search:reindex": "npm run reindex -w packages/content",
     "test:smoke": "npm run test:smoke -w apps/web && npm run test:smoke -w apps/api",
     "verify": "npm run lint && npm run typecheck && npm run build && npm run test:smoke",
     "verify:content": "node scripts/verify-content.mjs"

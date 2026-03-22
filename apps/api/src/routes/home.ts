@@ -1,6 +1,5 @@
 import { FastifyInstance } from "fastify";
 import {
-  CountryFlagDTO,
   HomeAboutProfileDTO,
   HomeEpisodeParticipantDTO,
   HomeEpisodeSeriesDTO,
@@ -12,6 +11,7 @@ import {
 import { z } from "zod";
 import { pool } from "../db.js";
 import { entityUrl, errorPayload, parseQuery, toNullableIsoDateTime, validateResponse } from "./utils.js";
+import { toAtlasEntityReference, type AtlasEntityReferenceRow } from "./atlas-entity-helpers.js";
 
 const HomeWorldQuoteRandomQueryDTO = z.object({
   exclude_id: z.coerce.number().int().positive().optional()
@@ -74,10 +74,16 @@ export async function registerHomeRoutes(app: FastifyInstance) {
   app.get("/api/home", async () => {
     const [latestEpisodeResult, aboutProfileResult, worldQuoteRow] = await Promise.all([
       pool.query(
-        `SELECT e.id, e.slug, e.series_id, e.country_id, e.episode_number, e.global_order, e.title_native, e.title_ru, e.summary, e.reading_minutes, e.published_at,
-                c.slug AS country_slug, c.title_ru AS country_title_ru, c.flag_colors AS country_flag_colors
+        `SELECT e.id, e.slug, e.series_id, e.country_entity_id, e.episode_number, e.global_order, e.title_native, e.title_ru, e.summary, e.reading_minutes, e.published_at,
+                c.id AS country_ref_id,
+                c.slug AS country_ref_slug,
+                c.type AS country_ref_type,
+                c.title_ru AS country_ref_title_ru,
+                c.summary AS country_ref_summary,
+                c.avatar_asset_path AS country_ref_avatar_asset_path,
+                c.flag_colors AS country_ref_flag_colors
          FROM episodes e
-         JOIN countries c ON c.id = e.country_id
+         JOIN atlas_entities c ON c.id = e.country_entity_id
          WHERE e.archived_at IS NULL
          ORDER BY e.published_at DESC NULLS LAST, e.global_order DESC
          LIMIT 1`
@@ -153,15 +159,16 @@ export async function registerHomeRoutes(app: FastifyInstance) {
               summary: episodeRow.summary ?? null,
               reading_minutes: episodeRow.reading_minutes ?? null,
               published_at: toNullableIsoDateTime(episodeRow.published_at),
-              country: validateResponse(
-                CountryFlagDTO,
+              country: toAtlasEntityReference(
                 {
-                  id: episodeRow.country_id,
-                  slug: episodeRow.country_slug,
-                  url: entityUrl("country", episodeRow.country_slug),
-                  title_ru: episodeRow.country_title_ru,
-                  flag_colors: episodeRow.country_flag_colors ?? null
-                },
+                  id: episodeRow.country_ref_id,
+                  slug: episodeRow.country_ref_slug,
+                  type: episodeRow.country_ref_type,
+                  title_ru: episodeRow.country_ref_title_ru,
+                  summary: episodeRow.country_ref_summary ?? null,
+                  avatar_asset_path: episodeRow.country_ref_avatar_asset_path ?? null,
+                  flag_colors: episodeRow.country_ref_flag_colors ?? null
+                } as AtlasEntityReferenceRow,
                 "/api/home:latest_episode:country"
               ),
               series,

@@ -1,12 +1,9 @@
 import { FastifyInstance } from "fastify";
 import {
   EpisodeCatalogItemDTO,
-  CountryFlagDTO,
-  CountryDTO,
   EpisodeCharacterLinkDTO,
   EpisodeDetailResponseDTO,
   EpisodeDTO,
-  EpisodeLocationLinkDTO,
   EpisodeParticipantDTO,
   EpisodeSeriesDTO,
   EpisodesListQueryDTO,
@@ -21,6 +18,7 @@ import {
   validateResponse,
   withArchivedFilter
 } from "./utils.js";
+import { toAtlasEntityReference, type AtlasEntityReferenceRow } from "./atlas-entity-helpers.js";
 
 export async function registerEpisodesRoutes(app: FastifyInstance) {
   app.get("/api/episodes", async (req, reply) => {
@@ -32,7 +30,10 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
     const { page, limit } = query;
     const offset = (page - 1) * limit;
     const filters: string[] = [];
-    const joins = ["JOIN episode_series s ON s.id = e.series_id", "JOIN countries c ON c.id = e.country_id"];
+    const joins = [
+      "JOIN episode_series s ON s.id = e.series_id",
+      "JOIN atlas_entities c ON c.id = e.country_entity_id"
+    ];
     const params: Array<string | number> = [];
     const sortOrder = query.sort === "newest" ? "DESC" : "ASC";
 
@@ -63,8 +64,14 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
     );
 
     const rows = await pool.query(
-      `SELECT DISTINCT e.id, e.slug, e.series_id, e.country_id, e.episode_number, e.global_order, e.title_native, e.title_ru, e.summary, e.reading_minutes, e.published_at,
-              c.slug AS country_slug, c.title_ru AS country_title_ru, c.flag_colors AS country_flag_colors
+      `SELECT DISTINCT e.id, e.slug, e.series_id, e.country_entity_id, e.episode_number, e.global_order, e.title_native, e.title_ru, e.summary, e.reading_minutes, e.published_at,
+              c.id AS country_ref_id,
+              c.slug AS country_ref_slug,
+              c.type AS country_ref_type,
+              c.title_ru AS country_ref_title_ru,
+              c.summary AS country_ref_summary,
+              c.avatar_asset_path AS country_ref_avatar_asset_path,
+              c.flag_colors AS country_ref_flag_colors
        FROM episodes e
        ${joins.join("\n       ")}
        WHERE ${where}
@@ -123,7 +130,7 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
           slug: row.slug,
           url: entityUrl("episode", row.slug),
           series_id: row.series_id,
-          country_id: row.country_id,
+          country_entity_id: row.country_entity_id,
           episode_number: row.episode_number,
           global_order: row.global_order,
           title_native: row.title_native ?? null,
@@ -132,14 +139,15 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
           reading_minutes: row.reading_minutes ?? null,
           published_at: toNullableIsoDateTime(row.published_at),
           participants: participantsByEpisode.get(row.id) ?? [],
-          country: validateResponse(
-            CountryFlagDTO,
+          country: toAtlasEntityReference(
             {
-              id: row.country_id,
-              slug: row.country_slug,
-              url: entityUrl("country", row.country_slug),
-              title_ru: row.country_title_ru,
-              flag_colors: row.country_flag_colors ?? null
+              id: row.country_ref_id,
+              slug: row.country_ref_slug,
+              type: row.country_ref_type,
+              title_ru: row.country_ref_title_ru,
+              summary: row.country_ref_summary ?? null,
+              avatar_asset_path: row.country_ref_avatar_asset_path ?? null,
+              flag_colors: row.country_ref_flag_colors ?? null
             },
             "/api/episodes:item:country"
           )
@@ -158,7 +166,9 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
   app.get("/api/episodes/:slug", async (req, reply) => {
     const { slug } = req.params as { slug: string };
     const episodeResult = await pool.query(
-      "SELECT id, slug, series_id, country_id, episode_number, global_order, title_native, title_ru, summary, content_markdown, reading_minutes, published_at FROM episodes WHERE slug = $1 AND archived_at IS NULL",
+      `SELECT id, slug, series_id, country_entity_id, episode_number, global_order, title_native, title_ru, summary, content_markdown, reading_minutes, published_at
+       FROM episodes
+       WHERE slug = $1 AND archived_at IS NULL`,
       [slug]
     );
     const episodeRow = episodeResult.rows[0];
@@ -171,7 +181,12 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
       pool.query("SELECT id, slug, title_ru, brand_color, summary FROM episode_series WHERE id = $1", [
         episodeRow.series_id
       ]),
-      pool.query("SELECT id, slug, title_ru, flag_colors FROM countries WHERE id = $1", [episodeRow.country_id]),
+      pool.query(
+        `SELECT id, slug, type, title_ru, summary, avatar_asset_path, flag_colors
+         FROM atlas_entities
+         WHERE id = $1 AND archived_at IS NULL`,
+        [episodeRow.country_entity_id]
+      ),
       pool.query(
         `SELECT c.id, c.slug, c.name_ru, c.name_native, c.tagline, c.avatar_asset_path
          FROM characters c
@@ -181,11 +196,12 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
         [episodeRow.id]
       ),
       pool.query(
-        `SELECT l.id, l.slug, l.title_ru, l.summary, l.country_id
-         FROM locations l
-         JOIN episode_locations el ON el.location_id = l.id
-         WHERE el.episode_id = $1 AND l.archived_at IS NULL
-         ORDER BY l.title_ru ASC`,
+        `SELECT ae.id, ae.slug, ae.type, ae.title_ru, ae.summary, ae.avatar_asset_path, ae.flag_colors
+         FROM atlas_entities ae
+         JOIN episode_atlas_entities eae ON eae.atlas_entity_id = ae.id
+         WHERE eae.episode_id = $1
+           AND ae.archived_at IS NULL
+         ORDER BY eae.sort_order ASC, ae.title_ru ASC`,
         [episodeRow.id]
       )
     ]);
@@ -197,7 +213,7 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
         slug: episodeRow.slug,
         url: entityUrl("episode", episodeRow.slug),
         series_id: episodeRow.series_id,
-        country_id: episodeRow.country_id,
+        country_entity_id: episodeRow.country_entity_id,
         episode_number: episodeRow.episode_number,
         global_order: episodeRow.global_order,
         title_native: episodeRow.title_native ?? null,
@@ -226,18 +242,13 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
       : null;
 
     const countryItem = country.rows[0]
-      ? validateResponse(
-          CountryDTO,
-          {
-            id: country.rows[0].id,
-            slug: country.rows[0].slug,
-            url: entityUrl("country", country.rows[0].slug),
-            title_ru: country.rows[0].title_ru,
-            flag_colors: country.rows[0].flag_colors ?? null
-          },
-          "/api/episodes/:slug:country"
-        )
+      ? toAtlasEntityReference(country.rows[0] as AtlasEntityReferenceRow, "/api/episodes/:slug:country")
       : null;
+
+    if (!countryItem) {
+      reply.code(500);
+      return errorPayload("Episode country is missing");
+    }
 
     const characterItems = characters.rows.map((row) =>
       validateResponse(
@@ -256,18 +267,7 @@ export async function registerEpisodesRoutes(app: FastifyInstance) {
     );
 
     const locationItems = locations.rows.map((row) =>
-      validateResponse(
-        EpisodeLocationLinkDTO,
-        {
-          id: row.id,
-          slug: row.slug,
-          url: entityUrl("location", row.slug),
-          title_ru: row.title_ru,
-          summary: row.summary ?? null,
-          country_id: row.country_id ?? null
-        },
-        "/api/episodes/:slug:location"
-      )
+      toAtlasEntityReference(row as AtlasEntityReferenceRow, "/api/episodes/:slug:location")
     );
 
     return validateResponse(

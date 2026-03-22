@@ -1,26 +1,25 @@
 ---
 slug: eversoul
-kind: geography
+type: location
 title_ru: Эверсоул
 summary: Столица Люмендора, роскошная, многолюдная и уверенная в собственной важности.
 country_slug: lumendor
-location_slug: eversoul
-fact:
-  title: Жетон извозчика
-  text: >-
-    Латунный кружок с номером маршрута носят в кармане отдельно от мелочи,
-    чтобы не стирался рельеф.
-  meta: Повседневная вещь городского темпа
 links:
-  - type: country
+  - type: atlas_entity
     slug: lumendor
     label: Люмендор
-  - type: location
-    slug: eversoul
-    label: Эверсоул
-  - type: atlas_entry
+  - type: atlas_entity
     slug: biblioteka-lorlayt
     label: Библиотека Лорлайт
+sections:
+  - key: geography
+    title_ru: География
+    fact:
+      title: Жетон извозчика
+      text: >-
+        Латунный кружок с номером маршрута носят в кармане отдельно от мелочи,
+        чтобы не стирался рельеф.
+      meta: Повседневная вещь городского темпа
 ---
 # Эверсоул
 

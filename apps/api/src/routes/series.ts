@@ -1,6 +1,5 @@
 import { FastifyInstance } from "fastify";
 import {
-  CountryFlagDTO,
   EpisodeListItemDTO,
   EpisodeSeriesDTO,
   PaginatedSeriesResponseDTO,
@@ -16,6 +15,7 @@ import {
   validateResponse,
   withArchivedFilter
 } from "./utils.js";
+import { toAtlasEntityReference, type AtlasEntityReferenceRow } from "./atlas-entity-helpers.js";
 
 export async function registerSeriesRoutes(app: FastifyInstance) {
   app.get("/api/series", async (req, reply) => {
@@ -76,11 +76,18 @@ export async function registerSeriesRoutes(app: FastifyInstance) {
     }
 
     const episodes = await pool.query(
-      `SELECT e.id, e.slug, e.series_id, e.country_id, e.episode_number, e.global_order, e.title_native, e.title_ru, e.summary, e.reading_minutes, e.published_at,
-              c.slug AS country_slug, c.title_ru AS country_title_ru, c.flag_colors AS country_flag_colors
+      `SELECT e.id, e.slug, e.series_id, e.country_entity_id, e.episode_number, e.global_order, e.title_native, e.title_ru, e.summary, e.reading_minutes, e.published_at,
+              c.id AS country_ref_id,
+              c.slug AS country_ref_slug,
+              c.type AS country_ref_type,
+              c.title_ru AS country_ref_title_ru,
+              c.summary AS country_ref_summary,
+              c.avatar_asset_path AS country_ref_avatar_asset_path,
+              c.flag_colors AS country_ref_flag_colors
        FROM episodes e
-       JOIN countries c ON c.id = e.country_id
-       WHERE e.series_id = $1 AND e.archived_at IS NULL ORDER BY e.episode_number ASC`,
+       JOIN atlas_entities c ON c.id = e.country_entity_id
+       WHERE e.series_id = $1 AND e.archived_at IS NULL
+       ORDER BY e.episode_number ASC`,
       [seriesRow.id]
     );
 
@@ -105,7 +112,7 @@ export async function registerSeriesRoutes(app: FastifyInstance) {
           slug: row.slug,
           url: entityUrl("episode", row.slug),
           series_id: row.series_id,
-          country_id: row.country_id,
+          country_entity_id: row.country_entity_id,
           episode_number: row.episode_number,
           global_order: row.global_order,
           title_native: row.title_native ?? null,
@@ -113,15 +120,16 @@ export async function registerSeriesRoutes(app: FastifyInstance) {
           summary: row.summary ?? null,
           reading_minutes: row.reading_minutes ?? null,
           published_at: toNullableIsoDateTime(row.published_at),
-          country: validateResponse(
-            CountryFlagDTO,
+          country: toAtlasEntityReference(
             {
-              id: row.country_id,
-              slug: row.country_slug,
-              url: entityUrl("country", row.country_slug),
-              title_ru: row.country_title_ru,
-              flag_colors: row.country_flag_colors ?? null
-            },
+              id: row.country_ref_id,
+              slug: row.country_ref_slug,
+              type: row.country_ref_type,
+              title_ru: row.country_ref_title_ru,
+              summary: row.country_ref_summary ?? null,
+              avatar_asset_path: row.country_ref_avatar_asset_path ?? null,
+              flag_colors: row.country_ref_flag_colors ?? null
+            } as AtlasEntityReferenceRow,
             "/api/series/:slug:episode:country"
           )
         },

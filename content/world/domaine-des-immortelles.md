@@ -1,15 +1,15 @@
 ---
 slug: domaine-des-immortelles
-kind: geography
+type: location
 title_ru: Domaine des Immortelles
 summary: Богатое приморское поместье Авзонии, где частная жизнь семьи, служебный уклад и южный свет держатся в одном тщательно выстроенном порядке.
 country_slug: ausonia
 published_at: "2026-03-15T00:00:00Z"
 links:
-  - type: country
+  - type: atlas_entity
     slug: ausonia
     label: Авзония
-  - type: atlas_entry
+  - type: atlas_entity
     slug: abbaye-des-hautes-roches
     label: Abbaye des Hautes Roches
   - type: character
@@ -21,6 +21,9 @@ links:
   - type: character
     slug: arnaud-dumont
     label: Арно Дюмонт
+sections:
+  - key: geography
+    title_ru: География
 ---
 # Domaine des Immortelles
 

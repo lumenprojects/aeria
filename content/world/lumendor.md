@@ -1,21 +1,25 @@
 ---
 slug: lumendor
-kind: geography
+type: country
 title_ru: Люмендор
 summary: Большая страна науки, денег и густонаселённых городов, где рядом существуют столичный шик Эверсоула и более земной ритм Элдендорфа.
+flag_colors:
+  - "#C1272D"
+  - "#111111"
+  - "#FFFFFF"
 links:
-  - type: country
-    slug: lumendor
-    label: Люмендор
-  - type: atlas_entry
+  - type: atlas_entity
     slug: eversoul
     label: Эверсоул
-  - type: atlas_entry
+  - type: atlas_entity
     slug: eldendorf
     label: Элдендорф
   - type: episode_series
     slug: fernalda
     label: Фернальда
+sections:
+  - key: geography
+    title_ru: География
 ---
 # Люмендор
 

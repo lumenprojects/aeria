@@ -36,8 +36,8 @@ describe("CharacterDetailPage smoke", () => {
         name_ru: "Форсиль Виллет",
         avatar_asset_path: "/assets/images/characters/forsil-villet.png",
         name_native: "Forsil Villet",
-        affiliation_id: "00000000-0000-0000-0000-000000000011",
-        country_id: "00000000-0000-0000-0000-000000000021",
+        affiliation_entity_id: "00000000-0000-0000-0000-000000000011",
+        country_entity_id: "00000000-0000-0000-0000-000000000021",
         tagline: "Не всякую мягкость видно сразу.",
         gender: "Женский",
         race: "Человек",
@@ -53,16 +53,21 @@ describe("CharacterDetailPage smoke", () => {
         id: "00000000-0000-0000-0000-000000000021",
         slug: "ausonia",
         url: "/atlas/ausonia",
+        type: "country",
         title_ru: "Авзония",
+        summary: "Виноградные долины и строгие дома.",
+        avatar_asset_path: null,
         flag_colors: ["#d72638", "#f5f1ea", "#1d5fa7"]
       },
       affiliation: {
         id: "00000000-0000-0000-0000-000000000011",
         slug: "domaine-des-immortelles",
         url: "/atlas/domaine-des-immortelles",
-        kind: "social",
+        type: "location",
         title_ru: "Domaine des Immortelles",
-        avatar_asset_path: null
+        summary: "Поместье, где дом держится на распорядке.",
+        avatar_asset_path: null,
+        flag_colors: null
       },
       quirks: [
         {
@@ -81,7 +86,7 @@ describe("CharacterDetailPage smoke", () => {
           author_meta: "городской лавочник",
           sort_order: 0,
           source: {
-            type: "atlas_entry",
+            type: "atlas_entity",
             id: "00000000-0000-0000-0000-000000000041",
             slug: "domaine-des-immortelles",
             url: "/atlas/domaine-des-immortelles",
@@ -96,7 +101,7 @@ describe("CharacterDetailPage smoke", () => {
           slug: "za-predelami-vinogradnikov",
           url: "/episodes/za-predelami-vinogradnikov",
           series_id: "00000000-0000-0000-0000-000000000201",
-          country_id: "00000000-0000-0000-0000-000000000021",
+          country_entity_id: "00000000-0000-0000-0000-000000000021",
           episode_number: 2,
           global_order: 2,
           title_native: "Au-dela des vignes",
@@ -108,7 +113,10 @@ describe("CharacterDetailPage smoke", () => {
             id: "00000000-0000-0000-0000-000000000021",
             slug: "ausonia",
             url: "/atlas/ausonia",
+            type: "country",
             title_ru: "Авзония",
+            summary: "Виноградные долины и строгие дома.",
+            avatar_asset_path: null,
             flag_colors: ["#d72638", "#f5f1ea", "#1d5fa7"]
           }
         }
@@ -145,7 +153,7 @@ describe("CharacterDetailPage smoke", () => {
     expect(screen.queryByRole("heading", { name: "Фраза персонажа" })).not.toBeInTheDocument();
 
     expect(screen.getByRole("heading", { name: "Что говорят другие?" })).toBeInTheDocument();
-    expect(screen.getByText("«С ней сложно спорить о цене, потому что она уже всё просчитала.»")).toBeInTheDocument();
+    expect(screen.getByText("С ней сложно спорить о цене, потому что она уже всё просчитала.")).toBeInTheDocument();
 
     const episodeItems = screen.getAllByTestId("character-detail-episode-item");
     expect(episodeItems).toHaveLength(1);

@@ -184,30 +184,49 @@ export default function CharacterDetailPage() {
             </Typography>
             <div className="character-detail-rumors-list">
               {data.rumors.map((rumor) => (
-                <figure key={`${rumor.sort_order}-${rumor.author_name}`} className="character-detail-rumor">
-                  <blockquote className="character-detail-rumor-quote">
-                    <Typography variant="body" as="p" className="character-detail-rumor-text">
-                      {`«${rumor.text}»`}
+                <figure
+                  key={`${rumor.sort_order}-${rumor.author_name}`}
+                  className="character-detail-rumor atlas-article-quote-card"
+                >
+                  <blockquote className="character-detail-rumor-quote atlas-article-quote-text">
+                    <Typography variant="body" as="p" className="character-detail-rumor-text atlas-article-quote-copy">
+                      {rumor.text}
                     </Typography>
                   </blockquote>
-                  <figcaption className="character-detail-rumor-attribution">
+                  <figcaption className="character-detail-rumor-attribution atlas-article-quote-footer">
                     {rumor.source?.avatar_asset_path ? (
-                      <Link to={rumor.source.url} className="character-detail-rumor-source-avatar">
+                      <Link
+                        to={rumor.source.url}
+                        className="character-detail-rumor-source-avatar atlas-article-quote-avatar-link"
+                      >
                         <Avatar size="xs" className="character-detail-rumor-source-image">
                           <AvatarImage src={rumor.source.avatar_asset_path} alt={rumor.source.title} />
                           <AvatarFallback>{fallbackText(rumor.source.title)}</AvatarFallback>
                         </Avatar>
                       </Link>
                     ) : null}
-                    <Typography variant="ui" as="p" className="tone-secondary character-detail-rumor-author">
-                      {rumor.author_name}
-                      {rumor.author_meta ? `, ${rumor.author_meta}` : ""}
-                    </Typography>
-                    {rumor.source && !rumor.source.avatar_asset_path && (
-                      <Link to={rumor.source.url} className="character-detail-rumor-author-link ui-underline-hover">
-                        {rumor.source.title}
-                      </Link>
-                    )}
+
+                    <div className="atlas-article-quote-source">
+                      <Typography
+                        variant="ui"
+                        as="p"
+                        className="tone-secondary character-detail-rumor-author atlas-article-quote-speaker"
+                      >
+                        {rumor.author_name}
+                      </Typography>
+
+                      {rumor.author_meta ? (
+                        <Typography variant="ui" as="p" className="tone-secondary atlas-article-quote-meta">
+                          {rumor.author_meta}
+                        </Typography>
+                      ) : null}
+
+                      {rumor.source && !rumor.source.avatar_asset_path ? (
+                        <Link to={rumor.source.url} className="character-detail-rumor-author-link ui-underline-hover">
+                          {rumor.source.title}
+                        </Link>
+                      ) : null}
+                    </div>
                   </figcaption>
                 </figure>
               ))}

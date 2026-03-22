@@ -2,7 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
+import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { Typography } from "../ui/typography";
 import { searchAll } from "@/lib/api";
 import { useUnderlineActivation } from "./useUnderlineActivation";
@@ -40,22 +40,23 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [query, setQuery] = React.useState("");
   const [recent, setRecent] = React.useState<RecentHit[]>([]);
+  const normalizedQuery = query.trim();
+  const deferredQuery = React.useDeferredValue(normalizedQuery);
   const { isUnderlineActive, setIsUnderlineActive, queueUnderlineActivation, clearUnderlineActivation } =
     useUnderlineActivation();
   const labels: Record<string, string> = {
     episode: "Эпизоды",
     character: "Персонажи",
-    atlas_entry: "Атлас",
+    atlas_entity: "Атлас",
     episode_series: "Серии",
-    country: "Страны",
-    location: "Локации",
     recent: "Недавнее"
   };
 
   const { data, isFetching, isError } = useQuery({
-    queryKey: ["search", query],
-    queryFn: () => searchAll(query),
-    enabled: open && query.length > 0
+    queryKey: ["search", deferredQuery],
+    queryFn: () => searchAll(deferredQuery),
+    enabled: open && deferredQuery.length > 0,
+    retry: false
   });
 
   React.useEffect(() => {
@@ -104,8 +105,9 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
   }
 
   const groups = data?.groups?.filter((group) => group.hits.length > 0) ?? [];
-  const showRecent = query.length === 0 && recent.length > 0;
-  const showResultsPanel = isFetching || isError || query.length > 0 || showRecent;
+  const showRecent = normalizedQuery.length === 0 && recent.length > 0;
+  const showEmptyState = !isFetching && !isError && normalizedQuery.length > 0 && groups.length === 0;
+  const showResultsPanel = isFetching || isError || normalizedQuery.length > 0 || showRecent;
 
   return (
     <AnimatePresence initial={false}>
@@ -118,7 +120,7 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
           className="bg-background"
         >
           <div className="width-wide search-inline-shell">
-            <Command className="search-inline-command">
+            <Command className="search-inline-command" shouldFilter={false}>
               <CommandInput
                 ref={inputRef}
                 value={query}
@@ -151,15 +153,20 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
                           Поиск временно недоступен. Попробуйте позже.
                         </Typography>
                       )}
-                      {!isFetching && !isError && query.length > 0 && (
-                        <CommandEmpty className="search-inline-status role-ui tone-secondary">
+                      {showEmptyState && (
+                        <Typography variant="ui" as="div" className="search-inline-status role-ui tone-secondary">
                           Ничего не найдено. Попробуйте другое слово.
-                        </CommandEmpty>
+                        </Typography>
                       )}
                       {showRecent && (
                         <CommandGroup className="search-inline-group" heading={labels.recent}>
                           {recent.map((hit) => (
-                            <CommandItem key={`${hit.type}:${hit.id}`} className="search-inline-item" onSelect={() => handleSelect(hit)}>
+                            <CommandItem
+                              key={`${hit.type}:${hit.id}`}
+                              value={`${hit.type}:${hit.id}`}
+                              className="search-inline-item"
+                              onSelect={() => handleSelect(hit)}
+                            >
                               <div className="flex flex-col">
                                 <Typography variant="ui" as="span">
                                   {hit.title}
@@ -177,7 +184,12 @@ export default function GlobalSearch({ open, onOpenChange }: { open: boolean; on
                       {groups.map((group) => (
                         <CommandGroup key={group.type} className="search-inline-group" heading={labels[group.type] ?? group.type}>
                           {group.hits.map((hit: SearchHit) => (
-                            <CommandItem key={hit.id} className="search-inline-item" onSelect={() => handleSelect(hit)}>
+                            <CommandItem
+                              key={`${hit.type}:${hit.id}`}
+                              value={`${hit.type}:${hit.id}`}
+                              className="search-inline-item"
+                              onSelect={() => handleSelect(hit)}
+                            >
                               <div className="flex flex-col">
                                 <Typography variant="ui" as="span">
                                   {hit.title}

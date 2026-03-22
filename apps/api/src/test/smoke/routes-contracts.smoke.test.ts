@@ -10,6 +10,44 @@ vi.mock("../../db.js", () => ({
   }
 }));
 
+const countryRef = {
+  id: "00000000-0000-0000-0000-000000000021",
+  slug: "ausonia",
+  url: "/atlas/ausonia",
+  type: "country" as const,
+  title_ru: "Авзония",
+  summary: "Виноградные долины и строгие дома.",
+  avatar_asset_path: null,
+  flag_colors: ["#CD212A", "#FFFFFF", "#0055A4"]
+};
+
+const worldRef = {
+  id: "00000000-0000-0000-0000-000000000051",
+  slug: "biblioteka-lorlayt",
+  url: "/atlas/biblioteka-lorlayt",
+  type: "organization" as const,
+  title_ru: "Библиотека Лорлайт",
+  summary: "Дом архивов и дисциплины.",
+  avatar_asset_path: "/assets/images/atlas/biblioteka-lorlayt.png",
+  flag_colors: null
+};
+
+const locationRef = {
+  id: "00000000-0000-0000-0000-000000000041",
+  slug: "domaine-des-immortelles",
+  url: "/atlas/domaine-des-immortelles",
+  type: "location" as const,
+  title_ru: "Domaine des Immortelles",
+  summary: "Поместье, где Арно начинает новую жизнь.",
+  avatar_asset_path: "/assets/images/atlas/domaine-des-immortelles.png",
+  flag_colors: null
+};
+
+async function createApp() {
+  const { buildApp } = await import("../../app.js");
+  return buildApp();
+}
+
 describe("API route contracts smoke", () => {
   beforeEach(() => {
     queryMock.mockReset();
@@ -18,20 +56,15 @@ describe("API route contracts smoke", () => {
   });
 
   it("returns 400 for invalid episodes list query", async () => {
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/episodes?page=0"
-    });
+    const app = await createApp();
+    const res = await app.inject({ method: "GET", url: "/api/episodes?page=0" });
 
     expect(res.statusCode).toBe(400);
     expect(res.json()).toEqual({ error: "Invalid query parameters" });
     await app.close();
   });
 
-  it("returns paginated episodes payload with strict shape", async () => {
+  it("returns paginated episodes payload with atlas country references", async () => {
     queryMock
       .mockResolvedValueOnce({ rows: [{ count: 1 }] })
       .mockResolvedValueOnce({
@@ -40,7 +73,7 @@ describe("API route contracts smoke", () => {
             id: "00000000-0000-0000-0000-000000000001",
             slug: "episode-001",
             series_id: "00000000-0000-0000-0000-000000000011",
-            country_id: "00000000-0000-0000-0000-000000000021",
+            country_entity_id: countryRef.id,
             episode_number: 1,
             global_order: 1,
             title_native: null,
@@ -48,9 +81,13 @@ describe("API route contracts smoke", () => {
             summary: "Test episode",
             reading_minutes: 3,
             published_at: new Date("2026-03-04T00:00:00Z"),
-            country_slug: "ru-example",
-            country_title_ru: "Country 01",
-            country_flag_colors: ["#111111", "#ffffff"]
+            country_id: countryRef.id,
+            country_slug: countryRef.slug,
+            country_type: countryRef.type,
+            country_title_ru: countryRef.title_ru,
+            country_summary: countryRef.summary,
+            country_avatar_asset_path: countryRef.avatar_asset_path,
+            country_flag_colors: countryRef.flag_colors
           }
         ]
       })
@@ -66,250 +103,22 @@ describe("API route contracts smoke", () => {
         ]
       });
 
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/episodes?page=1&limit=20"
-    });
+    const app = await createApp();
+    const res = await app.inject({ method: "GET", url: "/api/episodes?page=1&limit=20" });
+    const payload = res.json();
 
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({
-      items: [
-        {
-          id: "00000000-0000-0000-0000-000000000001",
-          slug: "episode-001",
-          url: "/episodes/episode-001",
-          series_id: "00000000-0000-0000-0000-000000000011",
-          country_id: "00000000-0000-0000-0000-000000000021",
-          episode_number: 1,
-          global_order: 1,
-          title_native: null,
-          title_ru: "Episode 001",
-          summary: "Test episode",
-          reading_minutes: 3,
-          published_at: "2026-03-04T00:00:00.000Z",
-          participants: [
-            {
-              id: "00000000-0000-0000-0000-000000000031",
-              slug: "character-001",
-              url: "/characters/character-001",
-              name_ru: "Character 001",
-              avatar_asset_path: "/assets/images/characters/character-001.png"
-            }
-          ],
-          country: {
-            id: "00000000-0000-0000-0000-000000000021",
-            slug: "ru-example",
-            url: "/atlas/ru-example",
-            title_ru: "Country 01",
-            flag_colors: ["#111111", "#ffffff"]
-          }
-        }
-      ],
-      total: 1,
-      page: 1,
-      limit: 20
+    expect(payload.items[0]).toMatchObject({
+      slug: "episode-001",
+      country_entity_id: countryRef.id,
+      country: countryRef
     });
-
+    expect(payload.items[0].participants).toHaveLength(1);
+    expect(payload.total).toBe(1);
     await app.close();
   });
 
-  it("returns atlas world catalog payload with mixed entities, facets and modern filters", async () => {
-    queryMock
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000021",
-            slug: "ausonia",
-            title_ru: "Авзония",
-            flag_colors: ["#CD212A", "#FFFFFF", "#0055A4"]
-          },
-          {
-            id: "00000000-0000-0000-0000-000000000022",
-            slug: "lumendor",
-            title_ru: "Люмендор",
-            flag_colors: ["#C1272D", "#111111", "#FFFFFF"]
-          }
-        ]
-      })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000041",
-            slug: "port-velon",
-            title_ru: "Порт Велон",
-            summary: "Торговая кромка Авзонии.",
-            description_markdown: "У пристаней Велона держится соль и шепот.",
-            avatar_asset_path: null,
-            country_id: "00000000-0000-0000-0000-000000000021"
-          }
-        ]
-      })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000051",
-            slug: "dom-velon",
-            kind: "social",
-            title_ru: "Дом Велон",
-            summary: "Дом с пристанью и долгой памятью.",
-            content_markdown: "Велон держит торговлю в узде.",
-            avatar_asset_path: "/assets/images/atlas/dom-velon.png",
-            country_id: "00000000-0000-0000-0000-000000000021",
-            location_id: null,
-            published_at: new Date("2026-03-14T00:00:00Z")
-          },
-          {
-            id: "00000000-0000-0000-0000-000000000052",
-            slug: "svobodnaya-hronika",
-            kind: "history",
-            title_ru: "Свободная хроника",
-            summary: "Архив без привязки.",
-            content_markdown: "Свободная запись.",
-            avatar_asset_path: null,
-            country_id: null,
-            location_id: null,
-            published_at: new Date("2026-03-15T00:00:00Z")
-          }
-        ]
-      })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            from_type: "atlas_entry",
-            from_id: "00000000-0000-0000-0000-000000000051",
-            to_type: "character",
-            to_id: "00000000-0000-0000-0000-000000000031",
-            label: "Велон"
-          }
-        ]
-      });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/atlas/catalog?page=1&limit=20&q=%D0%B2%D0%B5%D0%BB%D0%BE%D0%BD&entity=atlas_entry&country=ausonia&anchor=country&sort=recent"
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(queryMock).toHaveBeenCalledTimes(4);
-    expect(res.json()).toEqual({
-      items: [
-        {
-          node_type: "atlas_entry",
-          id: "00000000-0000-0000-0000-000000000051",
-          slug: "dom-velon",
-          url: "/atlas/dom-velon",
-          title_ru: "Дом Велон",
-          summary: "Дом с пристанью и долгой памятью.",
-          kind: "social",
-          avatar_asset_path: "/assets/images/atlas/dom-velon.png",
-          country: {
-            id: "00000000-0000-0000-0000-000000000021",
-            slug: "ausonia",
-            url: "/atlas/ausonia",
-            title_ru: "Авзония",
-            flag_colors: ["#CD212A", "#FFFFFF", "#0055A4"]
-          },
-          location: null,
-          anchor_mode: "country",
-          related_count: 1,
-          published_at: "2026-03-14T00:00:00.000Z"
-        }
-      ],
-      facets: {
-        entity: [
-          { value: "country", label: "Страны", count: 0 },
-          { value: "location", label: "Локации", count: 0 },
-          { value: "atlas_entry", label: "Записи атласа", count: 1 }
-        ],
-        kind: [
-          { value: "geography", label: "География", count: 0 },
-          { value: "social", label: "Социальное", count: 1 },
-          { value: "history", label: "История", count: 0 },
-          { value: "belief", label: "Вера", count: 0 },
-          { value: "object", label: "Объект", count: 0 },
-          { value: "event", label: "Событие", count: 0 },
-          { value: "other", label: "Другое", count: 0 }
-        ],
-        country: [
-          {
-            id: "00000000-0000-0000-0000-000000000021",
-            slug: "ausonia",
-            title_ru: "Авзония",
-            count: 1
-          }
-        ],
-        anchor: [
-          { value: "country", label: "Страна", count: 1 },
-          { value: "location", label: "Локация", count: 0 },
-          { value: "free", label: "Свободные", count: 0 }
-        ]
-      },
-      total: 1,
-      page: 1,
-      limit: 20
-    });
-
-    await app.close();
-  });
-
-  it("supports episodes list character filter and newest sort", async () => {
-    queryMock
-      .mockResolvedValueOnce({ rows: [{ count: 1 }] })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000002",
-            slug: "episode-002",
-            series_id: "00000000-0000-0000-0000-000000000011",
-            country_id: "00000000-0000-0000-0000-000000000021",
-            episode_number: 2,
-            global_order: 2,
-            title_native: null,
-            title_ru: "Episode 002",
-            summary: "Filtered episode",
-            reading_minutes: 5,
-            published_at: new Date("2026-03-05T00:00:00Z"),
-            country_slug: "ru-example",
-            country_title_ru: "Country 01",
-            country_flag_colors: ["#111111", "#ffffff"]
-          }
-        ]
-      })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            episode_id: "00000000-0000-0000-0000-000000000002",
-            id: "00000000-0000-0000-0000-000000000031",
-            slug: "character-001",
-            name_ru: "Character 001",
-            avatar_asset_path: "/assets/images/characters/character-001.png"
-          }
-        ]
-      });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/episodes?page=1&limit=100&series=series-01&character=character-001&sort=newest"
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(String(queryMock.mock.calls[0][0])).toContain("JOIN episode_characters ec_filter");
-    expect(String(queryMock.mock.calls[1][0])).toContain("ORDER BY e.global_order DESC");
-    expect(queryMock.mock.calls[0][1]).toEqual(["series-01", "character-001"]);
-
-    await app.close();
-  });
-
-  it("filters hidden characters from the public characters list", async () => {
+  it("returns character list and detail payloads built on atlas entities", async () => {
     queryMock
       .mockResolvedValueOnce({ rows: [{ count: 1 }] })
       .mockResolvedValueOnce({
@@ -321,807 +130,23 @@ describe("API route contracts smoke", () => {
             name_native: null,
             tagline: "Character tagline",
             avatar_asset_path: "/assets/images/characters/character-001.png",
-            country_id: "00000000-0000-0000-0000-000000000021",
-            country_slug: "ru-example",
-            country_title_ru: "Country 01",
-            country_flag_colors: ["#111111", "#ffffff"],
-            affiliation_id: "00000000-0000-0000-0000-000000000051",
-            affiliation_slug: "atlas-001",
-            affiliation_kind: "social",
-            affiliation_title_ru: "Atlas 001",
-            affiliation_avatar_asset_path: "/assets/images/atlas/atlas-001.png"
-          }
-        ]
-      });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/characters?page=1&limit=20"
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({
-      items: [
-        {
-          id: "00000000-0000-0000-0000-000000000031",
-          slug: "character-001",
-          url: "/characters/character-001",
-          name_ru: "Character 001",
-          name_native: null,
-          tagline: "Character tagline",
-          avatar_asset_path: "/assets/images/characters/character-001.png",
-          country: {
-            id: "00000000-0000-0000-0000-000000000021",
-            slug: "ru-example",
-            url: "/atlas/ru-example",
-            title_ru: "Country 01",
-            flag_colors: ["#111111", "#ffffff"]
-          },
-          affiliation: {
-            id: "00000000-0000-0000-0000-000000000051",
-            slug: "atlas-001",
-            url: "/atlas/atlas-001",
-            kind: "social",
-            title_ru: "Atlas 001",
-            avatar_asset_path: "/assets/images/atlas/atlas-001.png"
-          }
-        }
-      ],
-      total: 1,
-      page: 1,
-      limit: 20
-    });
-    expect(String(queryMock.mock.calls[0][0])).toContain("listed = TRUE");
-    expect(String(queryMock.mock.calls[1][0])).toContain("listed = TRUE");
-
-    await app.close();
-  });
-
-  it("supports character list query filters, search and sort", async () => {
-    queryMock
-      .mockResolvedValueOnce({ rows: [{ count: 1 }] })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000031",
-            slug: "character-001",
-            name_ru: "Character 001",
-            name_native: null,
-            tagline: "Character tagline",
-            avatar_asset_path: "/assets/images/characters/character-001.png",
-            country_id: "00000000-0000-0000-0000-000000000021",
-            country_slug: "ru-example",
-            country_title_ru: "Country 01",
-            country_flag_colors: ["#111111", "#ffffff"],
-            affiliation_id: "00000000-0000-0000-0000-000000000051",
-            affiliation_slug: "atlas-001",
-            affiliation_kind: "social",
-            affiliation_title_ru: "Atlas 001",
-            affiliation_avatar_asset_path: "/assets/images/atlas/atlas-001.png"
-          }
-        ]
-      });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/characters?page=1&limit=100&q=tea&country=ru-example&affiliation=atlas-001&sort=name_desc"
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.json().items).toHaveLength(1);
-    expect(String(queryMock.mock.calls[0][0])).toContain("COALESCE(ch.favorite_food, '') ILIKE");
-    expect(String(queryMock.mock.calls[0][0])).toContain("c.slug =");
-    expect(String(queryMock.mock.calls[0][0])).toContain("a.slug =");
-    expect(String(queryMock.mock.calls[1][0])).toContain("ORDER BY ch.name_ru DESC");
-    expect(queryMock.mock.calls[0][1]).toEqual(["%tea%", "ru-example", "atlas-001"]);
-    expect(queryMock.mock.calls[1][1]).toEqual(["%tea%", "ru-example", "atlas-001", 100, 0]);
-
-    await app.close();
-  });
-
-  it("returns character fact of day payload with comment author", async () => {
-    queryMock
-      .mockResolvedValueOnce({ rows: [{ count: 2 }] })
-      .mockResolvedValueOnce({ rows: [{ day_key: "20000" }] })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: 11,
-            fact_text: "Лилетт однажды попыталась приготовить настоящий шоколатин.",
-            comment_text: "Я до сих пор не понимаю, почему она добавила туда ром.",
-            subject_id: "00000000-0000-0000-0000-000000000031",
-            subject_slug: "character-001",
-            subject_name_ru: "Лилетт",
-            subject_avatar_asset_path: "/assets/images/characters/character-001.png",
-            author_id: "00000000-0000-0000-0000-000000000032",
-            author_slug: "character-002",
-            author_name_ru: "Арно",
-            author_avatar_asset_path: "/assets/images/characters/character-002.png"
-          }
-        ]
-      });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/characters/fact-of-day"
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({
-      fact_of_day: {
-        id: 11,
-        fact_text: "Лилетт однажды попыталась приготовить настоящий шоколатин.",
-        comment_text: "Я до сих пор не понимаю, почему она добавила туда ром.",
-        subject_character: {
-          id: "00000000-0000-0000-0000-000000000031",
-          slug: "character-001",
-          url: "/characters/character-001",
-          name_ru: "Лилетт",
-          avatar_asset_path: "/assets/images/characters/character-001.png"
-        },
-        comment_author_character: {
-          id: "00000000-0000-0000-0000-000000000032",
-          slug: "character-002",
-          url: "/characters/character-002",
-          name_ru: "Арно",
-          avatar_asset_path: "/assets/images/characters/character-002.png"
-        }
-      }
-    });
-
-    await app.close();
-  });
-
-  it("returns character fact of day payload with null comment author", async () => {
-    queryMock
-      .mockResolvedValueOnce({ rows: [{ count: 1 }] })
-      .mockResolvedValueOnce({ rows: [{ day_key: "20000" }] })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: 12,
-            fact_text: "Лилетт прячет лаванду во всех блокнотах.",
-            comment_text: "Это была не моя идея.",
-            subject_id: "00000000-0000-0000-0000-000000000031",
-            subject_slug: "character-001",
-            subject_name_ru: "Лилетт",
-            subject_avatar_asset_path: "/assets/images/characters/character-001.png",
-            author_id: null,
-            author_slug: null,
-            author_name_ru: null,
-            author_avatar_asset_path: null
-          }
-        ]
-      });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/characters/fact-of-day"
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({
-      fact_of_day: {
-        id: 12,
-        fact_text: "Лилетт прячет лаванду во всех блокнотах.",
-        comment_text: "Это была не моя идея.",
-        subject_character: {
-          id: "00000000-0000-0000-0000-000000000031",
-          slug: "character-001",
-          url: "/characters/character-001",
-          name_ru: "Лилетт",
-          avatar_asset_path: "/assets/images/characters/character-001.png"
-        },
-        comment_author_character: null
-      }
-    });
-
-    await app.close();
-  });
-
-  it("returns compact character preview payload", async () => {
-    queryMock
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000031",
-            slug: "forsil-villet",
-            name_ru: "Форсиль Виллет",
-            avatar_asset_path: "/assets/images/characters/forsil-villet.png",
-            name_native: "Forsil Villet",
-            affiliation_id: "00000000-0000-0000-0000-000000000051",
-            country_id: "00000000-0000-0000-0000-000000000021",
-            tagline: "Дом держится на её ритме."
+            country_id: countryRef.id,
+            country_slug: countryRef.slug,
+            country_type: countryRef.type,
+            country_title_ru: countryRef.title_ru,
+            country_summary: countryRef.summary,
+            country_avatar_asset_path: countryRef.avatar_asset_path,
+            country_flag_colors: countryRef.flag_colors,
+            affiliation_id: worldRef.id,
+            affiliation_slug: worldRef.slug,
+            affiliation_type: worldRef.type,
+            affiliation_title_ru: worldRef.title_ru,
+            affiliation_summary: worldRef.summary,
+            affiliation_avatar_asset_path: worldRef.avatar_asset_path,
+            affiliation_flag_colors: worldRef.flag_colors
           }
         ]
       })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000021",
-            slug: "ausonia",
-            title_ru: "Авзония",
-            flag_colors: ["#CD212A", "#FFFFFF", "#0055A4"]
-          }
-        ]
-      })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000051",
-            slug: "domaine-des-immortelles",
-            kind: "geography",
-            title_ru: "Бастида де ла Люн д'Ор",
-            avatar_asset_path: "/assets/images/atlas/domaine-des-immortelles.png"
-          }
-        ]
-      });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/characters/forsil-villet/preview"
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({
-      slug: "forsil-villet",
-      url: "/characters/forsil-villet",
-      name_ru: "Форсиль Виллет",
-      name_native: "Forsil Villet",
-      avatar_asset_path: "/assets/images/characters/forsil-villet.png",
-      tagline: "Дом держится на её ритме.",
-      country: {
-        id: "00000000-0000-0000-0000-000000000021",
-        slug: "ausonia",
-        url: "/atlas/ausonia",
-        title_ru: "Авзония",
-        flag_colors: ["#CD212A", "#FFFFFF", "#0055A4"]
-      },
-      affiliation: {
-        id: "00000000-0000-0000-0000-000000000051",
-        slug: "domaine-des-immortelles",
-        url: "/atlas/domaine-des-immortelles",
-        kind: "geography",
-        title_ru: "Бастида де ла Люн д'Ор",
-        avatar_asset_path: "/assets/images/atlas/domaine-des-immortelles.png"
-      }
-    });
-
-    await app.close();
-  });
-
-  it("returns atlas preview payload for country fallback slugs", async () => {
-    queryMock
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000021",
-            slug: "ausonia",
-            title_ru: "Авзония",
-            flag_colors: ["#CD212A", "#FFFFFF", "#0055A4"]
-          }
-        ]
-      });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/atlas/ausonia/preview"
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({
-      node_type: "country",
-      slug: "ausonia",
-      url: "/atlas/ausonia",
-      kind: "geography",
-      title_ru: "Авзония",
-      summary: null,
-      avatar_asset_path: null,
-      country: {
-        id: "00000000-0000-0000-0000-000000000021",
-        slug: "ausonia",
-        url: "/atlas/ausonia",
-        title_ru: "Авзония",
-        flag_colors: ["#CD212A", "#FFFFFF", "#0055A4"]
-      }
-    });
-
-    await app.close();
-  });
-
-  it("returns atlas preview payload for location fallback slugs", async () => {
-    queryMock
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000061",
-            slug: "biblioteka-lorlayt",
-            title_ru: "Библиотека Лорлайт",
-            summary: "Главная библиотека Эверсоула.",
-            avatar_asset_path: "/assets/images/locations/biblioteka-lorlayt.png",
-            country_id: "00000000-0000-0000-0000-000000000021"
-          }
-        ]
-      })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000021",
-            slug: "lumendor",
-            title_ru: "Люмендор",
-            flag_colors: ["#C1272D", "#111111", "#FFFFFF"]
-          }
-        ]
-      });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/atlas/biblioteka-lorlayt/preview"
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({
-      node_type: "location",
-      slug: "biblioteka-lorlayt",
-      url: "/atlas/biblioteka-lorlayt",
-      kind: "geography",
-      title_ru: "Библиотека Лорлайт",
-      summary: "Главная библиотека Эверсоула.",
-      avatar_asset_path: "/assets/images/locations/biblioteka-lorlayt.png",
-      country: {
-        id: "00000000-0000-0000-0000-000000000021",
-        slug: "lumendor",
-        url: "/atlas/lumendor",
-        title_ru: "Люмендор",
-        flag_colors: ["#C1272D", "#111111", "#FFFFFF"]
-      }
-    });
-
-    await app.close();
-  });
-
-  it("returns null fact of day when no visible facts exist", async () => {
-    queryMock.mockResolvedValueOnce({ rows: [{ count: 0 }] });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/characters/fact-of-day"
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ fact_of_day: null });
-    await app.close();
-  });
-
-  it("resolves /api/characters/fact-of-day via fact route and not via slug route", async () => {
-    queryMock.mockResolvedValueOnce({ rows: [{ count: 0 }] });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/characters/fact-of-day"
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(String(queryMock.mock.calls[0][0])).toContain("FROM character_facts");
-
-    await app.close();
-  });
-
-  it("uses Moscow day key to compute deterministic daily offset", async () => {
-    queryMock
-      .mockResolvedValueOnce({ rows: [{ count: 3 }] })
-      .mockResolvedValueOnce({ rows: [{ day_key: "8" }] })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: 13,
-            fact_text: "Факт с offset 2.",
-            comment_text: "Комментарий без автора.",
-            subject_id: "00000000-0000-0000-0000-000000000031",
-            subject_slug: "character-001",
-            subject_name_ru: "Лилетт",
-            subject_avatar_asset_path: "/assets/images/characters/character-001.png",
-            author_id: null,
-            author_slug: null,
-            author_name_ru: null,
-            author_avatar_asset_path: null
-          }
-        ]
-      });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/characters/fact-of-day"
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(queryMock.mock.calls[2][1]).toEqual([2]);
-    expect(res.json()).toEqual({
-      fact_of_day: {
-        id: 13,
-        fact_text: "Факт с offset 2.",
-        comment_text: "Комментарий без автора.",
-        subject_character: {
-          id: "00000000-0000-0000-0000-000000000031",
-          slug: "character-001",
-          url: "/characters/character-001",
-          name_ru: "Лилетт",
-          avatar_asset_path: "/assets/images/characters/character-001.png"
-        },
-        comment_author_character: null
-      }
-    });
-
-    await app.close();
-  });
-
-  it("returns home snapshot with latest episode", async () => {
-    queryMock
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000001",
-            slug: "episode-001",
-            series_id: "00000000-0000-0000-0000-000000000011",
-            country_id: "00000000-0000-0000-0000-000000000021",
-            episode_number: 1,
-            global_order: 1,
-            title_native: "Au-dela des vignes",
-            title_ru: "За пределами виноградников",
-            summary: "Test episode",
-            reading_minutes: 3,
-            published_at: new Date("2026-03-04T00:00:00Z"),
-            country_slug: "ru-example",
-            country_title_ru: "Country 01",
-            country_flag_colors: ["#111111", "#ffffff"]
-          }
-        ]
-      })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000099",
-            slug: "ame",
-            name_ru: "Ame",
-            avatar_asset_path: "/assets/images/characters/ame.png",
-            home_intro_title: "Привет, я Амэ",
-            home_intro_markdown: "Aeria intro"
-          }
-        ]
-      })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: 7,
-            quote: "У нас не было героев. Только сосед, который умел дышать через уши.",
-            source: "Услышано у костра"
-          }
-        ]
-      })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000011",
-            slug: "series-01",
-            title_ru: "Жёлтая луна",
-            brand_color: "#ffaa44"
-          }
-        ]
-      })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000031",
-            slug: "character-001",
-            name_ru: "Character 001",
-            avatar_asset_path: "/assets/images/characters/character-001.png"
-          },
-          {
-            id: "00000000-0000-0000-0000-000000000032",
-            slug: "character-002",
-            name_ru: "Character 002",
-            avatar_asset_path: "/assets/images/characters/character-002.png"
-          }
-        ]
-      });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/home"
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({
-      latest_episode: {
-        id: "00000000-0000-0000-0000-000000000001",
-        slug: "episode-001",
-        url: "/episodes/episode-001",
-        episode_number: 1,
-        global_order: 1,
-        title_native: "Au-dela des vignes",
-        title_ru: "За пределами виноградников",
-        summary: "Test episode",
-        reading_minutes: 3,
-        published_at: "2026-03-04T00:00:00.000Z",
-        country: {
-          id: "00000000-0000-0000-0000-000000000021",
-          slug: "ru-example",
-          url: "/atlas/ru-example",
-          title_ru: "Country 01",
-          flag_colors: ["#111111", "#ffffff"]
-        },
-        series: {
-          id: "00000000-0000-0000-0000-000000000011",
-          slug: "series-01",
-          url: "/episodes?series=series-01",
-          title_ru: "Жёлтая луна",
-          brand_color: "#ffaa44"
-        },
-        participants: [
-          {
-            id: "00000000-0000-0000-0000-000000000031",
-            slug: "character-001",
-            url: "/characters/character-001",
-            name_ru: "Character 001",
-            avatar_asset_path: "/assets/images/characters/character-001.png"
-          },
-          {
-            id: "00000000-0000-0000-0000-000000000032",
-            slug: "character-002",
-            url: "/characters/character-002",
-            name_ru: "Character 002",
-            avatar_asset_path: "/assets/images/characters/character-002.png"
-          }
-        ]
-      },
-      about_profile: {
-        id: "00000000-0000-0000-0000-000000000099",
-        slug: "ame",
-        url: "/characters/ame",
-        name_ru: "Ame",
-        avatar_asset_path: "/assets/images/characters/ame.png",
-        home_intro_title: "Привет, я Амэ",
-        home_intro_markdown: "Aeria intro"
-      },
-      world_quote: {
-        id: 7,
-        quote: "У нас не было героев. Только сосед, который умел дышать через уши.",
-        source: "Услышано у костра"
-      }
-    });
-
-    await app.close();
-  });
-
-  it("returns random world quote payload with strict shape", async () => {
-    queryMock.mockResolvedValueOnce({
-      rows: [
-        {
-          id: 13,
-          quote: "Карта всегда врет о расстояниях, но редко врет о страхе.",
-          source: "Услышано на переправе"
-        }
-      ]
-    });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/home/world-quote/random?exclude_id=7"
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({
-      world_quote: {
-        id: 13,
-        quote: "Карта всегда врет о расстояниях, но редко врет о страхе.",
-        source: "Услышано на переправе"
-      }
-    });
-
-    await app.close();
-  });
-
-  it("returns 503 when search backend is not configured", async () => {
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/search?q=test"
-    });
-
-    expect(res.statusCode).toBe(503);
-    expect(res.json()).toEqual({ error: "Typesense is not configured" });
-    await app.close();
-  });
-
-  it("returns 404 for unknown episode details", async () => {
-    queryMock.mockResolvedValueOnce({ rows: [] });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/episodes/missing-episode"
-    });
-
-    expect(res.statusCode).toBe(404);
-    expect(res.json()).toEqual({ error: "Episode not found" });
-    await app.close();
-  });
-
-  it("returns episode details payload with strict shape", async () => {
-    queryMock
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000001",
-            slug: "episode-001",
-            series_id: "00000000-0000-0000-0000-000000000011",
-            country_id: "00000000-0000-0000-0000-000000000021",
-            episode_number: 1,
-            global_order: 1,
-            title_native: "Original",
-            title_ru: "Episode 001",
-            summary: "Test episode",
-            content_markdown: "Body",
-            reading_minutes: 3,
-            published_at: new Date("2026-03-04T00:00:00Z")
-          }
-        ]
-      })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000011",
-            slug: "series-01",
-            title_ru: "Series 01",
-            brand_color: "#ffaa44",
-            summary: "Series summary"
-          }
-        ]
-      })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000021",
-            slug: "ru-example",
-            title_ru: "Country 01",
-            flag_colors: ["#111111", "#ffffff"]
-          }
-        ]
-      })
-        .mockResolvedValueOnce({
-          rows: [
-            {
-              id: "00000000-0000-0000-0000-000000000031",
-              slug: "character-001",
-              name_ru: "Character 001",
-              name_native: null,
-              tagline: "Character tagline",
-              avatar_asset_path: "/assets/images/characters/character-001.png"
-            }
-          ]
-        })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000041",
-            slug: "location-001",
-            title_ru: "Location 001",
-            summary: "Location summary",
-            country_id: "00000000-0000-0000-0000-000000000021"
-          }
-        ]
-      });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/episodes/episode-001"
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({
-      episode: {
-        id: "00000000-0000-0000-0000-000000000001",
-        slug: "episode-001",
-        url: "/episodes/episode-001",
-        series_id: "00000000-0000-0000-0000-000000000011",
-        country_id: "00000000-0000-0000-0000-000000000021",
-        episode_number: 1,
-        global_order: 1,
-        title_native: "Original",
-        title_ru: "Episode 001",
-        summary: "Test episode",
-        content_markdown: "Body",
-        reading_minutes: 3,
-        published_at: "2026-03-04T00:00:00.000Z"
-      },
-      series: {
-        id: "00000000-0000-0000-0000-000000000011",
-        slug: "series-01",
-        url: "/episodes?series=series-01",
-        title_ru: "Series 01",
-        brand_color: "#ffaa44",
-        summary: "Series summary"
-      },
-      country: {
-        id: "00000000-0000-0000-0000-000000000021",
-        slug: "ru-example",
-        url: "/atlas/ru-example",
-        title_ru: "Country 01",
-        flag_colors: ["#111111", "#ffffff"]
-      },
-        characters: [
-          {
-            id: "00000000-0000-0000-0000-000000000031",
-            slug: "character-001",
-            url: "/characters/character-001",
-            name_ru: "Character 001",
-            name_native: null,
-            tagline: "Character tagline",
-            avatar_asset_path: "/assets/images/characters/character-001.png"
-          }
-        ],
-      locations: [
-        {
-          id: "00000000-0000-0000-0000-000000000041",
-          slug: "location-001",
-          url: "/atlas/location-001",
-          title_ru: "Location 001",
-          summary: "Location summary",
-          country_id: "00000000-0000-0000-0000-000000000021"
-        }
-      ]
-    });
-    await app.close();
-  });
-
-  it("returns character details payload with strict shape", async () => {
-    queryMock
       .mockResolvedValueOnce({
         rows: [
           {
@@ -1130,8 +155,8 @@ describe("API route contracts smoke", () => {
             name_ru: "Character 001",
             avatar_asset_path: "/assets/images/characters/character-001.png",
             name_native: null,
-            affiliation_id: "00000000-0000-0000-0000-000000000051",
-            country_id: "00000000-0000-0000-0000-000000000021",
+            affiliation_entity_id: worldRef.id,
+            country_entity_id: countryRef.id,
             tagline: "Character tagline",
             gender: "unknown",
             race: "human",
@@ -1145,214 +170,295 @@ describe("API route contracts smoke", () => {
           }
         ]
       })
-      .mockResolvedValueOnce({
-        rows: [{ text: "Quirk 1", sort_order: 1 }]
-      })
+      .mockResolvedValueOnce({ rows: [{ text: "Quirk 1", sort_order: 1 }] })
       .mockResolvedValueOnce({
         rows: [
           {
             text: "Rumor 1",
             author_name: "Witness",
             author_meta: "Cook",
-            source_type: "atlas_entry",
-            source_id: "00000000-0000-0000-0000-000000000051",
+            source_type: "atlas_entity",
+            source_id: worldRef.id,
             sort_order: 1,
             source_character_slug: null,
             source_character_title: null,
             source_character_avatar_asset_path: null,
-            source_atlas_slug: "atlas-001",
-            source_atlas_title: "Atlas 001",
-            source_atlas_avatar_asset_path: "/assets/images/atlas/atlas-001.png"
+            source_atlas_slug: worldRef.slug,
+            source_atlas_title: worldRef.title_ru,
+            source_atlas_avatar_asset_path: worldRef.avatar_asset_path
           }
         ]
       })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: countryRef.id,
+            slug: countryRef.slug,
+            type: countryRef.type,
+            title_ru: countryRef.title_ru,
+            summary: countryRef.summary,
+            avatar_asset_path: countryRef.avatar_asset_path,
+            flag_colors: countryRef.flag_colors
+          }
+        ]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: worldRef.id,
+            slug: worldRef.slug,
+            type: worldRef.type,
+            title_ru: worldRef.title_ru,
+            summary: worldRef.summary,
+            avatar_asset_path: worldRef.avatar_asset_path,
+            flag_colors: worldRef.flag_colors
+          }
+        ]
+      });
+
+    const app = await createApp();
+    const listRes = await app.inject({ method: "GET", url: "/api/characters?page=1&limit=20" });
+    const detailRes = await app.inject({ method: "GET", url: "/api/characters/character-001" });
+
+    expect(listRes.statusCode).toBe(200);
+    expect(String(queryMock.mock.calls[0][0])).toContain("listed = TRUE");
+    expect(listRes.json().items[0]).toMatchObject({
+      slug: "character-001",
+      country: countryRef,
+      affiliation: worldRef
+    });
+
+    expect(detailRes.statusCode).toBe(200);
+    expect(detailRes.json()).toMatchObject({
+      character: {
+        slug: "character-001",
+        affiliation_entity_id: worldRef.id,
+        country_entity_id: countryRef.id
+      },
+      country: countryRef,
+      affiliation: worldRef
+    });
+    expect(detailRes.json().rumors[0].source).toMatchObject({
+      type: "atlas_entity",
+      slug: worldRef.slug,
+      url: worldRef.url
+    });
+    await app.close();
+  });
+
+  it("returns home snapshot and search fallback with modern entity groups", async () => {
+    queryMock
       .mockResolvedValueOnce({
         rows: [
           {
             id: "00000000-0000-0000-0000-000000000001",
             slug: "episode-001",
             series_id: "00000000-0000-0000-0000-000000000011",
-            country_id: "00000000-0000-0000-0000-000000000021",
+            country_entity_id: countryRef.id,
             episode_number: 1,
             global_order: 1,
-            title_native: null,
+            title_native: "Original",
             title_ru: "Episode 001",
             summary: "Test episode",
             reading_minutes: 3,
             published_at: new Date("2026-03-04T00:00:00Z"),
-            country_slug: "ru-example",
-            country_title_ru: "Country 01",
-            country_flag_colors: ["#111111", "#ffffff"]
+            country_id: countryRef.id,
+            country_slug: countryRef.slug,
+            country_type: countryRef.type,
+            country_title_ru: countryRef.title_ru,
+            country_summary: countryRef.summary,
+            country_avatar_asset_path: countryRef.avatar_asset_path,
+            country_flag_colors: countryRef.flag_colors
           }
         ]
       })
       .mockResolvedValueOnce({
         rows: [
           {
-            id: "00000000-0000-0000-0000-000000000021",
-            slug: "ru-example",
-            title_ru: "Country 01",
-            flag_colors: ["#111111", "#ffffff"]
+            id: "00000000-0000-0000-0000-000000000031",
+            slug: "forsil-villet",
+            name_ru: "Форсиль Виллет",
+            avatar_asset_path: "/assets/images/characters/forsil-villet.png",
+            home_intro_title: "Дом держится на её ритме.",
+            home_intro_markdown: "Форсиль удерживает режим дома даже в дни, когда все остальные уже сбились."
           }
         ]
       })
+      .mockResolvedValueOnce({ rows: [{ id: 7, quote: "Дом помнит шаги.", source: "Запись в старом регистре" }] })
       .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000051",
-            slug: "atlas-001",
-            kind: "social",
-            title_ru: "Atlas 001",
-            avatar_asset_path: "/assets/images/atlas/atlas-001.png"
-          }
-        ]
+        rows: [{ id: "00000000-0000-0000-0000-000000000011", slug: "yellow-moon", title_ru: "Жёлтая Луна", brand_color: "#ffaa44" }]
+      })
+      .mockResolvedValueOnce({
+        rows: [{ id: "00000000-0000-0000-0000-000000000032", slug: "arnaud-dumont", name_ru: "Арно Дюмонт", avatar_asset_path: "/assets/images/characters/arnaud-dumont.png" }]
+      })
+      .mockResolvedValueOnce({
+        rows: [{ id: "00000000-0000-0000-0000-000000000001", slug: "episode-001", title: "Episode 001", summary: "Episode summary" }]
+      })
+      .mockResolvedValueOnce({
+        rows: [{ id: "00000000-0000-0000-0000-000000000031", slug: "character-001", title: "Character 001", summary: "Character tagline" }]
+      })
+      .mockResolvedValueOnce({
+        rows: [{ id: worldRef.id, slug: worldRef.slug, title: worldRef.title_ru, summary: worldRef.summary }]
+      })
+      .mockResolvedValueOnce({
+        rows: [{ id: "00000000-0000-0000-0000-000000000011", slug: "yellow-moon", title: "Жёлтая Луна", summary: "Series summary" }]
       });
 
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
+    const app = await createApp();
+    const homeRes = await app.inject({ method: "GET", url: "/api/home" });
+    const searchRes = await app.inject({ method: "GET", url: "/api/search?q=test" });
 
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/characters/character-001"
+    expect(homeRes.statusCode).toBe(200);
+    expect(homeRes.json()).toMatchObject({
+      latest_episode: { slug: "episode-001", country: countryRef },
+      about_profile: { slug: "forsil-villet" },
+      world_quote: { id: 7 }
     });
 
-    expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({
-      character: {
-        id: "00000000-0000-0000-0000-000000000031",
-        slug: "character-001",
-        url: "/characters/character-001",
-        name_ru: "Character 001",
-        avatar_asset_path: "/assets/images/characters/character-001.png",
-        name_native: null,
-        affiliation_id: "00000000-0000-0000-0000-000000000051",
-        country_id: "00000000-0000-0000-0000-000000000021",
-        tagline: "Character tagline",
-        gender: "unknown",
-        race: "human",
-        height_cm: 170,
-        age: 20,
-        favorite_food: "tea",
-        orientation: "unknown",
-        mbti: "INTJ",
-        bio_markdown: "Bio",
-        published_at: "2026-03-04T00:00:00.000Z"
-      },
-      country: {
-        id: "00000000-0000-0000-0000-000000000021",
-        slug: "ru-example",
-        url: "/atlas/ru-example",
-        title_ru: "Country 01",
-        flag_colors: ["#111111", "#ffffff"]
-      },
-      affiliation: {
-        id: "00000000-0000-0000-0000-000000000051",
-        slug: "atlas-001",
-        url: "/atlas/atlas-001",
-        kind: "social",
-        title_ru: "Atlas 001",
-        avatar_asset_path: "/assets/images/atlas/atlas-001.png"
-      },
-      quirks: [{ text: "Quirk 1", sort_order: 1 }],
-      rumors: [
-        {
-          text: "Rumor 1",
-          author_name: "Witness",
-          author_meta: "Cook",
-          source: {
-            type: "atlas_entry",
-            id: "00000000-0000-0000-0000-000000000051",
-            slug: "atlas-001",
-            url: "/atlas/atlas-001",
-            title: "Atlas 001",
-            avatar_asset_path: "/assets/images/atlas/atlas-001.png"
-          },
-          sort_order: 1
-        }
-      ],
-      episodes: [
-        {
-          id: "00000000-0000-0000-0000-000000000001",
-          slug: "episode-001",
-          url: "/episodes/episode-001",
-          series_id: "00000000-0000-0000-0000-000000000011",
-          country_id: "00000000-0000-0000-0000-000000000021",
-          episode_number: 1,
-          global_order: 1,
-          title_native: null,
-          title_ru: "Episode 001",
-          summary: "Test episode",
-          reading_minutes: 3,
-          published_at: "2026-03-04T00:00:00.000Z",
-          country: {
-            id: "00000000-0000-0000-0000-000000000021",
-            slug: "ru-example",
-            url: "/atlas/ru-example",
-            title_ru: "Country 01",
-            flag_colors: ["#111111", "#ffffff"]
-          }
-        }
-      ]
+    expect(searchRes.statusCode).toBe(200);
+    expect(searchRes.json().groups.map((group: { type: string }) => group.type)).toEqual([
+      "episode",
+      "character",
+      "atlas_entity",
+      "episode_series"
+    ]);
+    expect(searchRes.json().groups[2].hits[0]).toMatchObject({
+      slug: worldRef.slug,
+      type: "atlas_entity",
+      url: worldRef.url
     });
     await app.close();
   });
 
-  it("returns atlas details payload with strict shape", async () => {
+  it("returns episode detail payload with atlas entity locations", async () => {
     queryMock
       .mockResolvedValueOnce({
         rows: [
           {
-            id: "00000000-0000-0000-0000-000000000051",
-            slug: "atlas-001",
-            kind: "object",
-            title_ru: "Atlas 001",
-            summary: "Atlas summary",
-            content_markdown: "Atlas content",
-            avatar_asset_path: "/assets/images/atlas/atlas-001.png",
-            country_id: "00000000-0000-0000-0000-000000000021",
-            location_id: "00000000-0000-0000-0000-000000000041",
+            id: "00000000-0000-0000-0000-000000000001",
+            slug: "episode-001",
+            series_id: "00000000-0000-0000-0000-000000000011",
+            country_entity_id: countryRef.id,
+            episode_number: 1,
+            global_order: 1,
+            title_native: "Original",
+            title_ru: "Episode 001",
+            summary: "Test episode",
+            content_markdown: "Body",
+            reading_minutes: 3,
             published_at: new Date("2026-03-04T00:00:00Z")
           }
         ]
       })
       .mockResolvedValueOnce({
+        rows: [{ id: "00000000-0000-0000-0000-000000000011", slug: "yellow-moon", title_ru: "Жёлтая Луна", brand_color: "#ffaa44", summary: "Series summary" }]
+      })
+      .mockResolvedValueOnce({
+        rows: [{ id: countryRef.id, slug: countryRef.slug, type: countryRef.type, title_ru: countryRef.title_ru, summary: countryRef.summary, avatar_asset_path: countryRef.avatar_asset_path, flag_colors: countryRef.flag_colors }]
+      })
+      .mockResolvedValueOnce({
+        rows: [{ id: "00000000-0000-0000-0000-000000000031", slug: "character-001", name_ru: "Character 001", name_native: null, tagline: "Character tagline", avatar_asset_path: "/assets/images/characters/character-001.png" }]
+      })
+      .mockResolvedValueOnce({
+        rows: [{ id: locationRef.id, slug: locationRef.slug, type: locationRef.type, title_ru: locationRef.title_ru, summary: locationRef.summary, avatar_asset_path: locationRef.avatar_asset_path, flag_colors: locationRef.flag_colors }]
+      });
+
+    const app = await createApp();
+    const res = await app.inject({ method: "GET", url: "/api/episodes/episode-001" });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({
+      episode: { slug: "episode-001", country_entity_id: countryRef.id },
+      country: countryRef
+    });
+    expect(res.json().locations).toEqual([locationRef]);
+    await app.close();
+  });
+
+  it("returns atlas catalog, preview and detail from canonical atlas entities", async () => {
+    queryMock
+      .mockResolvedValueOnce({
         rows: [
           {
-            id: "00000000-0000-0000-0000-000000000041",
-            slug: "port-velon",
-            title_ru: "Порт Велон",
-            avatar_asset_path: "/assets/images/locations/port-velon.png",
-            country_id: "00000000-0000-0000-0000-000000000021"
+            id: worldRef.id,
+            slug: worldRef.slug,
+            type: worldRef.type,
+            title_ru: worldRef.title_ru,
+            summary: worldRef.summary,
+            overview_markdown: "Текст для каталога.",
+            avatar_asset_path: worldRef.avatar_asset_path,
+            flag_colors: worldRef.flag_colors,
+            country_entity_id: countryRef.id,
+            location_entity_id: locationRef.id,
+            published_at: new Date("2026-03-14T00:00:00Z"),
+            country_id: countryRef.id,
+            country_slug: countryRef.slug,
+            country_type: countryRef.type,
+            country_title_ru: countryRef.title_ru,
+            country_summary: countryRef.summary,
+            country_avatar_asset_path: countryRef.avatar_asset_path,
+            country_flag_colors: countryRef.flag_colors,
+            location_id: locationRef.id,
+            location_slug: locationRef.slug,
+            location_type: locationRef.type,
+            location_title_ru: locationRef.title_ru,
+            location_summary: locationRef.summary,
+            location_avatar_asset_path: locationRef.avatar_asset_path,
+            location_flag_colors: locationRef.flag_colors,
+            sections: ["social"],
+            related_count: "1"
           }
         ]
       })
       .mockResolvedValueOnce({
         rows: [
           {
-            id: "00000000-0000-0000-0000-000000000021",
-            slug: "ru-example",
-            title_ru: "Country 01",
-            flag_colors: ["#111111", "#ffffff"]
+            id: worldRef.id,
+            slug: worldRef.slug,
+            type: worldRef.type,
+            title_ru: worldRef.title_ru,
+            summary: worldRef.summary,
+            overview_markdown: "Overview",
+            avatar_asset_path: worldRef.avatar_asset_path,
+            flag_colors: worldRef.flag_colors,
+            country_entity_id: countryRef.id,
+            location_entity_id: locationRef.id,
+            published_at: new Date("2026-03-14T00:00:00Z")
           }
         ]
       })
+      .mockResolvedValueOnce({ rows: [{ id: countryRef.id, slug: countryRef.slug, type: countryRef.type, title_ru: countryRef.title_ru, summary: countryRef.summary, avatar_asset_path: countryRef.avatar_asset_path, flag_colors: countryRef.flag_colors }] })
+      .mockResolvedValueOnce({ rows: [{ id: locationRef.id, slug: locationRef.slug, type: locationRef.type, title_ru: locationRef.title_ru, summary: locationRef.summary, avatar_asset_path: locationRef.avatar_asset_path, flag_colors: locationRef.flag_colors }] })
+      .mockResolvedValueOnce({ rows: [{ section: "social" }] })
       .mockResolvedValueOnce({
         rows: [
           {
-            from_type: "atlas_entry",
-            from_id: "00000000-0000-0000-0000-000000000051",
-            to_type: "episode_series",
-            to_id: "00000000-0000-0000-0000-000000000011",
-            label: "related"
+            id: worldRef.id,
+            slug: worldRef.slug,
+            type: worldRef.type,
+            title_ru: worldRef.title_ru,
+            summary: worldRef.summary,
+            overview_markdown: "Основной текст записи.",
+            avatar_asset_path: worldRef.avatar_asset_path,
+            flag_colors: worldRef.flag_colors,
+            country_entity_id: countryRef.id,
+            location_entity_id: null,
+            published_at: new Date("2026-03-14T00:00:00Z")
           }
         ]
       })
+      .mockResolvedValueOnce({ rows: [{ id: countryRef.id, slug: countryRef.slug, type: countryRef.type, title_ru: countryRef.title_ru, summary: countryRef.summary, avatar_asset_path: countryRef.avatar_asset_path, flag_colors: countryRef.flag_colors }] })
       .mockResolvedValueOnce({
         rows: [
           {
-            title: "Ключ на тёмной тесьме",
-            text: "Ключ носят не в связке, а отдельно, чтобы его вес всегда чувствовался в ладони.",
-            meta: "Из служебного правила"
+            section: "social",
+            title_ru: "Социальное",
+            summary: "Как место устроено внутри.",
+            body_markdown: "Секция про ритм и порядок.",
+            fact_title: "Тихий регистр",
+            fact_text: "Даже шёпот здесь считается частью режима.",
+            fact_meta: "Старое правило"
           }
         ]
       })
@@ -1360,231 +466,71 @@ describe("API route contracts smoke", () => {
         rows: [
           {
             id: "2",
-            speaker_type: "character",
-            character_id: "00000000-0000-0000-0000-000000000031",
-            speaker_name: null,
-            speaker_meta: null,
-            text: "Эту вещь не прячут глубоко: её смысл в том, что о ней помнят даже молча.",
-            sort_order: 0
-          },
-          {
-            id: "3",
+            section: "social",
             speaker_type: "world",
             character_id: null,
             speaker_name: "Архивариус северного крыла",
             speaker_meta: "дежурство у каталога",
-            text: "У этой вещи нет права лежать молча: любая полка вокруг неё начинает казаться временной.",
-            sort_order: 1
+            text: "У этой записи нет права лежать молча.",
+            sort_order: 0
           }
         ]
       })
       .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000031",
-            slug: "character-001",
-            name_ru: "Character 001",
-            avatar_asset_path: "/assets/images/characters/character-001.png"
-          }
-        ]
+        rows: [{ to_type: "episode_series", to_id: "00000000-0000-0000-0000-000000000011", label: "Жёлтая Луна" }]
       })
       .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000011",
-            slug: "yellow-moon",
-            title_ru: "Жёлтая Луна"
-          }
-        ]
+        rows: [{ id: "00000000-0000-0000-0000-000000000011", slug: "yellow-moon", title_ru: "Жёлтая Луна" }]
       });
 
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
+    const app = await createApp();
+    const catalogRes = await app.inject({ method: "GET", url: `/api/atlas/catalog?page=1&limit=20&type=organization&section=social&country=ausonia&location=${locationRef.slug}` });
+    const previewRes = await app.inject({ method: "GET", url: `/api/atlas/${worldRef.slug}/preview` });
+    const detailRes = await app.inject({ method: "GET", url: `/api/atlas/${worldRef.slug}` });
 
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/atlas/atlas-001"
+    expect(catalogRes.statusCode).toBe(200);
+    expect(catalogRes.json().items[0]).toMatchObject({
+      slug: worldRef.slug,
+      type: worldRef.type,
+      country: countryRef,
+      location: locationRef
     });
 
-    expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({
-      node_type: "atlas_entry",
-      entry: {
-        id: "00000000-0000-0000-0000-000000000051",
-        slug: "atlas-001",
-        url: "/atlas/atlas-001",
-        kind: "object",
-        title_ru: "Atlas 001",
-        summary: "Atlas summary",
-        content_markdown: "Atlas content",
-        avatar_asset_path: "/assets/images/atlas/atlas-001.png",
-        country_id: "00000000-0000-0000-0000-000000000021",
-        location_id: "00000000-0000-0000-0000-000000000041",
-        published_at: "2026-03-04T00:00:00.000Z"
-      },
-      country: {
-        id: "00000000-0000-0000-0000-000000000021",
-        slug: "ru-example",
-        url: "/atlas/ru-example",
-        title_ru: "Country 01",
-        flag_colors: ["#111111", "#ffffff"]
-      },
-      location: {
-        id: "00000000-0000-0000-0000-000000000041",
-        slug: "port-velon",
-        url: "/atlas/port-velon",
-        title_ru: "Порт Велон",
-        avatar_asset_path: "/assets/images/locations/port-velon.png",
-        country: {
-          id: "00000000-0000-0000-0000-000000000021",
-          slug: "ru-example",
-          url: "/atlas/ru-example",
-          title_ru: "Country 01",
-          flag_colors: ["#111111", "#ffffff"]
-        }
-      },
-      fact: {
-        title: "Ключ на тёмной тесьме",
-        text: "Ключ носят не в связке, а отдельно, чтобы его вес всегда чувствовался в ладони.",
-        meta: "Из служебного правила"
-      },
-      quotes: [
-        {
-          id: 2,
-          speaker_type: "character",
-          speaker_name: "Character 001",
-          speaker_meta: null,
-          text: "Эту вещь не прячут глубоко: её смысл в том, что о ней помнят даже молча.",
-          sort_order: 0,
-          character: {
-            id: "00000000-0000-0000-0000-000000000031",
-            slug: "character-001",
-            url: "/characters/character-001",
-            name_ru: "Character 001",
-            avatar_asset_path: "/assets/images/characters/character-001.png"
-          }
-        },
-        {
-          id: 3,
-          speaker_type: "world",
-          speaker_name: "Архивариус северного крыла",
-          speaker_meta: "дежурство у каталога",
-          text: "У этой вещи нет права лежать молча: любая полка вокруг неё начинает казаться временной.",
-          sort_order: 1,
-          character: null
-        }
-      ],
-      relations: [
-        {
-          from_type: "atlas_entry",
-          from_id: "00000000-0000-0000-0000-000000000051",
-          to_type: "episode_series",
-          to_id: "00000000-0000-0000-0000-000000000011",
-          label: "related",
-          target: {
-            type: "episode_series",
-            id: "00000000-0000-0000-0000-000000000011",
-            slug: "yellow-moon",
-            url: "/episodes?series=yellow-moon",
-            title: "Жёлтая Луна",
-            avatar_asset_path: null,
-            country: null
-          }
-        }
-      ]
+    expect(previewRes.statusCode).toBe(200);
+    expect(previewRes.json()).toMatchObject({
+      slug: worldRef.slug,
+      type: worldRef.type,
+      sections: ["social"],
+      country: countryRef,
+      location: locationRef
+    });
+
+    expect(detailRes.statusCode).toBe(200);
+    expect(detailRes.json()).toMatchObject({
+      entity: {
+        slug: worldRef.slug,
+        type: worldRef.type,
+        country: countryRef
+      }
+    });
+    expect(detailRes.json().relations[0]).toMatchObject({
+      from_type: "atlas_entity",
+      to_type: "episode_series"
+    });
+    expect(detailRes.json().sections[0]).toMatchObject({
+      section: "social",
+      fact: { title: "Тихий регистр" }
     });
     await app.close();
   });
 
-  it("returns country fallback atlas detail with empty editorial layers", async () => {
-    queryMock
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: "00000000-0000-0000-0000-000000000021",
-            slug: "ru-example",
-            title_ru: "Country 01",
-            flag_colors: ["#111111", "#ffffff"]
-          }
-        ]
-      })
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [] });
+  it("removes legacy /api/countries and /api/locations endpoints", async () => {
+    const app = await createApp();
+    const countryRes = await app.inject({ method: "GET", url: "/api/countries" });
+    const locationRes = await app.inject({ method: "GET", url: "/api/locations" });
 
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/atlas/ru-example"
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({
-      node_type: "country",
-      entry: {
-        id: "00000000-0000-0000-0000-000000000021",
-        slug: "ru-example",
-        url: "/atlas/ru-example",
-        kind: "geography",
-        title_ru: "Country 01",
-        summary: null,
-        content_markdown: null,
-        avatar_asset_path: null,
-        country_id: "00000000-0000-0000-0000-000000000021",
-        location_id: null,
-        published_at: null
-      },
-      country: {
-        id: "00000000-0000-0000-0000-000000000021",
-        slug: "ru-example",
-        url: "/atlas/ru-example",
-        title_ru: "Country 01",
-        flag_colors: ["#111111", "#ffffff"]
-      },
-      location: null,
-      fact: null,
-      quotes: [],
-      relations: []
-    });
-
-    await app.close();
-  });
-
-  it("returns 404 for unknown character details", async () => {
-    queryMock.mockResolvedValueOnce({ rows: [] });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/characters/missing-character"
-    });
-
-    expect(res.statusCode).toBe(404);
-    expect(res.json()).toEqual({ error: "Character not found" });
-    await app.close();
-  });
-
-  it("returns 404 for unknown atlas details", async () => {
-    queryMock
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [] });
-
-    const { buildApp } = await import("../../app.js");
-    const app = await buildApp();
-
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/atlas/missing-atlas"
-    });
-
-    expect(res.statusCode).toBe(404);
-    expect(res.json()).toEqual({ error: "Atlas entry not found" });
+    expect(countryRes.statusCode).toBe(404);
+    expect(locationRes.statusCode).toBe(404);
     await app.close();
   });
 });

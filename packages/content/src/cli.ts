@@ -1,4 +1,4 @@
-﻿import "dotenv/config";
+import "../../../scripts/load-root-env.cjs";
 import { Command } from "commander";
 import { runImport } from "./importer.js";
 

@@ -20,15 +20,13 @@ const typesenseClient = (() => {
 const collections = [
   { name: "episodes", type: "episode" },
   { name: "characters", type: "character" },
-  { name: "atlas_entries", type: "atlas_entry" },
-  { name: "episode_series", type: "episode_series" },
-  { name: "countries", type: "country" },
-  { name: "locations", type: "location" }
+  { name: "atlas_entities", type: "atlas_entity" },
+  { name: "episode_series", type: "episode_series" }
 ] as const;
 
 async function searchFromDb(query: string) {
   const searchTerm = `%${query}%`;
-  const [episodes, characters, atlasEntries, series, countries, locations] = await Promise.all([
+  const [episodes, characters, atlasEntities, series] = await Promise.all([
     pool.query(
       `SELECT id::text AS id, slug, title_ru AS title, summary
        FROM episodes
@@ -57,15 +55,24 @@ async function searchFromDb(query: string) {
       [searchTerm]
     ),
     pool.query(
-      `SELECT id::text AS id, slug, title_ru AS title, summary
-       FROM atlas_entries
-       WHERE archived_at IS NULL
+      `SELECT ae.id::text AS id,
+              ae.slug,
+              ae.title_ru AS title,
+              ae.summary
+       FROM atlas_entities ae
+       LEFT JOIN LATERAL (
+         SELECT STRING_AGG(COALESCE(section.summary, '') || ' ' || COALESCE(section.body_markdown, ''), ' ') AS body
+         FROM atlas_entity_sections section
+         WHERE section.atlas_entity_id = ae.id
+       ) section_text ON TRUE
+       WHERE ae.archived_at IS NULL
          AND (
-           title_ru ILIKE $1
-           OR COALESCE(summary, '') ILIKE $1
-           OR COALESCE(content_markdown, '') ILIKE $1
+           ae.title_ru ILIKE $1
+           OR COALESCE(ae.summary, '') ILIKE $1
+           OR COALESCE(ae.overview_markdown, '') ILIKE $1
+           OR COALESCE(section_text.body, '') ILIKE $1
          )
-       ORDER BY title_ru ASC
+       ORDER BY ae.title_ru ASC
        LIMIT 8`,
       [searchTerm]
     ),
@@ -80,38 +87,14 @@ async function searchFromDb(query: string) {
        ORDER BY title_ru ASC
        LIMIT 8`,
       [searchTerm]
-    ),
-    pool.query(
-      `SELECT id::text AS id, slug, title_ru AS title
-       FROM countries
-       WHERE archived_at IS NULL
-         AND title_ru ILIKE $1
-       ORDER BY title_ru ASC
-       LIMIT 8`,
-      [searchTerm]
-    ),
-    pool.query(
-      `SELECT id::text AS id, slug, title_ru AS title, summary
-       FROM locations
-       WHERE archived_at IS NULL
-         AND (
-           title_ru ILIKE $1
-           OR COALESCE(summary, '') ILIKE $1
-           OR COALESCE(description_markdown, '') ILIKE $1
-         )
-       ORDER BY title_ru ASC
-       LIMIT 8`,
-      [searchTerm]
     )
   ]);
 
   const rowsByType = {
     episode: episodes.rows,
     character: characters.rows,
-    atlas_entry: atlasEntries.rows,
-    episode_series: series.rows,
-    country: countries.rows,
-    location: locations.rows
+    atlas_entity: atlasEntities.rows,
+    episode_series: series.rows
   } as const;
 
   return collections.map((collection) => {
@@ -129,6 +112,7 @@ async function searchFromDb(query: string) {
         "/api/search:fallback-hit"
       )
     );
+
     return { type: collection.type, hits };
   });
 }
@@ -140,14 +124,14 @@ export async function registerSearchRoutes(app: FastifyInstance) {
       return errorPayload("Invalid query parameters");
     }
 
-    if (!typesenseClient) {
-      reply.code(503);
-      return errorPayload("Typesense is not configured");
-    }
-
     const query = queryParams.q?.trim() ?? "";
     if (!query) {
       return validateResponse(SearchGroupsDTO, { groups: [] }, "/api/search:empty");
+    }
+
+    if (!typesenseClient) {
+      const groups = await searchFromDb(query);
+      return validateResponse(SearchGroupsDTO, { groups }, "/api/search:fallback-no-typesense");
     }
 
     const searches = collections.map((collection) => ({

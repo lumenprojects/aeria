@@ -31,4 +31,4 @@ export * from "./skeleton";
 export * from "./toggle-group";
 export * from "./tooltip";
 export * from "./typography";
-export * from "./world-node-row";
+export * from "./atlas-entity-row";

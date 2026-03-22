@@ -3,8 +3,8 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "migrate": "node -r dotenv/config ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js -m migrations up",
-    "migrate:down": "node -r dotenv/config ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js -m migrations down"
+    "migrate": "node -r ../../scripts/load-root-env.cjs ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js -m migrations up",
+    "migrate:down": "node -r ../../scripts/load-root-env.cjs ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js -m migrations down"
   },
   "dependencies": {
     "node-pg-migrate": "^7.7.0"

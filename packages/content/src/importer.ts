@@ -1,4 +1,4 @@
-﻿import fs from "fs/promises";
+import fs from "fs/promises";
 import path from "path";
 import matter from "gray-matter";
 import { z } from "zod";
@@ -16,20 +16,14 @@ import { normalizeMarkdown } from "./markdown.js";
 import { readingMinutes } from "./reading.js";
 import { collectLocalMissingReferences } from "./reference-validation.js";
 import {
-  atlasSchema,
   characterSchema,
-  countrySchema,
   episodeSchema,
-  locationSchema,
   seriesSchema,
-  type AtlasFrontmatter,
-  type AtlasFactFrontmatter,
-  type AtlasQuoteFrontmatter,
+  worldSchema,
   type CharacterFrontmatter,
-  type CountryFrontmatter,
   type EpisodeFrontmatter,
-  type LocationFrontmatter,
-  type SeriesFrontmatter
+  type SeriesFrontmatter,
+  type WorldFrontmatter
 } from "./schema.js";
 
 const NAMESPACE = uuidv5("aeria", uuidv5.URL);
@@ -54,29 +48,13 @@ type LoadedFile<T> = {
   body: string;
 };
 
-type AtlasEditorialNodeType = "country" | "location" | "atlas_entry";
-
-type AtlasEditorialFrontmatter = {
-  fact?: AtlasFactFrontmatter;
-  quotes?: AtlasQuoteFrontmatter[];
-  kind?: AtlasFrontmatter["kind"];
-};
-
-type AtlasEditorialRecord = {
-  id: string;
-  nodeType: AtlasEditorialNodeType;
-  sourcePath: string;
-  frontmatter: AtlasEditorialFrontmatter;
-};
-
 function isValidAssetPath(value: string) {
   return value.startsWith("/assets/") && !value.includes("..");
 }
 
 async function validateAvatarAssetPaths(
-  locations: LoadedFile<LocationFrontmatter>[],
+  world: LoadedFile<WorldFrontmatter>[],
   characters: LoadedFile<CharacterFrontmatter>[],
-  atlas: LoadedFile<AtlasFrontmatter>[],
   runId: number
 ) {
   const errors: string[] = [];
@@ -89,20 +67,11 @@ async function validateAvatarAssetPaths(
     }
   }
 
-  for (const record of locations) {
+  for (const record of world) {
     const value = record.frontmatter.avatar_asset_path;
     if (value && !isValidAssetPath(value)) {
       errors.push(
-        `[location] ${record.sourcePath}: avatar_asset_path must be an absolute web path in /assets/*`
-      );
-    }
-  }
-
-  for (const record of atlas) {
-    const value = record.frontmatter.avatar_asset_path;
-    if (value && !isValidAssetPath(value)) {
-      errors.push(
-        `[atlas] ${record.sourcePath}: avatar_asset_path must be an absolute web path in /assets/*`
+        `[world] ${record.sourcePath}: avatar_asset_path must be an absolute web path in /assets/*`
       );
     }
   }
@@ -113,49 +82,6 @@ async function validateAvatarAssetPaths(
 
   if (errors.length) {
     throw new Error(`Avatar path validation failed: ${errors.length} issues`);
-  }
-}
-
-function supportsAtlasQuotes(nodeType: AtlasEditorialNodeType, kind?: AtlasFrontmatter["kind"]) {
-  if (nodeType === "country") return false;
-  if (nodeType === "location") return true;
-  return kind !== "geography";
-}
-
-async function validateAtlasEditorialCapabilities(
-  countries: LoadedFile<CountryFrontmatter>[],
-  locations: LoadedFile<LocationFrontmatter>[],
-  atlas: LoadedFile<AtlasFrontmatter>[],
-  runId: number
-) {
-  const errors: string[] = [];
-
-  for (const record of countries) {
-    if ((record.frontmatter.quotes ?? []).length > 0) {
-      errors.push(`[country] ${record.sourcePath}: countries do not support quotes`);
-    }
-  }
-
-  for (const record of locations) {
-    if (!supportsAtlasQuotes("location") && (record.frontmatter.quotes ?? []).length > 0) {
-      errors.push(`[location] ${record.sourcePath}: location quotes are not supported`);
-    }
-  }
-
-  for (const record of atlas) {
-    if (!supportsAtlasQuotes("atlas_entry", record.frontmatter.kind) && (record.frontmatter.quotes ?? []).length > 0) {
-      errors.push(
-        `[atlas_entry] ${record.sourcePath}: atlas entries of kind ${record.frontmatter.kind} do not support quotes`
-      );
-    }
-  }
-
-  for (const error of errors) {
-    await logImportError(runId, null, null, error);
-  }
-
-  if (errors.length) {
-    throw new Error(`Atlas editorial capability validation failed: ${errors.length} issues`);
   }
 }
 
@@ -234,7 +160,7 @@ async function queryExistingSlugs(table: string, slugs: string[]) {
 async function queryExistingBySlug(table: string, slugs: string[]) {
   if (slugs.length === 0) return new Map<string, { content_hash: string; source_path: string }>();
   const result = await pool.query(
-    `SELECT slug, content_hash, source_path FROM ${table} WHERE slug = ANY($1)` ,
+    `SELECT slug, content_hash, source_path FROM ${table} WHERE slug = ANY($1)`,
     [slugs]
   );
   return new Map(result.rows.map((row) => [row.slug, row]));
@@ -278,10 +204,8 @@ async function enqueueFullReindex() {
   const targets = [
     { table: "episodes", type: "episode" },
     { table: "characters", type: "character" },
-    { table: "atlas_entries", type: "atlas_entry" },
-    { table: "episode_series", type: "episode_series" },
-    { table: "countries", type: "country" },
-    { table: "locations", type: "location" }
+    { table: "atlas_entities", type: "atlas_entity" },
+    { table: "episode_series", type: "episode_series" }
   ];
 
   for (const target of targets) {
@@ -319,54 +243,36 @@ async function archiveMissing(table: string, entityType: string, importedSources
     );
   });
 
-  if (entityType !== "atlas_links") {
-    const ids = await pool.query(`SELECT id FROM ${table} WHERE source_path = ANY($1)`, [toArchive]);
-    for (const row of ids.rows) {
-      await enqueueSearch(entityType, row.id, "delete");
-    }
+  const ids = await pool.query(`SELECT id FROM ${table} WHERE source_path = ANY($1)`, [toArchive]);
+  for (const row of ids.rows) {
+    await enqueueSearch(entityType, row.id, "delete");
   }
 
   return toArchive.length;
 }
 
 async function validateReferences(
-  countries: LoadedFile<CountryFrontmatter>[],
-  locations: LoadedFile<LocationFrontmatter>[],
+  world: LoadedFile<WorldFrontmatter>[],
   series: LoadedFile<SeriesFrontmatter>[],
   episodes: LoadedFile<EpisodeFrontmatter>[],
   characters: LoadedFile<CharacterFrontmatter>[],
-  atlas: LoadedFile<AtlasFrontmatter>[],
   runId: number
 ) {
   const errors: string[] = [];
-  const missing = collectLocalMissingReferences(
-    countries,
-    locations,
-    series,
-    episodes,
-    characters,
-    atlas
-  );
+  const missing = collectLocalMissingReferences(world, series, episodes, characters);
 
-  const missingCountryArray = [...missing.countries];
-  const missingLocationArray = [...missing.locations];
+  const missingAtlasArray = [...missing.atlas_entities];
   const missingSeriesArray = [...missing.series];
   const missingEpisodeArray = [...missing.episodes];
   const missingCharacterArray = [...missing.characters];
-  const missingAtlasArray = [...missing.atlas];
 
-  const existingCountries = await queryExistingSlugs("countries", missingCountryArray);
-  const existingLocations = await queryExistingSlugs("locations", missingLocationArray);
+  const existingAtlas = await queryExistingSlugs("atlas_entities", missingAtlasArray);
   const existingSeries = await queryExistingSlugs("episode_series", missingSeriesArray);
   const existingEpisodes = await queryExistingSlugs("episodes", missingEpisodeArray);
   const existingCharacters = await queryExistingSlugs("characters", missingCharacterArray);
-  const existingAtlas = await queryExistingSlugs("atlas_entries", missingAtlasArray);
 
-  for (const slug of missingCountryArray) {
-    if (!existingCountries.has(slug)) errors.push(`Missing country slug: ${slug}`);
-  }
-  for (const slug of missingLocationArray) {
-    if (!existingLocations.has(slug)) errors.push(`Missing location slug: ${slug}`);
+  for (const slug of missingAtlasArray) {
+    if (!existingAtlas.has(slug)) errors.push(`Missing world slug: ${slug}`);
   }
   for (const slug of missingSeriesArray) {
     if (!existingSeries.has(slug)) errors.push(`Missing series slug: ${slug}`);
@@ -377,9 +283,8 @@ async function validateReferences(
   for (const slug of missingCharacterArray) {
     if (!existingCharacters.has(slug)) errors.push(`Missing character slug: ${slug}`);
   }
-  for (const slug of missingAtlasArray) {
-    if (!existingAtlas.has(slug)) errors.push(`Missing atlas slug: ${slug}`);
-  }
+
+  errors.push(...missing.typeViolations);
 
   for (const error of errors) {
     await logImportError(runId, null, null, error);
@@ -410,48 +315,30 @@ async function upsertRows(
   }
 }
 
-async function importCountries(records: LoadedFile<CountryFrontmatter>[], summary: ImportSummary, batchSize: number) {
-  const existing = await queryExistingBySlug("countries", records.map((r) => r.slug));
+async function importWorld(records: LoadedFile<WorldFrontmatter>[], summary: ImportSummary, batchSize: number) {
+  const existing = await queryExistingBySlug("atlas_entities", records.map((r) => r.slug));
   const rows = records.map((record) => {
     const { frontmatter } = record;
     return {
       id: record.id,
       slug: record.slug,
+      type: frontmatter.type,
       title_ru: frontmatter.title_ru,
-      flag_colors: frontmatter.flag_colors ? JSON.stringify(frontmatter.flag_colors) : null,
-      source_path: record.sourcePath,
-      content_hash: record.contentHash,
-      archived_at: null,
-      updated_at: new Date()
-    };
-  });
-
-  applyHashDiff(summary, records, existing);
-  for (let i = 0; i < rows.length; i += batchSize) {
-    const batch = rows.slice(i, i + batchSize);
-    await withTransaction(async (client) => {
-      await upsertRows(client, "countries", batch);
-    });
-  }
-  for (const record of records) {
-    await enqueueSearch("country", record.id, "upsert");
-  }
-
-  summary.archived += await archiveMissing("countries", "country", new Set(records.map((r) => r.sourcePath)));
-}
-
-async function importLocations(records: LoadedFile<LocationFrontmatter>[], summary: ImportSummary, batchSize: number) {
-  const existing = await queryExistingBySlug("locations", records.map((r) => r.slug));
-  const rows = records.map((record) => {
-    const { frontmatter } = record;
-    return {
-      id: record.id,
-      slug: record.slug,
-      title_ru: frontmatter.title_ru,
-      country_id: frontmatter.country_slug ? entityId("country", frontmatter.country_slug) : null,
       summary: frontmatter.summary ?? null,
-      description_markdown: record.body || null,
+      overview_markdown: record.body || null,
       avatar_asset_path: frontmatter.avatar_asset_path ?? null,
+      flag_colors: frontmatter.type === "country" && frontmatter.flag_colors
+        ? JSON.stringify(frontmatter.flag_colors)
+        : null,
+      country_entity_id:
+        frontmatter.country_slug && frontmatter.country_slug !== record.slug
+          ? entityId("atlas_entity", frontmatter.country_slug)
+          : null,
+      location_entity_id:
+        frontmatter.location_slug && frontmatter.location_slug !== record.slug
+          ? entityId("atlas_entity", frontmatter.location_slug)
+          : null,
+      published_at: frontmatter.published_at ? new Date(frontmatter.published_at) : null,
       source_path: record.sourcePath,
       content_hash: record.contentHash,
       archived_at: null,
@@ -463,15 +350,94 @@ async function importLocations(records: LoadedFile<LocationFrontmatter>[], summa
 
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows.slice(i, i + batchSize);
+    const recordsBatch = records.slice(i, i + batchSize);
     await withTransaction(async (client) => {
-      await upsertRows(client, "locations", batch);
+      await upsertRows(client, "atlas_entities", batch);
+
+      for (const record of recordsBatch) {
+        await client.query("DELETE FROM atlas_entity_facts WHERE atlas_entity_id = $1", [record.id]);
+        await client.query("DELETE FROM atlas_entity_quotes WHERE atlas_entity_id = $1", [record.id]);
+        await client.query("DELETE FROM atlas_entity_sections WHERE atlas_entity_id = $1", [record.id]);
+        await client.query("DELETE FROM atlas_entity_links WHERE from_atlas_entity_id = $1", [record.id]);
+
+        for (const [index, section] of (record.frontmatter.sections ?? []).entries()) {
+          await client.query(
+            `INSERT INTO atlas_entity_sections
+               (atlas_entity_id, section, title_ru, summary, body_markdown, sort_order)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [
+              record.id,
+              section.key,
+              section.title_ru,
+              section.summary ?? null,
+              section.body_markdown ?? null,
+              index
+            ]
+          );
+
+          if (section.fact) {
+            await client.query(
+              `INSERT INTO atlas_entity_facts
+                 (atlas_entity_id, section, title, text, meta)
+               VALUES ($1, $2, $3, $4, $5)`,
+              [
+                record.id,
+                section.key,
+                section.fact.title,
+                section.fact.text,
+                section.fact.meta ?? null
+              ]
+            );
+          }
+
+          for (const [quoteIndex, quote] of (section.quotes ?? []).entries()) {
+            const isCharacterQuote = "character_slug" in quote;
+            await client.query(
+              `INSERT INTO atlas_entity_quotes
+                 (atlas_entity_id, section, speaker_type, character_id, speaker_name, speaker_meta, text, sort_order)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+              [
+                record.id,
+                section.key,
+                isCharacterQuote ? "character" : "world",
+                isCharacterQuote ? entityId("character", quote.character_slug) : null,
+                isCharacterQuote ? null : quote.speaker_name,
+                isCharacterQuote ? null : (quote.speaker_meta ?? null),
+                quote.text,
+                quoteIndex
+              ]
+            );
+          }
+        }
+
+        for (const [index, link] of (record.frontmatter.links ?? []).entries()) {
+          await client.query(
+            `INSERT INTO atlas_entity_links
+               (from_atlas_entity_id, to_type, to_id, label, sort_order)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT DO NOTHING`,
+            [
+              record.id,
+              link.type,
+              entityId(link.type, link.slug),
+              link.label ?? null,
+              index
+            ]
+          );
+        }
+      }
     });
   }
+
   for (const record of records) {
-    await enqueueSearch("location", record.id, "upsert");
+    await enqueueSearch("atlas_entity", record.id, "upsert");
   }
 
-  summary.archived += await archiveMissing("locations", "location", new Set(records.map((r) => r.sourcePath)));
+  summary.archived += await archiveMissing(
+    "atlas_entities",
+    "atlas_entity",
+    new Set(records.map((r) => r.sourcePath))
+  );
 }
 
 async function importSeries(records: LoadedFile<SeriesFrontmatter>[], summary: ImportSummary, batchSize: number) {
@@ -503,7 +469,11 @@ async function importSeries(records: LoadedFile<SeriesFrontmatter>[], summary: I
     await enqueueSearch("episode_series", record.id, "upsert");
   }
 
-  summary.archived += await archiveMissing("episode_series", "episode_series", new Set(records.map((r) => r.sourcePath)));
+  summary.archived += await archiveMissing(
+    "episode_series",
+    "episode_series",
+    new Set(records.map((r) => r.sourcePath))
+  );
 }
 
 async function importEpisodes(
@@ -512,12 +482,11 @@ async function importEpisodes(
   batchSize: number
 ): Promise<{
   episodeCharacters: Array<{ episodeId: string; characterId: string; sortOrder: number }>;
-  episodeLocations: Array<{ episodeId: string; locationId: string }>;
-}>
-{
+  episodeAtlasEntities: Array<{ episodeId: string; atlasEntityId: string; sortOrder: number }>;
+}> {
   const existing = await queryExistingBySlug("episodes", records.map((r) => r.slug));
   const episodeCharacters: Array<{ episodeId: string; characterId: string; sortOrder: number }> = [];
-  const episodeLocations: Array<{ episodeId: string; locationId: string }> = [];
+  const episodeAtlasEntities: Array<{ episodeId: string; atlasEntityId: string; sortOrder: number }> = [];
 
   const rows = records.map((record) => {
     const { frontmatter } = record;
@@ -532,10 +501,11 @@ async function importEpisodes(
       });
     }
 
-    for (const locSlug of frontmatter.locations ?? []) {
-      episodeLocations.push({
+    for (const [index, slug] of (frontmatter.locations ?? []).entries()) {
+      episodeAtlasEntities.push({
         episodeId: record.id,
-        locationId: entityId("location", locSlug)
+        atlasEntityId: entityId("atlas_entity", slug),
+        sortOrder: index
       });
     }
 
@@ -543,7 +513,7 @@ async function importEpisodes(
       id: record.id,
       slug: record.slug,
       series_id: entityId("episode_series", frontmatter.series_slug),
-      country_id: entityId("country", frontmatter.country_slug),
+      country_entity_id: entityId("atlas_entity", frontmatter.country_slug),
       episode_number: frontmatter.episode_number,
       global_order: frontmatter.global_order,
       title_native: frontmatter.title_native ?? null,
@@ -572,42 +542,27 @@ async function importEpisodes(
   }
 
   summary.archived += await archiveMissing("episodes", "episode", new Set(records.map((r) => r.sourcePath)));
-  return { episodeCharacters, episodeLocations };
+  return { episodeCharacters, episodeAtlasEntities };
 }
 
 async function importCharacters(
   records: LoadedFile<CharacterFrontmatter>[],
   summary: ImportSummary,
   batchSize: number
-): Promise<Array<{ characterId: string; affiliationId: string }>> {
+) {
   const existing = await queryExistingBySlug("characters", records.map((r) => r.slug));
-  const affiliationSlugs = records
-    .map((record) => record.frontmatter.affiliation_slug)
-    .filter((slug): slug is string => Boolean(slug));
-  const existingAffiliations = await queryExistingSlugs("atlas_entries", affiliationSlugs);
-  const pendingAffiliations: Array<{ characterId: string; affiliationId: string }> = [];
   const rows = records.map((record) => {
     const { frontmatter } = record;
     const publishedAt = frontmatter.published_at ? new Date(frontmatter.published_at) : null;
-    let affiliationId: string | null = null;
-    if (frontmatter.affiliation_slug) {
-      if (existingAffiliations.has(frontmatter.affiliation_slug)) {
-        affiliationId = entityId("atlas_entry", frontmatter.affiliation_slug);
-      } else {
-        pendingAffiliations.push({
-          characterId: record.id,
-          affiliationId: entityId("atlas_entry", frontmatter.affiliation_slug)
-        });
-      }
-    }
+
     return {
       id: record.id,
       slug: record.slug,
       name_ru: frontmatter.name_ru,
       avatar_asset_path: frontmatter.avatar_asset_path,
       name_native: frontmatter.name_native ?? null,
-      affiliation_id: affiliationId,
-      country_id: entityId("country", frontmatter.country_slug),
+      affiliation_entity_id: frontmatter.affiliation_slug ? entityId("atlas_entity", frontmatter.affiliation_slug) : null,
+      country_entity_id: entityId("atlas_entity", frontmatter.country_slug),
       tagline: frontmatter.tagline ?? null,
       gender: frontmatter.gender ?? null,
       race: frontmatter.race ?? null,
@@ -649,13 +604,14 @@ async function importCharacters(
             [record.id, quirk, order++]
           );
         }
+
         order = 0;
         for (const rumor of rumors) {
           const sourceId =
             rumor.source_type && rumor.source_slug ? entityId(rumor.source_type, rumor.source_slug) : null;
           await client.query(
             `INSERT INTO character_rumors
-             (character_id, text, author_name, author_meta, source_type, source_id, sort_order)
+               (character_id, text, author_name, author_meta, source_type, source_id, sort_order)
              VALUES ($1, $2, $3, $4, $5, $6, $7)`,
             [
               record.id,
@@ -677,80 +633,27 @@ async function importCharacters(
   }
 
   summary.archived += await archiveMissing("characters", "character", new Set(records.map((r) => r.sourcePath)));
-  return pendingAffiliations;
 }
 
-async function applyPendingAffiliations(
-  pending: Array<{ characterId: string; affiliationId: string }>,
-  batchSize: number
+async function importEpisodeAtlasEntities(
+  rows: Array<{ episodeId: string; atlasEntityId: string; sortOrder: number }>
 ) {
-  if (pending.length === 0) return;
-  for (let i = 0; i < pending.length; i += batchSize) {
-    const batch = pending.slice(i, i + batchSize);
-    await withTransaction(async (client) => {
-      for (const item of batch) {
-        await client.query(
-          "UPDATE characters SET affiliation_id = $1, updated_at = now() WHERE id = $2",
-          [item.affiliationId, item.characterId]
-        );
-      }
-    });
-  }
-}
-
-async function importAtlas(records: LoadedFile<AtlasFrontmatter>[], summary: ImportSummary, batchSize: number) {
-  const existing = await queryExistingBySlug("atlas_entries", records.map((r) => r.slug));
-  const rows = records.map((record) => {
-    const { frontmatter } = record;
-    const publishedAt = frontmatter.published_at ? new Date(frontmatter.published_at) : null;
-    return {
-      id: record.id,
-      slug: record.slug,
-      kind: frontmatter.kind,
-      title_ru: frontmatter.title_ru,
-      summary: frontmatter.summary ?? null,
-      content_markdown: record.body || null,
-      avatar_asset_path: frontmatter.avatar_asset_path ?? null,
-      country_id: frontmatter.country_slug ? entityId("country", frontmatter.country_slug) : null,
-      location_id: frontmatter.location_slug ? entityId("location", frontmatter.location_slug) : null,
-      published_at: publishedAt,
-      source_path: record.sourcePath,
-      content_hash: record.contentHash,
-      archived_at: null,
-      updated_at: new Date()
-    };
-  });
-
-  applyHashDiff(summary, records, existing);
-
-  for (let i = 0; i < rows.length; i += batchSize) {
-    const batch = rows.slice(i, i + batchSize);
-    await withTransaction(async (client) => {
-      await upsertRows(client, "atlas_entries", batch);
-    });
-  }
-  for (const record of records) {
-    await enqueueSearch("atlas_entry", record.id, "upsert");
-  }
-
-  summary.archived += await archiveMissing("atlas_entries", "atlas_entry", new Set(records.map((r) => r.sourcePath)));
-}
-
-async function importEpisodeLocations(rows: Array<{ episodeId: string; locationId: string }>) {
-  const grouped = new Map<string, string[]>();
+  const grouped = new Map<string, Array<{ atlasEntityId: string; sortOrder: number }>>();
   for (const row of rows) {
     const list = grouped.get(row.episodeId) ?? [];
-    list.push(row.locationId);
+    list.push({ atlasEntityId: row.atlasEntityId, sortOrder: row.sortOrder });
     grouped.set(row.episodeId, list);
   }
 
-  for (const [episodeId, locationIds] of grouped) {
+  for (const [episodeId, entityRows] of grouped) {
     await withTransaction(async (client) => {
-      await client.query("DELETE FROM episode_locations WHERE episode_id = $1", [episodeId]);
-      for (const locationId of locationIds) {
+      await client.query("DELETE FROM episode_atlas_entities WHERE episode_id = $1", [episodeId]);
+      for (const { atlasEntityId, sortOrder } of entityRows) {
         await client.query(
-          "INSERT INTO episode_locations (episode_id, location_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-          [episodeId, locationId]
+          `INSERT INTO episode_atlas_entities (episode_id, atlas_entity_id, sort_order)
+           VALUES ($1, $2, $3)
+           ON CONFLICT DO NOTHING`,
+          [episodeId, atlasEntityId, sortOrder]
         );
       }
     });
@@ -770,73 +673,10 @@ async function importEpisodeCharacters(rows: Array<{ episodeId: string; characte
       await client.query("DELETE FROM episode_characters WHERE episode_id = $1", [episodeId]);
       for (const { characterId, sortOrder } of characterRows) {
         await client.query(
-          "INSERT INTO episode_characters (episode_id, character_id, sort_order) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+          `INSERT INTO episode_characters (episode_id, character_id, sort_order)
+           VALUES ($1, $2, $3)
+           ON CONFLICT DO NOTHING`,
           [episodeId, characterId, sortOrder]
-        );
-      }
-    });
-  }
-}
-
-async function importAtlasLinks(records: LoadedFile<AtlasFrontmatter>[]) {
-  for (const record of records) {
-    const links = record.frontmatter.links ?? [];
-    await withTransaction(async (client) => {
-      await client.query(
-        "DELETE FROM atlas_links WHERE from_type = 'atlas_entry' AND from_id = $1",
-        [record.id]
-      );
-
-      for (const link of links) {
-        const toId = entityId(link.type, link.slug);
-        await client.query(
-          "INSERT INTO atlas_links (from_type, from_id, to_type, to_id, label) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING",
-          ["atlas_entry", record.id, link.type, toId, link.label ?? null]
-        );
-      }
-    });
-  }
-}
-
-async function importAtlasFacts(records: AtlasEditorialRecord[]) {
-  for (const record of records) {
-    const fact = record.frontmatter.fact;
-    await withTransaction(async (client) => {
-      await client.query("DELETE FROM atlas_facts WHERE node_type = $1 AND node_id = $2", [record.nodeType, record.id]);
-
-      if (fact) {
-        await client.query(
-          `INSERT INTO atlas_facts (node_type, node_id, title, text, meta)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [record.nodeType, record.id, fact.title, fact.text, fact.meta ?? null]
-        );
-      }
-    });
-  }
-}
-
-async function importAtlasQuotes(records: AtlasEditorialRecord[]) {
-  for (const record of records) {
-    const quotes = record.frontmatter.quotes ?? [];
-    await withTransaction(async (client) => {
-      await client.query("DELETE FROM atlas_quotes WHERE node_type = $1 AND node_id = $2", [record.nodeType, record.id]);
-
-      for (const [index, quote] of quotes.entries()) {
-        const isCharacterQuote = "character_slug" in quote;
-        await client.query(
-          `INSERT INTO atlas_quotes
-             (node_type, node_id, speaker_type, character_id, speaker_name, speaker_meta, text, sort_order)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-          [
-            record.nodeType,
-            record.id,
-            isCharacterQuote ? "character" : "world",
-            isCharacterQuote ? entityId("character", quote.character_slug) : null,
-            isCharacterQuote ? null : quote.speaker_name,
-            isCharacterQuote ? null : (quote.speaker_meta ?? null),
-            quote.text,
-            index
-          ]
         );
       }
     });
@@ -855,80 +695,53 @@ export async function runImport(options: ImportOptions) {
   const schemaVersion = await loadSchemaVersion(options.rootDir);
   const runId = await createImportRun(schemaVersion, options.dryRun ? "dry-run" : "running");
   const summary: Record<string, ImportSummary> = {
-    countries: emptySummary(),
-    locations: emptySummary(),
+    world: emptySummary(),
     series: emptySummary(),
     episodes: emptySummary(),
-    characters: emptySummary(),
-    atlas: emptySummary()
+    characters: emptySummary()
   };
 
   try {
-    const [countries, locations, series, episodes, characters, atlas] = await Promise.all([
-      loadFiles(options.rootDir, "countries", countrySchema, "country", false),
-      loadFiles(options.rootDir, "locations", locationSchema, "location", true),
+    const [world, series, episodes, characters] = await Promise.all([
+      loadFiles(options.rootDir, "world", worldSchema, "atlas_entity", true),
       loadFiles(options.rootDir, "series", seriesSchema, "episode_series", false),
       loadFiles(options.rootDir, "episodes", episodeSchema, "episode", true),
-      loadFiles(options.rootDir, "characters", characterSchema, "character", true),
-      loadFiles(options.rootDir, "atlas", atlasSchema, "atlas_entry", true)
+      loadFiles(options.rootDir, "characters", characterSchema, "character", true)
     ]);
 
-    await validateAvatarAssetPaths(locations, characters, atlas, runId);
-    await validateAtlasEditorialCapabilities(countries, locations, atlas, runId);
-    await validateReferences(countries, locations, series, episodes, characters, atlas, runId);
+    await validateAvatarAssetPaths(world, characters, runId);
+    await validateReferences(world, series, episodes, characters, runId);
 
     if (options.dryRun) {
-      await diffSummary("countries", countries, summary.countries);
-      await diffSummary("locations", locations, summary.locations);
+      await diffSummary("atlas_entities", world, summary.world);
       await diffSummary("episode_series", series, summary.series);
       await diffSummary("episodes", episodes, summary.episodes);
       await diffSummary("characters", characters, summary.characters);
-      await diffSummary("atlas_entries", atlas, summary.atlas);
 
       await updateImportRun(runId, "dry-run", summary);
       return { runId, summary };
     }
 
-    await importCountries(countries, summary.countries, options.batchSize);
-    await importLocations(locations, summary.locations, options.batchSize);
+    await importWorld(world, summary.world, options.batchSize);
     await importSeries(series, summary.series, options.batchSize);
-    const { episodeCharacters, episodeLocations } = await importEpisodes(episodes, summary.episodes, options.batchSize);
-    const pendingAffiliations = await importCharacters(characters, summary.characters, options.batchSize);
-    await importAtlas(atlas, summary.atlas, options.batchSize);
-    await applyPendingAffiliations(pendingAffiliations, options.batchSize);
-    await importEpisodeLocations(episodeLocations);
+    const { episodeCharacters, episodeAtlasEntities } = await importEpisodes(
+      episodes,
+      summary.episodes,
+      options.batchSize
+    );
+    await importCharacters(characters, summary.characters, options.batchSize);
+    await importEpisodeAtlasEntities(episodeAtlasEntities);
     await importEpisodeCharacters(episodeCharacters);
-    const atlasEditorialRecords: AtlasEditorialRecord[] = [
-      ...countries.map((record) => ({
-        id: record.id,
-        nodeType: "country" as const,
-        sourcePath: record.sourcePath,
-        frontmatter: record.frontmatter
-      })),
-      ...locations.map((record) => ({
-        id: record.id,
-        nodeType: "location" as const,
-        sourcePath: record.sourcePath,
-        frontmatter: record.frontmatter
-      })),
-      ...atlas.map((record) => ({
-        id: record.id,
-        nodeType: "atlas_entry" as const,
-        sourcePath: record.sourcePath,
-        frontmatter: record.frontmatter
-      }))
-    ];
-    await importAtlasFacts(atlasEditorialRecords);
-    await importAtlasQuotes(atlasEditorialRecords);
-    await importAtlasLinks(atlas);
 
     if (options.reindex) {
       await enqueueFullReindex();
     }
+
     await updateImportRun(runId, "completed", summary);
     return { runId, summary };
-  } catch (error: any) {
-    await logImportError(runId, null, null, error.message ?? String(error));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await logImportError(runId, null, null, message);
     await updateImportRun(runId, "failed", summary);
     throw error;
   }

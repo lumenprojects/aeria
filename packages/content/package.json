@@ -8,7 +8,8 @@
     "test": "node --import tsx --test \"test/**/*.test.ts\"",
     "test:integration": "node --import tsx --test \"test/integration/**/*.test.ts\"",
     "import": "tsx src/cli.ts",
-    "worker": "tsx src/search-worker.ts"
+    "worker": "tsx src/search-worker.ts",
+    "reindex": "tsx src/search-reindex.ts"
   },
   "dependencies": {
     "@aeria/shared": "*",

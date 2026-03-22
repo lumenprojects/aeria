@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { atlasKindValues, characterRumorSourceTypeValues, entityTypeValues } from "@aeria/shared";
+import {
+  atlasEntityTypeValues,
+  atlasSectionValues,
+  characterRumorSourceTypeValues,
+  entityTypeValues
+} from "@aeria/shared";
 
 export const slugSchema = z.string().min(1);
 export const assetWebPathSchema = z.string().regex(/^\/assets\/.+/, "Asset path must start with /assets/");
@@ -11,65 +16,71 @@ export const seriesSchema = z.object({
   summary: z.string().optional().nullable()
 });
 
-export const countrySchema = z.object({
+export const atlasLinkSchema = z.object({
+  type: z.enum(entityTypeValues),
   slug: slugSchema,
-  title_ru: z.string().min(1),
-  flag_colors: z.array(z.string()).optional().nullable(),
-  fact: z
-    .object({
-      title: z.string().min(1),
-      text: z.string().min(1),
-      meta: z.string().optional().nullable()
-    })
-    .optional(),
-  quotes: z
-    .array(
-      z.union([
-        z.object({ text: z.string().min(1), character_slug: slugSchema }).strict(),
-        z.object({
-          text: z.string().min(1),
-          speaker_name: z.string().min(1),
-          speaker_meta: z.string().optional().nullable()
-        }).strict()
-      ])
-    )
-    .max(3)
-    .default([])
-}).superRefine((value, ctx) => {
-  if ((value.quotes ?? []).length > 0) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "country entries do not support quotes"
-    });
-  }
+  label: z.string().optional().nullable()
 });
 
-export const locationSchema = z.object({
-  slug: slugSchema,
+export const atlasFactSchema = z.object({
+  title: z.string().min(1),
+  text: z.string().min(1),
+  meta: z.string().optional().nullable()
+});
+
+export const atlasCharacterQuoteSchema = z.object({
+  text: z.string().min(1),
+  character_slug: slugSchema
+}).strict();
+
+export const atlasWorldQuoteSchema = z.object({
+  text: z.string().min(1),
+  speaker_name: z.string().min(1),
+  speaker_meta: z.string().optional().nullable()
+}).strict();
+
+export const atlasQuoteSchema = z.union([atlasCharacterQuoteSchema, atlasWorldQuoteSchema]);
+
+export const worldSectionSchema = z.object({
+  key: z.enum(atlasSectionValues),
   title_ru: z.string().min(1),
-  country_slug: z.string().optional().nullable(),
   summary: z.string().optional().nullable(),
+  body_markdown: z.string().optional().nullable(),
+  fact: atlasFactSchema.optional(),
+  quotes: z.array(atlasQuoteSchema).max(3).default([])
+});
+
+export const worldSchema = z.object({
+  slug: slugSchema,
+  type: z.enum(atlasEntityTypeValues),
+  title_ru: z.string().min(1),
+  summary: z.string().optional().nullable(),
+  country_slug: z.string().optional().nullable(),
+  location_slug: z.string().optional().nullable(),
   avatar_asset_path: assetWebPathSchema.optional().nullable(),
-  fact: z
-    .object({
-      title: z.string().min(1),
-      text: z.string().min(1),
-      meta: z.string().optional().nullable()
-    })
-    .optional(),
-  quotes: z
-    .array(
-      z.union([
-        z.object({ text: z.string().min(1), character_slug: slugSchema }).strict(),
-        z.object({
-          text: z.string().min(1),
-          speaker_name: z.string().min(1),
-          speaker_meta: z.string().optional().nullable()
-        }).strict()
-      ])
-    )
-    .max(3)
-    .default([])
+  flag_colors: z.array(z.string()).optional().nullable(),
+  published_at: z.string().optional().nullable(),
+  links: z.array(atlasLinkSchema).default([]),
+  sections: z.array(worldSectionSchema).default([])
+}).superRefine((value, ctx) => {
+  const sectionKeys = new Set<string>();
+
+  for (const section of value.sections) {
+    if (sectionKeys.has(section.key)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Duplicate world section: ${section.key}`
+      });
+    }
+    sectionKeys.add(section.key);
+  }
+
+  if (value.type === "country" && value.flag_colors && value.flag_colors.length === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "country flag_colors cannot be an empty array"
+    });
+  }
 });
 
 export const episodeSchema = z.object({
@@ -135,59 +146,12 @@ export const characterSchema = z.object({
   }
 });
 
-export const atlasLinkSchema = z.object({
-  type: z.enum(entityTypeValues),
-  slug: slugSchema,
-  label: z.string().optional().nullable()
-});
-
-export const atlasFactSchema = z.object({
-  title: z.string().min(1),
-  text: z.string().min(1),
-  meta: z.string().optional().nullable()
-});
-
-export const atlasCharacterQuoteSchema = z.object({
-  text: z.string().min(1),
-  character_slug: slugSchema
-}).strict();
-
-export const atlasWorldQuoteSchema = z.object({
-  text: z.string().min(1),
-  speaker_name: z.string().min(1),
-  speaker_meta: z.string().optional().nullable()
-}).strict();
-
-export const atlasQuoteSchema = z.union([atlasCharacterQuoteSchema, atlasWorldQuoteSchema]);
-
-export const atlasSchema = z.object({
-  slug: slugSchema,
-  kind: z.enum(atlasKindValues),
-  title_ru: z.string().min(1),
-  summary: z.string().optional().nullable(),
-  avatar_asset_path: assetWebPathSchema.optional().nullable(),
-  country_slug: z.string().optional().nullable(),
-  location_slug: z.string().optional().nullable(),
-  fact: atlasFactSchema.optional(),
-  quotes: z.array(atlasQuoteSchema).max(3).default([]),
-  links: z.array(atlasLinkSchema).default([]),
-  published_at: z.string().optional().nullable()
-}).superRefine((value, ctx) => {
-  if (value.kind === "geography" && (value.quotes ?? []).length > 0) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "geography atlas entries do not support quotes"
-    });
-  }
-});
-
 export type SeriesFrontmatter = z.infer<typeof seriesSchema>;
-export type CountryFrontmatter = z.infer<typeof countrySchema>;
-export type LocationFrontmatter = z.infer<typeof locationSchema>;
+export type WorldFrontmatter = z.infer<typeof worldSchema>;
+export type WorldSectionFrontmatter = z.infer<typeof worldSectionSchema>;
 export type EpisodeFrontmatter = z.infer<typeof episodeSchema>;
 export type CharacterFrontmatter = z.infer<typeof characterSchema>;
 export type CharacterRumorFrontmatter = z.infer<typeof characterRumorSchema>;
-export type AtlasFrontmatter = z.infer<typeof atlasSchema>;
 export type AtlasLinkFrontmatter = z.infer<typeof atlasLinkSchema>;
 export type AtlasFactFrontmatter = z.infer<typeof atlasFactSchema>;
 export type AtlasQuoteFrontmatter = z.infer<typeof atlasQuoteSchema>;

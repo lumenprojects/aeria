@@ -1,6 +1,5 @@
 import { FastifyInstance } from "fastify";
 import {
-  AtlasReferenceDTO,
   CharacterDTO,
   CharacterDetailResponseDTO,
   CharacterFactOfDayDTO,
@@ -11,7 +10,6 @@ import {
   CharactersListQueryDTO,
   CharacterQuirkDTO,
   CharacterRumorDTO,
-  CountryFlagDTO,
   EpisodeListItemDTO,
   PaginatedCharactersResponseDTO
 } from "@aeria/shared";
@@ -23,6 +21,7 @@ import {
   toNullableIsoDateTime,
   validateResponse
 } from "./utils.js";
+import { toAtlasEntityReference, type AtlasEntityReferenceRow } from "./atlas-entity-helpers.js";
 
 export async function registerCharactersRoutes(app: FastifyInstance) {
   app.get("/api/characters", async (req, reply) => {
@@ -74,8 +73,8 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
     const countResult = await pool.query(
       `SELECT COUNT(*)::int AS count
        FROM characters ch
-       LEFT JOIN countries c ON c.id = ch.country_id AND c.archived_at IS NULL
-       LEFT JOIN atlas_entries a ON a.id = ch.affiliation_id AND a.archived_at IS NULL
+       LEFT JOIN atlas_entities c ON c.id = ch.country_entity_id AND c.archived_at IS NULL
+       LEFT JOIN atlas_entities a ON a.id = ch.affiliation_entity_id AND a.archived_at IS NULL
        WHERE ${where}`,
       whereValues
     );
@@ -83,18 +82,23 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
     const listValues = [...whereValues, limit, offset];
     const rows = await pool.query(
       `SELECT ch.id, ch.slug, ch.name_ru, ch.name_native, ch.tagline, ch.avatar_asset_path,
-              c.id AS country_id,
-              c.slug AS country_slug,
-              c.title_ru AS country_title_ru,
-              c.flag_colors AS country_flag_colors,
-              a.id AS affiliation_id,
-              a.slug AS affiliation_slug,
-              a.kind AS affiliation_kind,
-              a.title_ru AS affiliation_title_ru,
-              a.avatar_asset_path AS affiliation_avatar_asset_path
+              c.id AS country_ref_id,
+              c.slug AS country_ref_slug,
+              c.type AS country_ref_type,
+              c.title_ru AS country_ref_title_ru,
+              c.summary AS country_ref_summary,
+              c.avatar_asset_path AS country_ref_avatar_asset_path,
+              c.flag_colors AS country_ref_flag_colors,
+              a.id AS affiliation_ref_id,
+              a.slug AS affiliation_ref_slug,
+              a.type AS affiliation_ref_type,
+              a.title_ru AS affiliation_ref_title_ru,
+              a.summary AS affiliation_ref_summary,
+              a.avatar_asset_path AS affiliation_ref_avatar_asset_path,
+              a.flag_colors AS affiliation_ref_flag_colors
        FROM characters ch
-       LEFT JOIN countries c ON c.id = ch.country_id AND c.archived_at IS NULL
-       LEFT JOIN atlas_entries a ON a.id = ch.affiliation_id AND a.archived_at IS NULL
+       LEFT JOIN atlas_entities c ON c.id = ch.country_entity_id AND c.archived_at IS NULL
+       LEFT JOIN atlas_entities a ON a.id = ch.affiliation_entity_id AND a.archived_at IS NULL
        WHERE ${where}
        ORDER BY ${orderBy}
        LIMIT $${whereValues.length + 1} OFFSET $${whereValues.length + 2}`,
@@ -113,31 +117,32 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
           tagline: row.tagline ?? null,
           avatar_asset_path: row.avatar_asset_path,
           country:
-            row.country_id && row.country_slug && row.country_title_ru
-              ? validateResponse(
-                  CountryFlagDTO,
+            row.country_ref_id && row.country_ref_slug && row.country_ref_title_ru
+              ? toAtlasEntityReference(
                   {
-                    id: row.country_id,
-                    slug: row.country_slug,
-                    url: entityUrl("country", row.country_slug),
-                    title_ru: row.country_title_ru,
-                    flag_colors: row.country_flag_colors ?? null
-                  },
+                    id: row.country_ref_id,
+                    slug: row.country_ref_slug,
+                    type: row.country_ref_type,
+                    title_ru: row.country_ref_title_ru,
+                    summary: row.country_ref_summary ?? null,
+                    avatar_asset_path: row.country_ref_avatar_asset_path ?? null,
+                    flag_colors: row.country_ref_flag_colors ?? null
+                  } as AtlasEntityReferenceRow,
                   "/api/characters:item:country"
                 )
               : null,
           affiliation:
-            row.affiliation_id && row.affiliation_slug && row.affiliation_kind && row.affiliation_title_ru
-              ? validateResponse(
-                  AtlasReferenceDTO,
+            row.affiliation_ref_id && row.affiliation_ref_slug && row.affiliation_ref_type && row.affiliation_ref_title_ru
+              ? toAtlasEntityReference(
                   {
-                    id: row.affiliation_id,
-                    slug: row.affiliation_slug,
-                    url: entityUrl("atlas_entry", row.affiliation_slug),
-                    kind: row.affiliation_kind,
-                    title_ru: row.affiliation_title_ru,
-                    avatar_asset_path: row.affiliation_avatar_asset_path ?? null
-                  },
+                    id: row.affiliation_ref_id,
+                    slug: row.affiliation_ref_slug,
+                    type: row.affiliation_ref_type,
+                    title_ru: row.affiliation_ref_title_ru,
+                    summary: row.affiliation_ref_summary ?? null,
+                    avatar_asset_path: row.affiliation_ref_avatar_asset_path ?? null,
+                    flag_colors: row.affiliation_ref_flag_colors ?? null
+                  } as AtlasEntityReferenceRow,
                   "/api/characters:item:affiliation"
                 )
               : null
@@ -256,7 +261,7 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
   app.get("/api/characters/:slug/preview", async (req, reply) => {
     const { slug } = req.params as { slug: string };
     const characterResult = await pool.query(
-      `SELECT id, slug, name_ru, avatar_asset_path, name_native, affiliation_id, country_id, tagline
+      `SELECT id, slug, name_ru, avatar_asset_path, name_native, affiliation_entity_id, country_entity_id, tagline
        FROM characters
        WHERE slug = $1 AND archived_at IS NULL`,
       [slug]
@@ -268,45 +273,31 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
     }
 
     const [country, affiliation] = await Promise.all([
-      characterRow.country_id
+      characterRow.country_entity_id
         ? pool.query(
-            "SELECT id, slug, title_ru, flag_colors FROM countries WHERE id = $1 AND archived_at IS NULL",
-            [characterRow.country_id]
+            `SELECT id, slug, type, title_ru, summary, avatar_asset_path, flag_colors
+             FROM atlas_entities
+             WHERE id = $1 AND archived_at IS NULL`,
+            [characterRow.country_entity_id]
           )
         : Promise.resolve({ rows: [] }),
-      characterRow.affiliation_id
+      characterRow.affiliation_entity_id
         ? pool.query(
-            "SELECT id, slug, kind, title_ru, avatar_asset_path FROM atlas_entries WHERE id = $1 AND archived_at IS NULL",
-            [characterRow.affiliation_id]
+            `SELECT id, slug, type, title_ru, summary, avatar_asset_path, flag_colors
+             FROM atlas_entities
+             WHERE id = $1 AND archived_at IS NULL`,
+            [characterRow.affiliation_entity_id]
           )
         : Promise.resolve({ rows: [] })
     ]);
 
     const countryItem = country.rows[0]
-      ? validateResponse(
-          CountryFlagDTO,
-          {
-            id: country.rows[0].id,
-            slug: country.rows[0].slug,
-            url: entityUrl("country", country.rows[0].slug),
-            title_ru: country.rows[0].title_ru,
-            flag_colors: country.rows[0].flag_colors ?? null
-          },
-          "/api/characters/:slug/preview:country"
-        )
+      ? toAtlasEntityReference(country.rows[0] as AtlasEntityReferenceRow, "/api/characters/:slug/preview:country")
       : null;
 
     const affiliationItem = affiliation.rows[0]
-      ? validateResponse(
-          AtlasReferenceDTO,
-          {
-            id: affiliation.rows[0].id,
-            slug: affiliation.rows[0].slug,
-            url: entityUrl("atlas_entry", affiliation.rows[0].slug),
-            kind: affiliation.rows[0].kind,
-            title_ru: affiliation.rows[0].title_ru,
-            avatar_asset_path: affiliation.rows[0].avatar_asset_path ?? null
-          },
+      ? toAtlasEntityReference(
+          affiliation.rows[0] as AtlasEntityReferenceRow,
           "/api/characters/:slug/preview:affiliation"
         )
       : null;
@@ -330,7 +321,7 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
   app.get("/api/characters/:slug", async (req, reply) => {
     const { slug } = req.params as { slug: string };
     const characterResult = await pool.query(
-      `SELECT id, slug, name_ru, avatar_asset_path, name_native, affiliation_id, country_id, tagline,
+      `SELECT id, slug, name_ru, avatar_asset_path, name_native, affiliation_entity_id, country_entity_id, tagline,
               gender, race, height_cm, age, orientation, mbti, favorite_food, bio_markdown, published_at
        FROM characters
        WHERE slug = $1 AND archived_at IS NULL`,
@@ -358,32 +349,42 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
          FROM character_rumors r
          LEFT JOIN characters sc
            ON r.source_type = 'character' AND r.source_id = sc.id AND sc.archived_at IS NULL
-         LEFT JOIN atlas_entries sa
-           ON r.source_type = 'atlas_entry' AND r.source_id = sa.id AND sa.archived_at IS NULL
+         LEFT JOIN atlas_entities sa
+           ON r.source_type = 'atlas_entity' AND r.source_id = sa.id AND sa.archived_at IS NULL
          WHERE r.character_id = $1
          ORDER BY r.sort_order ASC`,
         [characterRow.id]
       ),
       pool.query(
-        `SELECT e.id, e.slug, e.series_id, e.country_id, e.episode_number, e.global_order, e.title_native, e.title_ru, e.summary, e.reading_minutes, e.published_at,
-                c.slug AS country_slug, c.title_ru AS country_title_ru, c.flag_colors AS country_flag_colors
+        `SELECT e.id, e.slug, e.series_id, e.country_entity_id, e.episode_number, e.global_order, e.title_native, e.title_ru, e.summary, e.reading_minutes, e.published_at,
+                c.id AS country_ref_id,
+                c.slug AS country_ref_slug,
+                c.type AS country_ref_type,
+                c.title_ru AS country_ref_title_ru,
+                c.summary AS country_ref_summary,
+                c.avatar_asset_path AS country_ref_avatar_asset_path,
+                c.flag_colors AS country_ref_flag_colors
          FROM episodes e
          JOIN episode_characters ec ON ec.episode_id = e.id
-         JOIN countries c ON c.id = e.country_id
+         JOIN atlas_entities c ON c.id = e.country_entity_id
          WHERE ec.character_id = $1 AND e.archived_at IS NULL
          ORDER BY e.global_order ASC`,
         [characterRow.id]
       ),
-      characterRow.country_id
+      characterRow.country_entity_id
         ? pool.query(
-            "SELECT id, slug, title_ru, flag_colors FROM countries WHERE id = $1 AND archived_at IS NULL",
-            [characterRow.country_id]
+            `SELECT id, slug, type, title_ru, summary, avatar_asset_path, flag_colors
+             FROM atlas_entities
+             WHERE id = $1 AND archived_at IS NULL`,
+            [characterRow.country_entity_id]
           )
         : Promise.resolve({ rows: [] }),
-      characterRow.affiliation_id
+      characterRow.affiliation_entity_id
         ? pool.query(
-            "SELECT id, slug, kind, title_ru, avatar_asset_path FROM atlas_entries WHERE id = $1 AND archived_at IS NULL",
-            [characterRow.affiliation_id]
+            `SELECT id, slug, type, title_ru, summary, avatar_asset_path, flag_colors
+             FROM atlas_entities
+             WHERE id = $1 AND archived_at IS NULL`,
+            [characterRow.affiliation_entity_id]
           )
         : Promise.resolve({ rows: [] })
     ]);
@@ -397,8 +398,8 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
         name_ru: characterRow.name_ru,
         avatar_asset_path: characterRow.avatar_asset_path,
         name_native: characterRow.name_native ?? null,
-        affiliation_id: characterRow.affiliation_id ?? null,
-        country_id: characterRow.country_id ?? null,
+        affiliation_entity_id: characterRow.affiliation_entity_id ?? null,
+        country_entity_id: characterRow.country_entity_id ?? null,
         tagline: characterRow.tagline ?? null,
         gender: characterRow.gender ?? null,
         race: characterRow.race ?? null,
@@ -435,12 +436,12 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
               title: row.source_character_title,
               avatar_asset_path: row.source_character_avatar_asset_path ?? null
             }
-          : row.source_type === "atlas_entry" && row.source_atlas_slug
+          : row.source_type === "atlas_entity" && row.source_atlas_slug
             ? {
-                type: "atlas_entry" as const,
+                type: "atlas_entity" as const,
                 id: row.source_id,
                 slug: row.source_atlas_slug,
-                url: entityUrl("atlas_entry", row.source_atlas_slug),
+                url: entityUrl("atlas_entity", row.source_atlas_slug),
                 title: row.source_atlas_title,
                 avatar_asset_path: row.source_atlas_avatar_asset_path ?? null
               }
@@ -467,7 +468,7 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
           slug: row.slug,
           url: entityUrl("episode", row.slug),
           series_id: row.series_id,
-          country_id: row.country_id,
+          country_entity_id: row.country_entity_id,
           episode_number: row.episode_number,
           global_order: row.global_order,
           title_native: row.title_native ?? null,
@@ -475,15 +476,16 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
           summary: row.summary ?? null,
           reading_minutes: row.reading_minutes ?? null,
           published_at: toNullableIsoDateTime(row.published_at),
-          country: validateResponse(
-            CountryFlagDTO,
+          country: toAtlasEntityReference(
             {
-              id: row.country_id,
-              slug: row.country_slug,
-              url: entityUrl("country", row.country_slug),
-              title_ru: row.country_title_ru,
-              flag_colors: row.country_flag_colors ?? null
-            },
+              id: row.country_ref_id,
+              slug: row.country_ref_slug,
+              type: row.country_ref_type,
+              title_ru: row.country_ref_title_ru,
+              summary: row.country_ref_summary ?? null,
+              avatar_asset_path: row.country_ref_avatar_asset_path ?? null,
+              flag_colors: row.country_ref_flag_colors ?? null
+            } as AtlasEntityReferenceRow,
             "/api/characters/:slug:episode:country"
           )
         },
@@ -492,30 +494,12 @@ export async function registerCharactersRoutes(app: FastifyInstance) {
     );
 
     const countryItem = country.rows[0]
-      ? validateResponse(
-          CountryFlagDTO,
-          {
-            id: country.rows[0].id,
-            slug: country.rows[0].slug,
-            url: entityUrl("country", country.rows[0].slug),
-            title_ru: country.rows[0].title_ru,
-            flag_colors: country.rows[0].flag_colors ?? null
-          },
-          "/api/characters/:slug:country"
-        )
+      ? toAtlasEntityReference(country.rows[0] as AtlasEntityReferenceRow, "/api/characters/:slug:country")
       : null;
 
     const affiliationItem = affiliation.rows[0]
-      ? validateResponse(
-          AtlasReferenceDTO,
-          {
-            id: affiliation.rows[0].id,
-            slug: affiliation.rows[0].slug,
-            url: entityUrl("atlas_entry", affiliation.rows[0].slug),
-            kind: affiliation.rows[0].kind,
-            title_ru: affiliation.rows[0].title_ru,
-            avatar_asset_path: affiliation.rows[0].avatar_asset_path ?? null
-          },
+      ? toAtlasEntityReference(
+          affiliation.rows[0] as AtlasEntityReferenceRow,
           "/api/characters/:slug:affiliation"
         )
       : null;

@@ -368,5 +368,5 @@ Reading progress:
 5. `npm run migrate`
 6. `npm run content:dry-run`
 7. `npm run content:import`
-8. `npm run search:worker`
+8. `npm run search:reindex`
 9. `npm run dev`

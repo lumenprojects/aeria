@@ -13,6 +13,7 @@ import {
 } from "../ui/breadcrumb";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { useTheme } from "@/lib/theme";
+import { themeCatalog } from "@/lib/theme-catalog";
 import { getEpisode, getSeries } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import GlobalSearch from "../search/GlobalSearch";
@@ -47,13 +48,6 @@ const fontOptions = {
     { value: "Noto Serif", label: "Noto Serif" }
   ]
 };
-
-const themeOptions = [
-  { value: "paper", label: "Paper", swatch: { light: "#ffb44b", dark: "#f2ca86" } },
-  { value: "stone", label: "Stone", swatch: { light: "#8d6b44", dark: "#d0a878" } },
-  { value: "coral", label: "Coral", swatch: { light: "#f95c4b", dark: "#ff7d6f" } },
-  { value: "amoled", label: "Amoled", swatch: { light: "#6ea8ff", dark: "#72a5ff" } }
-] as const;
 
 const tapOptions = [
   { value: "none", label: "None" },
@@ -388,7 +382,7 @@ export default function Navbar() {
                           label="Style"
                           value={theme}
                           onValueChange={(value) => setTheme(value as typeof theme)}
-                          options={themeOptions.map((item) => ({
+                          options={themeCatalog.map((item) => ({
                             value: item.value,
                             label: item.label,
                             swatch: mode === "dark" ? item.swatch.dark : item.swatch.light

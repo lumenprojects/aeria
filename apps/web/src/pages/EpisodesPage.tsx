@@ -4,20 +4,34 @@ import type { CharacterSort, PaginatedCharactersResponseDTO, PaginatedEpisodesRe
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
+import { LatestEpisode } from "@/components/home/LatestEpisode";
 import { useUnderlineActivation } from "@/components/search/useUnderlineActivation";
-import { Avatar, AvatarFallback, AvatarImage, Input, SectionBreak, SelectField, Skeleton, Typography } from "@/components/ui";
-import { getCharacters, getEpisodes, getSeries, getSeriesList } from "@/lib/api";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Input,
+  SectionBreak,
+  SelectField,
+  Skeleton,
+  Typography
+} from "@/components/ui";
+import { getCharacters, getEpisodes, getHomeSnapshot, getSeriesList } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const SEARCH_DEBOUNCE_MS = 200;
 const MOTION_EASE = [0.22, 1, 0.36, 1] as const;
-const DEFAULT_SORT = "oldest" as const;
+const DEFAULT_SORT = "newest" as const;
 
 type EpisodeCatalogItem = PaginatedEpisodesResponseDTO["items"][number];
 type CharacterFilterItem = PaginatedCharactersResponseDTO["items"][number];
 
 function normalizeSort(value: string | null) {
-  return value === "newest" ? "newest" : DEFAULT_SORT;
+  return value === "oldest" ? "oldest" : DEFAULT_SORT;
 }
 
 function buildCharacterOptions(items: CharacterFilterItem[], selectedSlug: string) {
@@ -149,15 +163,14 @@ export default function EpisodesPage() {
     placeholderData: (previous) => previous
   });
 
+  const latestEpisodeQuery = useQuery({
+    queryKey: ["home", "latest-episode"],
+    queryFn: getHomeSnapshot
+  });
+
   const charactersListQuery = useQuery({
     queryKey: ["characters", "catalog", "filters-source"],
     queryFn: () => getCharacters({ page: 1, limit: 100, sort: "name_asc" as CharacterSort })
-  });
-
-  const seriesQuery = useQuery({
-    queryKey: ["series", seriesParam],
-    queryFn: () => getSeries(seriesParam),
-    enabled: Boolean(seriesParam)
   });
 
   const seriesListQuery = useQuery({
@@ -181,10 +194,6 @@ export default function EpisodesPage() {
     () => (episodesQuery.data?.items ?? []).filter((item) => matchesEpisodeSearch(item, qParam)),
     [episodesQuery.data?.items, qParam]
   );
-  const seriesTitle = seriesQuery.data?.series.title_ru ?? seriesParam;
-  const seriesSummary = seriesQuery.data?.series.summary ?? null;
-  const visibleCount = episodes.length;
-  const totalCount = episodesQuery.data?.total ?? episodes.length;
   const hasActiveFilters = Boolean(characterParam || seriesParam || sortParam !== DEFAULT_SORT);
 
   const layoutTransition = React.useMemo(
@@ -202,52 +211,60 @@ export default function EpisodesPage() {
 
   return (
     <div className="page-stack">
+      <section className="width-wide episodes-catalog-release" data-testid="episodes-latest-release">
+        <Typography variant="h1" as="h1" className="episodes-catalog-release-title">
+          Самый свежий <em>Эпизод</em>
+        </Typography>
+
+        <LatestEpisode
+          episode={latestEpisodeQuery.data?.latest_episode ?? null}
+          titleAs="h2"
+          subtitleAs="h3"
+          emptyStateTitle={null}
+          isLoading={latestEpisodeQuery.isLoading}
+        />
+      </section>
+
       <section className="width-medium episodes-catalog" data-testid="episodes-catalog">
-        <div className="episodes-catalog-head">
-          <div className="episodes-catalog-intro">
-            <Typography variant="h1" as="h1" className="episodes-catalog-title">
-              Эпизоды
-            </Typography>
-            <Typography variant="body" fontRole="body" className="tone-secondary episodes-catalog-lead">
-              Список глав в хронологическом порядке: от быстрых точек входа к длинным чтениям, с поиском по названию,
-              описанию и номеру.
-            </Typography>
-          </div>
+        <section className="home-faq" data-testid="episodes-faq">
+          <Accordion type="single" collapsible className="width-medium">
+            <AccordionItem value="episodes-1">
+              <AccordionTrigger className="home-faq-trigger role-heading type-h2">
+                Что такое <em>Эпизоды</em>?
+              </AccordionTrigger>
+              <AccordionContent className="home-faq-content">
+                <Typography as="p" variant="body" fontRole="body" className="home-faq-content-text">
+                  Это отдельные главы истории: самостоятельные точки входа в мир, которые можно читать по одной или
+                  собирать в более длинную дугу.
+                </Typography>
+              </AccordionContent>
+            </AccordionItem>
 
-          <div
-            className={cn(
-              "episodes-catalog-summary theme-stroke",
-              seriesParam ? "theme-stroke-accent" : undefined
-            )}
-            data-testid="episodes-catalog-summary"
-          >
-            <Typography variant="ui" as="p" className="tone-secondary episodes-catalog-summary-label">
-              {seriesParam ? "Серия" : "В каталоге"}
-            </Typography>
+            <AccordionItem value="episodes-2">
+              <AccordionTrigger className="home-faq-trigger role-heading type-h2">
+                А что значит <em>Серия Эпизодов</em>?
+              </AccordionTrigger>
+              <AccordionContent className="home-faq-content">
+                <Typography as="p" variant="body" fontRole="body" className="home-faq-content-text">
+                  Это связка нескольких глав с общим ритмом, темой или направлением сюжета. Серия помогает читать не
+                  только по отдельным эпизодам, но и по более крупной линии.
+                </Typography>
+              </AccordionContent>
+            </AccordionItem>
 
-            <Typography variant="h4" as="p" className="episodes-catalog-summary-value">
-              {seriesParam ? seriesTitle : `${visibleCount} из ${totalCount}`}
-            </Typography>
-
-            <Typography variant="ui" as="p" className="tone-secondary episodes-catalog-summary-note">
-              {seriesParam
-                ? seriesSummary ?? "Контекст серии удерживает список собранным, но не меняет общий ритм каталога."
-                : "Список остаётся редакционным и спокойным, без превращения в копию каталога персонажей."}
-            </Typography>
-
-            {seriesParam && (
-              <button
-                type="button"
-                className="episodes-catalog-summary-reset tone-secondary ui-underline-hover"
-                onClick={() => updateParams({ series: null })}
-              >
-                Показать все эпизоды
-              </button>
-            )}
-          </div>
-        </div>
-
-        <SectionBreak variant="line" lineWidthClassName="width-medium" />
+            <AccordionItem value="episodes-3">
+              <AccordionTrigger className="home-faq-trigger role-heading type-h2">
+                Почему номера эпизодов иногда совпадают?
+              </AccordionTrigger>
+              <AccordionContent className="home-faq-content">
+                <Typography as="p" variant="body" fontRole="body" className="home-faq-content-text">
+                  Потому что у главы может быть свой номер внутри конкретной серии и отдельный порядок внутри общего
+                  каталога. Поэтому совпадение номера не всегда значит, что это один и тот же выпуск.
+                </Typography>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </section>
 
         <div className="episodes-catalog-controls">
           <label className="episodes-catalog-search-shell" aria-label="Поиск эпизодов">
@@ -368,8 +385,7 @@ export default function EpisodesPage() {
           <AnimatePresence initial={false} mode="popLayout">
             {episodes.map((episode) => {
               const readingLabel = formatReadingMinutesLabel(episode.reading_minutes);
-              const episodeSeries =
-                (seriesParam ? seriesQuery.data?.series : null) ?? seriesById.get(episode.series_id) ?? null;
+              const episodeSeries = seriesById.get(episode.series_id) ?? null;
               const participants = episode.participants;
               const seriesColor = episodeSeries?.brand_color ?? "var(--accent)";
 

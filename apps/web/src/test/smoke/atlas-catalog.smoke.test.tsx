@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
-import type { AtlasCatalogResponseDTO, AtlasCatalogSort, WorldNodeListItemDTO } from "@aeria/shared";
+import type { AtlasCatalogItemDTO, AtlasCatalogResponseDTO, AtlasCatalogSort } from "@aeria/shared";
 import AtlasPage from "@/pages/AtlasPage";
 
 const { getAtlasCatalogMock } = vi.hoisted(() => ({
@@ -43,47 +43,76 @@ async function chooseSelectOption(testId: string, label: string) {
   fireEvent.click(within(listbox).getByText(label));
 }
 
-function buildResponse(items: WorldNodeListItemDTO[]): AtlasCatalogResponseDTO {
+function atlasRef(slug: string, title_ru: string, type: AtlasCatalogItemDTO["type"] = "country") {
+  return {
+    id: `${slug}-id`,
+    slug,
+    url: `/atlas/${slug}`,
+    type,
+    title_ru,
+    summary: null,
+    avatar_asset_path: null,
+    flag_colors: type === "country" ? ["#d72638", "#f5f1ea", "#1d5fa7"] : null
+  } as const;
+}
+
+function buildResponse(items: AtlasCatalogItemDTO[]): AtlasCatalogResponseDTO {
   const countryFacetMap = new Map<string, { id: string; slug: string; title_ru: string; count: number }>();
+  const locationFacetMap = new Map<string, { id: string; slug: string; title_ru: string; count: number }>();
+
   for (const item of items) {
-    const country = item.country;
-    if (!country) continue;
-    const current = countryFacetMap.get(country.slug);
-    if (current) {
-      current.count += 1;
-      continue;
+    if (item.country) {
+      const current = countryFacetMap.get(item.country.slug);
+      if (current) current.count += 1;
+      else {
+        countryFacetMap.set(item.country.slug, {
+          id: item.country.id,
+          slug: item.country.slug,
+          title_ru: item.country.title_ru,
+          count: 1
+        });
+      }
     }
-    countryFacetMap.set(country.slug, {
-      id: country.id,
-      slug: country.slug,
-      title_ru: country.title_ru,
-      count: 1
-    });
+
+    const location = item.location ?? (item.type === "location" ? item : null);
+    if (location) {
+      const current = locationFacetMap.get(location.slug);
+      if (current) current.count += 1;
+      else {
+        locationFacetMap.set(location.slug, {
+          id: location.id,
+          slug: location.slug,
+          title_ru: location.title_ru,
+          count: 1
+        });
+      }
+    }
   }
 
   return {
     items,
     facets: {
-      entity: [
-        { value: "country", label: "Страны", count: items.filter((item) => item.node_type === "country").length },
-        { value: "location", label: "Локации", count: items.filter((item) => item.node_type === "location").length },
-        { value: "atlas_entry", label: "Записи атласа", count: items.filter((item) => item.node_type === "atlas_entry").length }
+      type: [
+        { value: "country", label: "Страны", count: items.filter((item) => item.type === "country").length },
+        { value: "location", label: "Локации", count: items.filter((item) => item.type === "location").length },
+        { value: "organization", label: "Организации", count: items.filter((item) => item.type === "organization").length },
+        { value: "event", label: "События", count: items.filter((item) => item.type === "event").length },
+        { value: "object", label: "Объекты", count: 0 },
+        { value: "belief", label: "Верования", count: 0 },
+        { value: "concept", label: "Понятия", count: 0 },
+        { value: "other", label: "Другое", count: 0 }
       ],
-      kind: [
-        { value: "geography", label: "География", count: items.filter((item) => item.kind === "geography").length },
-        { value: "social", label: "Социальное", count: items.filter((item) => item.kind === "social").length },
-        { value: "history", label: "История", count: items.filter((item) => item.kind === "history").length },
-        { value: "belief", label: "Вера", count: items.filter((item) => item.kind === "belief").length },
-        { value: "object", label: "Объект", count: items.filter((item) => item.kind === "object").length },
-        { value: "event", label: "Событие", count: items.filter((item) => item.kind === "event").length },
-        { value: "other", label: "Другое", count: items.filter((item) => item.kind === "other").length }
+      section: [
+        { value: "geography", label: "География", count: items.filter((item) => item.sections.includes("geography")).length },
+        { value: "social", label: "Социальное", count: items.filter((item) => item.sections.includes("social")).length },
+        { value: "history", label: "История", count: items.filter((item) => item.sections.includes("history")).length },
+        { value: "belief", label: "Вера", count: items.filter((item) => item.sections.includes("belief")).length },
+        { value: "object", label: "Объект", count: items.filter((item) => item.sections.includes("object")).length },
+        { value: "event", label: "Событие", count: items.filter((item) => item.sections.includes("event")).length },
+        { value: "other", label: "Другое", count: items.filter((item) => item.sections.includes("other")).length }
       ],
       country: [...countryFacetMap.values()],
-      anchor: [
-        { value: "country", label: "Страна", count: items.filter((item) => item.anchor_mode === "country").length },
-        { value: "location", label: "Локация", count: items.filter((item) => item.anchor_mode === "location").length },
-        { value: "free", label: "Свободные", count: items.filter((item) => item.anchor_mode === "free").length }
-      ]
+      location: [...locationFacetMap.values()]
     },
     total: items.length,
     page: 1,
@@ -92,95 +121,67 @@ function buildResponse(items: WorldNodeListItemDTO[]): AtlasCatalogResponseDTO {
 }
 
 describe("AtlasPage catalog smoke", () => {
-  const baseItems: WorldNodeListItemDTO[] = [
+  const ausonia = atlasRef("ausonia", "Авзония");
+  const road = atlasRef("doroga-na-sever", "Дорога на север", "location");
+
+  const baseItems: AtlasCatalogItemDTO[] = [
     {
-      node_type: "country",
       id: "00000000-0000-0000-0000-000000000021",
       slug: "ausonia",
       url: "/atlas/ausonia",
+      type: "country",
       title_ru: "Авзония",
       summary: null,
-      kind: null,
       avatar_asset_path: null,
-      country: {
-        id: "00000000-0000-0000-0000-000000000021",
-        slug: "ausonia",
-        url: "/atlas/ausonia",
-        title_ru: "Авзония",
-        flag_colors: ["#d72638", "#f5f1ea", "#1d5fa7"]
-      },
+      flag_colors: ["#d72638", "#f5f1ea", "#1d5fa7"],
+      sections: ["geography"],
+      country: null,
       location: null,
-      anchor_mode: "country",
       related_count: 3,
       published_at: null
     },
     {
-      node_type: "location",
       id: "00000000-0000-0000-0000-000000000041",
       slug: "doroga-na-sever",
       url: "/atlas/doroga-na-sever",
+      type: "location",
       title_ru: "Дорога на север",
       summary: "Маршрут, который держит торговлю и слухи в одном ритме.",
-      kind: null,
       avatar_asset_path: null,
-      country: {
-        id: "00000000-0000-0000-0000-000000000021",
-        slug: "ausonia",
-        url: "/atlas/ausonia",
-        title_ru: "Авзония",
-        flag_colors: ["#d72638", "#f5f1ea", "#1d5fa7"]
-      },
-      location: {
-        id: "00000000-0000-0000-0000-000000000041",
-        slug: "doroga-na-sever",
-        url: "/atlas/doroga-na-sever",
-        title_ru: "Дорога на север",
-        avatar_asset_path: null,
-        country: {
-          id: "00000000-0000-0000-0000-000000000021",
-          slug: "ausonia",
-          url: "/atlas/ausonia",
-          title_ru: "Авзония",
-          flag_colors: ["#d72638", "#f5f1ea", "#1d5fa7"]
-        }
-      },
-      anchor_mode: "location",
+      flag_colors: null,
+      sections: ["geography"],
+      country: ausonia,
+      location: null,
       related_count: 1,
       published_at: null
     },
     {
-      node_type: "atlas_entry",
       id: "00000000-0000-0000-0000-000000000051",
       slug: "bastida-de-la-lune",
       url: "/atlas/bastida-de-la-lune",
+      type: "organization",
       title_ru: "Бастида де ла Люн",
       summary: "Городская ткань вокруг рынков, дворов и разговоров.",
-      kind: "social",
       avatar_asset_path: null,
-      country: {
-        id: "00000000-0000-0000-0000-000000000021",
-        slug: "ausonia",
-        url: "/atlas/ausonia",
-        title_ru: "Авзония",
-        flag_colors: ["#d72638", "#f5f1ea", "#1d5fa7"]
-      },
+      flag_colors: null,
+      sections: ["social"],
+      country: ausonia,
       location: null,
-      anchor_mode: "country",
       related_count: 2,
       published_at: "2026-03-15T00:00:00.000Z"
     },
     {
-      node_type: "atlas_entry",
       id: "00000000-0000-0000-0000-000000000052",
       slug: "prazdnik-immortelles",
       url: "/atlas/prazdnik-immortelles",
+      type: "event",
       title_ru: "Праздник иммортелей",
       summary: "Сезонный ритуал памяти и торговли.",
-      kind: "event",
       avatar_asset_path: null,
+      flag_colors: null,
+      sections: ["event"],
       country: null,
       location: null,
-      anchor_mode: "free",
       related_count: 1,
       published_at: "2026-03-16T00:00:00.000Z"
     }
@@ -191,10 +192,10 @@ describe("AtlasPage catalog smoke", () => {
     getAtlasCatalogMock.mockImplementation(
       async (params?: {
         q?: string;
-        entity?: string;
+        type?: string;
         country?: string;
-        kind?: string;
-        anchor?: string;
+        location?: string;
+        section?: string;
         sort?: AtlasCatalogSort;
       }) => {
         let items = [...baseItems];
@@ -208,10 +209,10 @@ describe("AtlasPage catalog smoke", () => {
               .includes(query)
           );
         }
-        if (params?.entity) items = items.filter((item) => item.node_type === params.entity);
-        if (params?.country) items = items.filter((item) => item.country?.slug === params.country || item.slug === params.country);
-        if (params?.kind) items = items.filter((item) => item.kind === params.kind);
-        if (params?.anchor) items = items.filter((item) => item.anchor_mode === params.anchor);
+        if (params?.type) items = items.filter((item) => item.type === params.type);
+        if (params?.country) items = items.filter((item) => item.country?.slug === params.country);
+        if (params?.location) items = items.filter((item) => item.location?.slug === params.location || item.slug === params.location);
+        if (params?.section) items = items.filter((item) => item.sections.includes(params.section as AtlasCatalogItemDTO["sections"][number]));
 
         const sort = params?.sort ?? "title_asc";
         items.sort((a, b) => {
@@ -230,52 +231,55 @@ describe("AtlasPage catalog smoke", () => {
     );
   });
 
-  it("renders atlas world index with grouped sections and rows", async () => {
+  it("renders atlas world index as a single catalog list", async () => {
     renderAtlasPage();
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Атлас" })).toBeInTheDocument();
+      expect(screen.getByTestId("atlas-world-search")).toBeInTheDocument();
     });
 
     expect(screen.getByTestId("atlas-world-catalog")).toBeInTheDocument();
-    expect(screen.getByTestId("atlas-world-search")).toBeInTheDocument();
+    expect(screen.getByTestId("atlas-filter-button")).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getAllByTestId("world-node-row")).toHaveLength(4);
+      expect(screen.getAllByTestId("atlas-entity-row")).toHaveLength(4);
     });
 
-    expect(screen.getByTestId("atlas-group-country")).toBeInTheDocument();
-    expect(screen.getByTestId("atlas-group-location")).toBeInTheDocument();
-    expect(screen.getByTestId("atlas-group-atlas_entry")).toBeInTheDocument();
-    expect(screen.getAllByTestId("world-node-row")[0]).toHaveAttribute("href", "/atlas/ausonia");
+    expect(screen.getAllByTestId("atlas-entity-row")[0]).toHaveAttribute("href", "/atlas/ausonia");
   });
 
   it("syncs search and visible filters with URL and atlas catalog query", async () => {
     renderAtlasPage();
 
     await waitFor(() => {
-      expect(screen.getAllByTestId("world-node-row")).toHaveLength(4);
+      expect(screen.getAllByTestId("atlas-entity-row")).toHaveLength(4);
     });
 
     fireEvent.change(screen.getByTestId("atlas-world-search"), {
-      target: { value: "дорога" }
+      target: { value: "Бастида" }
     });
 
     await waitFor(() => {
-      expect(locationParams().get("q")).toBe("дорога");
+      expect(locationParams().get("q")).toBe("Бастида");
     });
 
     await waitFor(() => {
-      expect(screen.getAllByTestId("world-node-row")).toHaveLength(1);
+      expect(screen.getAllByTestId("atlas-entity-row")).toHaveLength(1);
     });
 
-    await chooseSelectOption("atlas-world-filter-entity", "Локации");
+    fireEvent.click(screen.getByTestId("atlas-filter-button"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("atlas-filters-panel")).toBeInTheDocument();
+    });
+
     await chooseSelectOption("atlas-world-filter-country", "Авзония");
+    await chooseSelectOption("atlas-world-filter-section", "Социальное");
     await chooseSelectOption("atlas-world-filter-sort", "Сначала новое");
 
     await waitFor(() => {
-      expect(locationParams().get("entity")).toBe("location");
       expect(locationParams().get("country")).toBe("ausonia");
+      expect(locationParams().get("section")).toBe("social");
       expect(locationParams().get("sort")).toBe("recent");
     });
 
@@ -286,20 +290,37 @@ describe("AtlasPage catalog smoke", () => {
             | {
                 limit?: number;
                 q?: string;
-                entity?: string;
                 country?: string;
+                section?: string;
                 sort?: AtlasCatalogSort;
               }
             | undefined;
           return (
             params?.limit === 100 &&
-            params?.q === "дорога" &&
-            params?.entity === "location" &&
+            params?.q === "Бастида" &&
             params?.country === "ausonia" &&
+            params?.section === "social" &&
             params?.sort === "recent"
           );
         })
       ).toBe(true);
     });
+  });
+
+  it("supports grouped atlas views without duplicating list rows outside the result area", async () => {
+    renderAtlasPage();
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("atlas-entity-row")).toHaveLength(4);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Страны" }));
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("atlas-catalog-group")).toHaveLength(2);
+    });
+
+    expect(screen.getAllByRole("heading", { name: "Авзония" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("heading", { name: "Без страны" }).length).toBeGreaterThan(0);
   });
 });

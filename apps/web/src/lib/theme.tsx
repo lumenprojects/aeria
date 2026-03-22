@@ -1,7 +1,8 @@
 ﻿import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { getCookie, setCookie } from "./cookies";
+import { resolveThemeName, type ThemeName } from "./theme-catalog";
 
-export type ThemeName = "paper" | "stone" | "coral" | "amoled";
+export type { ThemeName } from "./theme-catalog";
 export type ThemeMode = "light" | "dark";
 export type TapEffect = "none" | "ripple" | "spark" | "pulse";
 
@@ -84,7 +85,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const cookieValue = getCookie(STORAGE_KEY);
     const cookiePayload = safeParseTheme(cookieValue);
     if (cookiePayload) {
-      if (cookiePayload.theme) setTheme(cookiePayload.theme as ThemeName);
+      const cookieTheme = resolveThemeName(cookiePayload.theme);
+      if (cookieTheme) setTheme(cookieTheme);
       if (cookiePayload.mode) setMode(cookiePayload.mode as ThemeMode);
       setFontHeading(normalizeFont("heading", cookiePayload.fontHeading));
       setFontBody(normalizeFont("body", cookiePayload.fontBody));
@@ -97,7 +99,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem(STORAGE_KEY);
     const parsed = safeParseTheme(saved);
     if (parsed) {
-      if (parsed.theme) setTheme(parsed.theme as ThemeName);
+      const parsedTheme = resolveThemeName(parsed.theme);
+      if (parsedTheme) setTheme(parsedTheme);
       if (parsed.mode) setMode(parsed.mode as ThemeMode);
       if (parsed.preset && legacyPresets[parsed.preset]) {
         const preset = legacyPresets[parsed.preset];

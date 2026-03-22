@@ -56,6 +56,7 @@ import {
   TooltipTrigger,
   Typography
 } from "@/components/ui";
+import { themeCatalog } from "@/lib/theme-catalog";
 
 const spacingTokens = [
   { key: "XS", token: "--space-xs", note: "микро-связи" },
@@ -213,12 +214,7 @@ export default function HomePage() {
           <Combobox
             value={comboValue}
             onChange={setComboValue}
-            options={[
-              { label: "Paper", value: "paper" },
-              { label: "Stone", value: "stone" },
-              { label: "Coral", value: "coral" },
-              { label: "Amoled", value: "amoled" }
-            ]}
+            options={themeCatalog.map(({ label, value }) => ({ label, value }))}
           />
         </div>
       </Section>
@@ -303,9 +299,9 @@ export default function HomePage() {
           <MenubarMenu>
             <MenubarTrigger>Настройки</MenubarTrigger>
             <MenubarContent>
-              <MenubarItem>Paper</MenubarItem>
-              <MenubarItem>Stone</MenubarItem>
-              <MenubarItem>Coral</MenubarItem>
+              {themeCatalog.map(({ label, value }) => (
+                <MenubarItem key={value}>{label}</MenubarItem>
+              ))}
             </MenubarContent>
           </MenubarMenu>
         </Menubar>

@@ -19,7 +19,7 @@ Monorepo for the Aeria site.
 5. `npm run migrate`
 6. `npm run content:dry-run`
 7. `npm run content:import`
-8. `npm run search:worker`
+8. `npm run search:reindex`
 9. `npm run dev`
 
 ## Content import
@@ -31,4 +31,6 @@ Monorepo for the Aeria site.
 - `npm run dev` - web + api
 - `npm run migrate` - run DB migrations
 - `npm run content:import` - import Markdown content
-- `npm run search:worker` - process Typesense queue
+- `npm run search:reindex` - rebuild Typesense index from current DB state
+- `npm run search:worker` - process queued Typesense updates once
+- `npm run search:watch` - keep processing the search queue in watch mode

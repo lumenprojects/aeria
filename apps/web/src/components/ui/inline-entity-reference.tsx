@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { AtlasPreviewDTO, CharacterPreviewDTO } from "@aeria/shared";
+import type { AtlasEntityType, AtlasPreviewDTO, AtlasSection, CharacterPreviewDTO } from "@aeria/shared";
 import { Link } from "react-router-dom";
 import { Flag } from "@/components/entities";
 import { getAtlasPreview, getCharacterPreview } from "@/lib/api";
@@ -30,7 +30,18 @@ type ParsedEntityReference =
 
 type PreviewData = CharacterPreviewDTO | AtlasPreviewDTO;
 
-const atlasKindLabels: Record<AtlasPreviewDTO["kind"], string> = {
+const atlasTypeLabels: Record<AtlasEntityType, string> = {
+  country: "Страна",
+  location: "Локация",
+  organization: "Организация",
+  object: "Объект",
+  event: "Событие",
+  belief: "Верование",
+  concept: "Понятие",
+  other: "Другое"
+};
+
+const atlasSectionLabels: Record<AtlasSection, string> = {
   geography: "География",
   social: "Социальное",
   history: "История",
@@ -39,6 +50,11 @@ const atlasKindLabels: Record<AtlasPreviewDTO["kind"], string> = {
   event: "Событие",
   other: "Другое"
 };
+
+function getAtlasPreviewLabel(preview: AtlasPreviewDTO) {
+  const leadSection = preview.sections?.[0];
+  return leadSection ? atlasSectionLabels[leadSection] : atlasTypeLabels[preview.type];
+}
 
 function parseEntityReference(href: string): ParsedEntityReference | null {
   const characterMatch = href.match(/^\/characters\/([^/?#]+)/);
@@ -143,7 +159,7 @@ function AtlasPreviewBody({ preview }: { preview: AtlasPreviewDTO }) {
         ) : null}
         <div className="entity-reference-preview-copy">
           <Typography variant="ui" className="tone-secondary entity-reference-preview-kind">
-            {atlasKindLabels[preview.kind]}
+            {getAtlasPreviewLabel(preview)}
           </Typography>
           <Typography variant="h4" as="p">
             {preview.title_ru}

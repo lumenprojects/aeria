@@ -9,18 +9,20 @@ import type {
 } from "@aeria/shared";
 import EpisodesPage from "@/pages/EpisodesPage";
 
-const { getEpisodesMock, getSeriesMock, getSeriesListMock, getCharactersMock } = vi.hoisted(() => ({
+const { getEpisodesMock, getSeriesMock, getSeriesListMock, getCharactersMock, getHomeSnapshotMock } = vi.hoisted(() => ({
   getEpisodesMock: vi.fn(),
   getSeriesMock: vi.fn(),
   getSeriesListMock: vi.fn(),
-  getCharactersMock: vi.fn()
+  getCharactersMock: vi.fn(),
+  getHomeSnapshotMock: vi.fn()
 }));
 
 vi.mock("@/lib/api", () => ({
   getEpisodes: getEpisodesMock,
   getSeries: getSeriesMock,
   getSeriesList: getSeriesListMock,
-  getCharacters: getCharactersMock
+  getCharacters: getCharactersMock,
+  getHomeSnapshot: getHomeSnapshotMock
 }));
 
 type EpisodeItem = PaginatedEpisodesResponseDTO["items"][number];
@@ -72,7 +74,7 @@ describe("EpisodesPage smoke", () => {
       slug: "episode-001",
       url: "/episodes/episode-001",
       series_id: "00000000-0000-0000-0000-000000000011",
-      country_id: "00000000-0000-0000-0000-000000000021",
+      country_entity_id: "00000000-0000-0000-0000-000000000021",
       episode_number: 1,
       global_order: 1,
       title_native: "Au-dela des vignes",
@@ -84,7 +86,10 @@ describe("EpisodesPage smoke", () => {
         id: "00000000-0000-0000-0000-000000000021",
         slug: "ausonia",
         url: "/atlas/ausonia",
+        type: "country",
         title_ru: "Авзония",
+        summary: null,
+        avatar_asset_path: null,
         flag_colors: ["#d72638", "#f5f1ea", "#1d5fa7"]
       },
       participants: [
@@ -102,7 +107,7 @@ describe("EpisodesPage smoke", () => {
       slug: "episode-002",
       url: "/episodes/episode-002",
       series_id: "00000000-0000-0000-0000-000000000011",
-      country_id: "00000000-0000-0000-0000-000000000022",
+      country_entity_id: "00000000-0000-0000-0000-000000000022",
       episode_number: 2,
       global_order: 2,
       title_native: "Le souffle de la route",
@@ -114,7 +119,10 @@ describe("EpisodesPage smoke", () => {
         id: "00000000-0000-0000-0000-000000000022",
         slug: "lumia",
         url: "/atlas/lumia",
+        type: "country",
         title_ru: "Люмия",
+        summary: null,
+        avatar_asset_path: null,
         flag_colors: ["#202020", "#efefef", "#ffb44b"]
       },
       participants: [
@@ -134,6 +142,7 @@ describe("EpisodesPage smoke", () => {
     getSeriesMock.mockReset();
     getSeriesListMock.mockReset();
     getCharactersMock.mockReset();
+    getHomeSnapshotMock.mockReset();
 
     getEpisodesMock.mockImplementation(async (params?: { character?: string; series?: string; sort?: string }) => {
       let items = [...baseItems];
@@ -210,27 +219,81 @@ describe("EpisodesPage smoke", () => {
       page: 1,
       limit: 100
     } satisfies PaginatedCharactersResponseDTO);
+
+    getHomeSnapshotMock.mockResolvedValue({
+      latest_episode: {
+        id: "00000000-0000-0000-0000-000000000002",
+        slug: "episode-002",
+        url: "/episodes/episode-002",
+        episode_number: 2,
+        global_order: 2,
+        title_native: "Le souffle de la route",
+        title_ru: "Дыхание дороги",
+        summary: "Ночь срывает прежние договорённости.",
+        reading_minutes: 7,
+        published_at: null,
+        country: {
+          id: "00000000-0000-0000-0000-000000000022",
+          slug: "lumia",
+          url: "/atlas/lumia",
+          type: "country",
+          title_ru: "Люмия",
+          summary: null,
+          avatar_asset_path: null,
+          flag_colors: ["#202020", "#efefef", "#ffb44b"]
+        },
+        series: {
+          id: "00000000-0000-0000-0000-000000000011",
+          slug: "yellow-moon",
+          url: "/episodes?series=yellow-moon",
+          title_ru: "Жёлтая Луна",
+          brand_color: "#f2b14b"
+        },
+        participants: [
+          {
+            id: "00000000-0000-0000-0000-000000000102",
+            slug: "forsil-villet",
+            url: "/characters/forsil-villet",
+            name_ru: "Форсил Виллет",
+            avatar_asset_path: "/assets/images/characters/forsil-villet.png"
+          }
+        ]
+      }
+    });
   });
 
   it("renders editorial catalog layout with series context and episode rows", async () => {
     renderEpisodesPage("/episodes?series=yellow-moon");
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Эпизоды" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Самый свежий Эпизод" })).toBeInTheDocument();
     });
-
-    expect(screen.getByTestId("episodes-catalog")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Поиск по главам...")).toBeInTheDocument();
-    expect(screen.getByTestId("episodes-filter-button")).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByTestId("episodes-catalog-summary")).toHaveTextContent("Жёлтая Луна");
+      expect(screen.getByRole("heading", { name: "Le souffle de la route" })).toBeInTheDocument();
     });
 
+    expect(screen.queryByText("Последняя глава")).not.toBeInTheDocument();
+    expect(screen.getByTestId("episodes-catalog")).toBeInTheDocument();
+    expect(screen.getByTestId("episodes-latest-release")).toBeInTheDocument();
+    expect(screen.getByTestId("episodes-faq")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Что такое Эпизоды\s?\?/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /А что значит Серия Эпизодов\s?\?/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Почему номера эпизодов иногда совпадают?" })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Поиск по главам...")).toBeInTheDocument();
+    expect(screen.getByTestId("episodes-filter-button")).toBeInTheDocument();
+    expect(screen.queryByTestId("episodes-catalog-summary")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        "Список глав в хронологическом порядке: от быстрых точек входа к длинным чтениям, с поиском по названию, описанию и номеру."
+      )
+    ).not.toBeInTheDocument();
+
     expect(screen.getAllByTestId("episodes-catalog-item")).toHaveLength(2);
-    expect(screen.getAllByTestId("episodes-catalog-item")[0]).toHaveAttribute("href", "/episodes/episode-001");
+    expect(screen.getAllByTestId("episodes-catalog-item")[0]).toHaveAttribute("href", "/episodes/episode-002");
     expect(screen.getAllByText("Жёлтая Луна").length).toBeGreaterThan(1);
     expect(screen.getByTitle("Амэ")).toBeInTheDocument();
+    expect(document.querySelectorAll(".section-break-line")).toHaveLength(0);
   });
 
   it("syncs local search and filters with URL while preserving catalog context", async () => {
@@ -239,6 +302,8 @@ describe("EpisodesPage smoke", () => {
     await waitFor(() => {
       expect(screen.getAllByTestId("episodes-catalog-item")).toHaveLength(2);
     });
+
+    expect(screen.getAllByTestId("episodes-catalog-item")[0]).toHaveAttribute("href", "/episodes/episode-002");
 
     fireEvent.click(screen.getByTestId("episodes-filter-button"));
     await chooseSelectOption("episodes-filter-character", "Амэ");
@@ -256,7 +321,7 @@ describe("EpisodesPage smoke", () => {
     await chooseSelectOption("episodes-filter-sort", "Новые -> старые");
 
     await waitFor(() => {
-      expect(locationParams().get("sort")).toBe("newest");
+      expect(locationParams().get("sort")).toBeNull();
     });
 
     fireEvent.change(screen.getByPlaceholderText("Поиск по главам..."), {
