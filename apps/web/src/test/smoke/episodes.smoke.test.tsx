@@ -282,12 +282,13 @@ describe("EpisodesPage smoke", () => {
     expect(screen.getByRole("button", { name: "Почему номера эпизодов иногда совпадают?" })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Поиск по главам...")).toBeInTheDocument();
     expect(screen.getByTestId("episodes-filter-button")).toBeInTheDocument();
-    expect(screen.queryByTestId("episodes-catalog-summary")).not.toBeInTheDocument();
+    expect(screen.getByTestId("episodes-series-context")).toBeInTheDocument();
+    expect(screen.getByText("Серия")).toBeInTheDocument();
     expect(
-      screen.queryByText(
-        "Список глав в хронологическом порядке: от быстрых точек входа к длинным чтениям, с поиском по названию, описанию и номеру."
-      )
-    ).not.toBeInTheDocument();
+      screen.getByText("Серия о дорогах, письмах и людях, которые опаздывают к собственным решениям.")
+    ).toBeInTheDocument();
+    expect(screen.getByText("В серии 2 эпизода")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Показать весь каталог" })).toBeInTheDocument();
 
     expect(screen.getAllByTestId("episodes-catalog-item")).toHaveLength(2);
     expect(screen.getAllByTestId("episodes-catalog-item")[0]).toHaveAttribute("href", "/episodes/episode-002");

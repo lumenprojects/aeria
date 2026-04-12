@@ -95,7 +95,7 @@ function loadingSections(): HomeSection[] {
         <div className="width-medium">
           <div className="home-about">
             <Skeleton className="h-[var(--avatar-md)] w-[var(--avatar-md)] rounded-full" />
-            <div className="showcase-stack-sm">
+            <div className="stack-sm">
               <Skeleton className="h-14 w-64" />
               <Skeleton className="h-40 w-full" />
             </div>
@@ -181,7 +181,7 @@ function loadingSections(): HomeSection[] {
       boundaryBefore: "line",
       content: (
         <div className="width-medium">
-          <div className="showcase-stack-sm">
+          <div className="stack-sm">
             <Skeleton className="h-16 w-full rounded-lg" />
             <Skeleton className="h-16 w-full rounded-lg" />
             <Skeleton className="h-16 w-full rounded-lg" />

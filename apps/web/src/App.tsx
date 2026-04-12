@@ -1,6 +1,5 @@
 import { Route, Routes } from "react-router-dom";
 import Layout from "./components/layout/Layout";
-import ShowcasePage from "./pages/HomePage";
 import LandingPage from "./pages/LandingPage";
 import EpisodesPage from "./pages/EpisodesPage";
 import EpisodeDetailPage from "./pages/EpisodeDetailPage";
@@ -14,7 +13,6 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Layout />}>
         <Route index element={<LandingPage />} />
-        <Route path="showcase" element={<ShowcasePage />} />
         <Route path="episodes" element={<EpisodesPage />} />
         <Route path="episodes/:slug" element={<EpisodeDetailPage />} />
         <Route path="characters" element={<CharactersPage />} />

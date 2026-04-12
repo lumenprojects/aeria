@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getEpisode } from "@/lib/api";
 import { EntityAvatar, Flag } from "@/components/entities";
@@ -15,6 +15,7 @@ export default function EpisodeDetailPage() {
   if (!data) return null;
   const titleNative = data.episode.title_native ?? data.episode.title_ru;
   const showRuTitle = data.episode.title_native && data.episode.title_native !== data.episode.title_ru;
+  const seriesColor = data.series?.brand_color ?? "var(--accent)";
 
   return (
     <div className="episode-detail-page">
@@ -30,6 +31,18 @@ export default function EpisodeDetailPage() {
               <Typography variant="h3" fontRole="body" as="p" className="episode-detail-title-ru tone-secondary">
                 {data.episode.title_ru}
               </Typography>
+            )}
+            {data.series && (
+              <Link to={data.series.url} className="episode-detail-series-link ui-underline-hover">
+                <span
+                  className="episode-detail-series-dot"
+                  style={{ backgroundColor: seriesColor }}
+                  aria-hidden="true"
+                />
+                <Typography variant="ui" as="span" className="tone-secondary episode-detail-series-label">
+                  {data.series.title_ru}
+                </Typography>
+              </Link>
             )}
           </div>
           {data.characters.length > 0 && (

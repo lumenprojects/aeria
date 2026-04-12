@@ -20,7 +20,7 @@ import {
   Skeleton,
   Typography
 } from "@/components/ui";
-import { getCharacters, getEpisodes, getHomeSnapshot, getSeriesList } from "@/lib/api";
+import { getCharacters, getEpisodes, getHomeSnapshot, getSeries, getSeriesList } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const SEARCH_DEBOUNCE_MS = 200;
@@ -101,6 +101,21 @@ function formatReadingMinutesLabel(readingMinutes: number | null) {
   return `${readingMinutes} ${unit}`;
 }
 
+function formatEpisodeCountLabel(count: number) {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+
+  if (mod10 === 1 && mod100 !== 11) {
+    return `${count} эпизод`;
+  }
+
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+    return `${count} эпизода`;
+  }
+
+  return `${count} эпизодов`;
+}
+
 export default function EpisodesPage() {
   const reduceMotion = useReducedMotion();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -178,6 +193,12 @@ export default function EpisodesPage() {
     queryFn: () => getSeriesList({ page: 1, limit: 100 })
   });
 
+  const activeSeriesQuery = useQuery({
+    queryKey: ["series", "detail", seriesParam],
+    queryFn: () => getSeries(seriesParam),
+    enabled: Boolean(seriesParam)
+  });
+
   const characterOptions = React.useMemo(
     () => buildCharacterOptions(charactersListQuery.data?.items ?? [], characterParam),
     [characterParam, charactersListQuery.data?.items]
@@ -195,6 +216,17 @@ export default function EpisodesPage() {
     [episodesQuery.data?.items, qParam]
   );
   const hasActiveFilters = Boolean(characterParam || seriesParam || sortParam !== DEFAULT_SORT);
+  const activeSeries = activeSeriesQuery.data?.series ?? null;
+  const activeSeriesTitle =
+    activeSeries?.title_ru ??
+    seriesOptions.find((option) => option.value === seriesParam)?.label ??
+    seriesParam;
+  const activeSeriesSummary =
+    activeSeries?.summary ??
+    "Серия объединяет несколько близких по ритму и направлению глав, чтобы их было удобно читать как одну линию.";
+  const activeSeriesEpisodeCount = activeSeriesQuery.data?.episodes.length ?? null;
+  const hasSecondarySeriesFilters = Boolean(qParam || characterParam || sortParam !== DEFAULT_SORT);
+  const activeSeriesColor = activeSeries?.brand_color ?? "var(--accent)";
 
   const layoutTransition = React.useMemo(
     () =>
@@ -265,6 +297,57 @@ export default function EpisodesPage() {
             </AccordionItem>
           </Accordion>
         </section>
+
+        {seriesParam && (
+          <section
+            className="episodes-series-context"
+            data-testid="episodes-series-context"
+            aria-label={`Контекст серии ${activeSeriesTitle}`}
+          >
+            <div className="episodes-series-context-head">
+              <div className="episodes-series-context-kicker">
+                <span
+                  className="episodes-series-context-dot"
+                  style={{ backgroundColor: activeSeriesColor }}
+                  aria-hidden="true"
+                />
+                <Typography variant="ui" as="p" className="tone-tertiary">
+                  Серия
+                </Typography>
+              </div>
+
+              <button
+                type="button"
+                className="episodes-series-context-reset tone-secondary ui-underline-hover"
+                onClick={() => updateParams({ series: null })}
+              >
+                Показать весь каталог
+              </button>
+            </div>
+
+            <Typography variant="h2" as="h2" className="episodes-series-context-title">
+              {activeSeriesTitle}
+            </Typography>
+
+            <Typography variant="body" fontRole="body" className="tone-secondary episodes-series-context-summary">
+              {activeSeriesSummary}
+            </Typography>
+
+            <div className="episodes-series-context-meta">
+              {activeSeriesEpisodeCount !== null && (
+                <Typography variant="ui" as="p" className="tone-secondary episodes-series-context-note">
+                  {`В серии ${formatEpisodeCountLabel(activeSeriesEpisodeCount)}`}
+                </Typography>
+              )}
+
+              {hasSecondarySeriesFilters && (
+                <Typography variant="ui" as="p" className="tone-secondary episodes-series-context-note">
+                  Ниже список дополнительно сужен поиском или фильтрами.
+                </Typography>
+              )}
+            </div>
+          </section>
+        )}
 
         <div className="episodes-catalog-controls">
           <label className="episodes-catalog-search-shell" aria-label="Поиск эпизодов">

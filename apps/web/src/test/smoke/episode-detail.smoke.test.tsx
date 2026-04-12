@@ -124,6 +124,7 @@ describe("EpisodeDetailPage smoke", () => {
 
     expect(screen.getByText("За пределами виноградников")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Флаг страны: Авзония" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Жёлтая Луна" })).toHaveAttribute("href", "/episodes?series=yellow-moon");
     expect(screen.getByRole("link", { name: "Арно Дюмонт" })).toHaveAttribute("href", "/characters/arnaud-dumont");
     expect(screen.getByText("Форсиль Виллет", { selector: "a.inline-entity-reference" })).toHaveAttribute(
       "href",

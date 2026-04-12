@@ -31,27 +31,27 @@
 - Есть dry-run (`content:dry-run`).
 - Ссылки по slug валидируются до записи.
 - Markdown санитизируется.
-- `characters.avatar_asset_path` обязателен; для `locations`/`atlas_entries` — опционален.
-- `country` и `location` поддерживают optional `fact`; `location` дополнительно поддерживает optional `quotes`.
-- `atlas_entries` дополнительно поддерживают editorial-поля frontmatter:
+- Данные world-индекса импортируются из `content/world` в единую сущность `atlas_entities`.
+- `characters.avatar_asset_path` обязателен; для world-сущностей — optional.
+- `world.sections[]` поддерживают editorial-поля:
   - `fact = { title, text, meta? }`
   - `quotes[] = { text, character_slug } | { text, speaker_name, speaker_meta? }`
-- `quotes` разрешены только для `location` и для `atlas_entries`, кроме `kind=geography`.
+- `quotes` задаются на уровне секции и доступны для любых world-сущностей, где это уместно редакционно.
 - `avatar_asset_path` хранится как абсолютный web-path внутри проекта (`/assets/...`).
 - `reading_minutes`: 180 слов/мин, округление вверх.
 - Индексация поиска выполняется через очередь, не в транзакции импорта.
 
 Порядок загрузки:
-- `countries -> locations -> series -> episodes -> characters -> atlas -> facts/quotes -> links`.
+- `world -> series -> episodes -> characters`.
 
 ## 4) API контракты
 Основные публичные роуты:
 - `/api/home`
+- `/api/home/world-quote/random`
 - `/api/episodes`, `/api/episodes/:slug`
 - `/api/series`, `/api/series/:slug`
 - `/api/characters`, `/api/characters/fact-of-day`, `/api/characters/:slug`, `/api/characters/:slug/preview`
 - `/api/atlas/catalog`, `/api/atlas/:slug`, `/api/atlas/:slug/preview`
-- `/api/countries`, `/api/locations`
 - `/api/search`
 
 Общие правила:
@@ -82,36 +82,42 @@ Shape item в `/api/characters`:
 ### `/api/home`
 - Отдаёт `latest_episode`, `about_profile`, `world_quote`.
 
+### `/api/home/world-quote/random`
+- Возвращает случайную цитату мира.
+- Поддерживает optional `exclude_id`, чтобы не повторять только что показанную цитату.
+- Используется главной страницей для кнопки `Подслушать ещё`.
+
 ### `/api/atlas/catalog`
-- Единый мировой индекс для `country`, `location`, `atlas_entry`.
-- Поддерживает: `page`, `limit`, `q`, `entity`, `kind`, `country`, `anchor`, `sort`.
+- Единый мировой индекс для `country`, `location` и остальных `atlas_entities`.
+- Поддерживает: `page`, `limit`, `q`, `type`, `section`, `country`, `location`, `sort`.
 - `sort`: `title_asc` (default), `title_desc`, `recent`.
 - `q` ищет по:
-  - `title_ru`, `summary`, `body/content_markdown`;
+  - `title_ru`, `summary`, `overview_markdown`;
   - `country.title_ru`, `location.title_ru`;
-  - `relation.label`.
+  - списку секций world-узла.
 - Shape item:
-  - `node_type`,
-  - `kind | null`,
+  - `type`,
+  - `sections[]`,
   - resolved `country` и `location`,
-  - `anchor_mode`,
   - `related_count`,
   - `published_at`.
+- Ответ дополнительно содержит facets:
+  - `type`,
+  - `section`,
+  - `country`,
+  - `location`.
 
 ### `/api/atlas/:slug`
-- Detail работает для трёх типов world-node:
-  - `atlas_entry`,
-  - `country` fallback по slug,
-  - `location` fallback по slug.
+- Detail работает по единой записи из `atlas_entities`.
 - Payload содержит:
-  - `node_type`,
-  - resolved `location`,
-  - `fact`,
-  - `quotes[]`,
-  - `relations` с resolved target `{ type, slug, url, title, avatar_asset_path, country? }`.
+  - `entity`,
+  - `sections[]`,
+  - `relations[]`.
+- `sections[]` включают `title_ru`, `summary`, `body_markdown`, optional `fact`, optional `quotes[]`.
+- `relations[]` содержат resolved target `{ type, slug, url, title, avatar_asset_path, country? }`.
 
 ### `/api/atlas/:slug/preview`
-- Preview содержит `node_type`.
+- Preview содержит `type`, `sections[]`, optional `country` и optional `location`.
 
 ## 5) Поиск
 - Глобальный поиск (navbar): `Ctrl/Cmd + K`, группы по типам сущностей.
@@ -190,11 +196,11 @@ Reading progress:
 ## 7) Каталоги (v1)
 ### `/episodes`
 Текущий состав:
-1. Интро-блок каталога.
-2. `SectionBreak` (`line`).
-3. Каталог: `поиск + фильтры`.
-4. Список строк эпизодов.
-5. Если страница открыта с `series` в URL, сверху появляется context-summary блока серии с отдельным reset.
+1. Hero-блок `Самый свежий Эпизод`.
+2. FAQ-блок об эпизодах и сериях.
+3. Optional context-блок активной серии, если открыт `/episodes?series=...`.
+4. Каталог: `поиск + фильтры`.
+5. Список строк эпизодов.
 
 Контейнер и ритм:
 - каталог живёт в `width-medium`;
@@ -205,13 +211,13 @@ Reading progress:
 Фильтры v1:
 - `Персонаж`, `Серия`, `Порядок`, `Сбросить фильтры`;
 - поиск работает локально по заголовку, описанию и номеру уже загруженных эпизодов;
-- series-context может быть сброшен отдельно через summary block;
+- при активной `series` страница показывает краткий контекст выбранной серии и действие `Показать весь каталог`;
 - surface: inline collapsible drawer под поиском, открывается icon-control кнопкой.
 
 Строка эпизода:
 - полностью кликабельна (переход на reading/detail);
-- структура: номерной блок + вертикальный текстовый блок + chevron;
-- внутри текстового блока допустимы `title_native`, `title_ru`, meta-line и summary;
+- структура: номерной блок + вертикальный текстовый блок;
+- внутри текстового блока используются `title_ru`, участники, summary, серия и время чтения;
 - нижняя линия: default `divider`, на hover плавно в `accent`;
 - визуально ощущается частью той же системы, что и каталог персонажей, но различается силуэтом и акцентом на номер/редакционную подачу.
 
@@ -226,46 +232,46 @@ Reading progress:
 - каталог живёт в `width-medium`.
 - разрыв между controls и списком: `--space-lg`.
 - UI пагинации нет; загружается до 100 записей.
-- список имеет стабильную высоту (min/max) и внутренний `overflow-y`, чтобы страница не дёргалась при сужении выдачи.
+- список живёт в нормальном потоке страницы, без внутреннего `overflow-y`.
 
 Фильтры v1:
 - `Страна`, `Принадлежность`, `Сортировка`, `Сбросить`.
-- Surface: desktop-панель справа, mobile-полноширинное меню.
+- Surface: inline collapsible drawer под поиском; на mobile сетка фильтров схлопывается в одну колонку.
 
 Строка персонажа:
 - полностью кликабельна (переход на detail),
-- структура: `Avatar(sm)` + вертикальный блок + chevron,
+- структура: `Avatar(md)` + вертикальный блок + chevron,
 - inset `--space-md`, gap `--space-md`, внутри текстового блока `--space-sm`,
 - нижняя линия: default `divider`, на hover плавно в `accent`.
 - при отсутствии страны/принадлежности используется нейтральный fallback без ломки ритма.
 
 ### `/atlas`
 Текущий состав:
-1. Типографский intro блока.
-2. Видимая taxonomy-bar с быстрыми якорями `Страны -> Локации -> Записи атласа`.
-3. Две строки controls:
-   - primary: `поиск`, `сущность`, `страна`;
-   - secondary: `слой`, `привязка`, `сортировка`.
+1. Optional feature-блок с редакционным входом в атлас.
+2. `SectionBreak` (`line`) между feature и каталогом.
+3. Каталог: `поиск + кнопка фильтров`.
 4. Applied filters bar с `Сбросить всё`.
-5. Группированный editorial-list.
+5. Toolbar `Режим обзора` с переключением режима list/section.
+6. Inline collapsible drawer с фильтрами.
+7. Результаты каталога в list-режиме или grouped-режиме.
 
 Контейнер и ритм:
-- каталог живёт в `width-wide`;
+- каталог живёт в `width-medium`;
 - иерархия строится воздухом, типографикой и underline-системой;
-- boxed rows, карточные заливки и бордер-сетки запрещены.
+- редакционные блоки могут использовать карточную/медийную подачу, но list-строки остаются частью общей системы каталога.
 
 Поведение и визуальный контракт:
 - `/atlas` является единым world index, а не каталогом только `atlas_entries`;
-- все видимые сигналы в строке обязаны иметь фильтрационный паритет (`entity/country/kind/anchor`);
+- все видимые сигналы в строке обязаны иметь фильтрационный паритет (`type/country/location/section`);
 - строки полностью кликабельны и подаются как editorial-узлы:
   - заголовок,
-  - контекст (`тип / локация / страна / привязка`),
+  - контекст (`тип / секции / страна / локация`),
   - summary,
   - число связей.
 
 ### `/characters/:slug`
 Текущий состав:
-1. Hero профиля: аватар + имя (`h1`, `ru/native`) + флаг страны рядом с именем + ссылка принадлежности (без текстового префикса).
+1. Hero профиля: аватар + имя (`h1`) + флаг страны рядом с именем.
 2. `SectionBreak` (`line`) сразу после hero.
 3. Ниже hero — горизонтальная прокручиваемая лента параметров (conveyor-паттерн главной) без разделителей.
 4. Отдельная центрированная секция tagline: текст второстепенного тона `36%` (tone-tertiary) в размере `h2`, с типографскими кавычками, без подписи секции.
@@ -280,7 +286,7 @@ Reading progress:
 - в секциях используются только линии, типографика и воздух; сплошные заливные surface-блоки запрещены.
 
 Поведение и визуальный контракт:
-- ссылки на принадлежность/источники и строки глав используют системный `ui-underline-hover`;
+- ссылки на источники слухов и строки глав используют системный `ui-underline-hover`;
 - список глав визуально родственен `/episodes`, но имеет отдельный силуэт страницы персонажа;
 - биография использует reading-паттерн (`MarkdownContent preset="reading"`), но остаётся в структуре detail-страницы.
 - нижний фиксированный флаг (центр, размер `md`, bottom `--space-md`) появляется только когда флаг рядом с именем ушёл из viewport;
@@ -289,27 +295,25 @@ Reading progress:
 
 ### `/atlas/:slug`
 Текущий состав:
-1. Типографский hero: `node_type`, `kind`, название (`h1`), флаг страны и summary.
-2. Сразу под hero — `EntityFactStrip` (`Сущность`, `Тип`, `Привязка`, `Страна/Локация`, `Дата`, `Связи`).
-3. `SectionBreak` (`line`) как разделитель между hero и основным контентом.
-4. Контентный блок:
-   - inline outline `В этой записи`, если в markdown есть минимум две внутренние секции;
-   - reading-подача текста;
-   - optional spotlight-блок факта с category-aware heading;
-   - секция `Что говорят`, если у узла есть 1-3 editorial-цитаты;
-   - секция `Связи` внутри основного потока чтения;
-   - compact duplicate-outline в aside на desktop допустим только как дублирующий слой.
+1. Типографский hero: название (`h1`), флаг страны и summary.
+2. Блок `Описание` с reading-подачей overview.
+3. `SectionBreak` (`line`) перед детализированными секциями world-узла.
+4. Список секций узла:
+   - заголовок и optional summary секции;
+   - optional reading-body;
+   - optional editorial-цитаты;
+   - optional fact-блок.
+5. `SectionBreak` (`stars`) перед grouped relations.
+6. Отдельная секция `Связи`.
 
 Контейнер и ритм:
 - каркас страницы живёт в `width-wide`;
-- reading-колонка держит `width-narrow` внутри общего grid;
+- reading-блоки держат `width-narrow` внутри общего каркаса;
 - вертикальный ритм строится через `--space-lg/--space-xl/--space-2xl`;
 - в секциях используются только линии, типографика и воздух; сплошные заливные surface-блоки запрещены.
 
 Поведение и визуальный контракт:
 - slug-страницы атласа остаются detail-узлом и не копируют силуэт `/characters/:slug`;
-- fallback для `country` и `location` явно маркируется как `World node`, а не как обычная atlas-entry;
-- сигнатура без изображения использует типографский mark, а не пустой media-box;
 - editorial-слой строится через `fact` и `quotes`, без карточных заливок и декоративных рамок;
 - связи группируются по типу цели и каждая строка становится кликабельной навигационной единицей;
 - основной текст записи рендерится через `MarkdownContent preset="reading"`.
