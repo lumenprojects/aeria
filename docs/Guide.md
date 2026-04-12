@@ -181,6 +181,7 @@ Reading progress:
 - ссылок разделов navbar,
 - кнопок `Поиск`, `Aa`, `...`,
 - кнопок фильтров в каталогах персонажей и эпизодов.
+- generic visual contract для control-элементов живёт в shared UI-layer; `navbar-*` используется только для navbar-layout/placement/reading-state и не применяется вне navbar как универсальный visual namespace.
 
 ### Настройки navbar
 Источник истины: cookie `aeria-theme`.
@@ -331,6 +332,7 @@ Reading progress:
 - Только системные токены, без page-local чисел.
 - Нельзя добавлять локальные `clamp()` под один блок.
 - Нельзя дублировать ритм одновременно через `gap` и `margin`.
+- Повторяющиеся control/search/filter/quote-паттерны оформляются как shared assets: React-примитив в `components/ui` + общий CSS-слой. Page-local визуальные форки для этих паттернов запрещены.
 - Любая визуальная правка должна синхронизировать код и docs в одном изменении.
 - Для иконографических стрелок предпочтителен единый asset `/assets/icons/aeria-arrow.svg`; текстовые символы `<` и `>` допустимы только там, где это отдельно закреплено UX-контрактом.
 

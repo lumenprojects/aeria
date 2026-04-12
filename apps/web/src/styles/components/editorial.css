@@ -1,0 +1,66 @@
+.editorial-quote-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin: 0;
+}
+
+.editorial-quote-card::before {
+  content: "“";
+  font-family: var(--font-heading, "Playfair Display"), serif;
+  font-size: var(--type-medium);
+  line-height: 0.8;
+  opacity: var(--opacity-36);
+}
+
+.editorial-quote-text {
+  margin: 0;
+  padding: 0;
+}
+
+.editorial-quote-copy {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.editorial-quote-footer {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.editorial-quote-avatar-link {
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: 999px;
+}
+
+.editorial-quote-avatar {
+  background: transparent;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.editorial-quote-source {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.editorial-quote-speaker-link,
+.editorial-quote-secondary-link {
+  width: fit-content;
+  color: inherit;
+  --ui-underline-offset: -2px;
+}
+
+.editorial-quote-speaker,
+.editorial-quote-meta {
+  margin: 0;
+}
+
+.editorial-quote-meta {
+  text-wrap: pretty;
+}

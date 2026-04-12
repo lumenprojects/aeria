@@ -1,11 +1,12 @@
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import type { AtlasDetailResponseDTO, AtlasEntityType, AtlasResolvedRelationDTO, AtlasSection } from "@aeria/shared";
-import { EntityAvatar, Flag } from "@/components/entities";
+import type { AtlasEntityType, AtlasResolvedRelationDTO, AtlasSection } from "@aeria/shared";
+import { Flag } from "@/components/entities";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
+  EditorialQuoteCard,
   MarkdownContent,
   SectionBreak,
   Typography,
@@ -160,48 +161,16 @@ export default function AtlasDetailPage() {
                 {section.quotes.length > 0 ? (
                   <div className="atlas-article-quotes-list" data-testid="atlas-detail-quotes">
                     {section.quotes.map((quote) => (
-                      <figure key={`${section.section}-${quote.id}`} className="atlas-article-quote-card">
-                        <blockquote className="atlas-article-quote-text">
-                          <Typography variant="body" as="p" className="atlas-article-quote-copy">
-                            {quote.text}
-                          </Typography>
-                        </blockquote>
-
-                        <figcaption className="atlas-article-quote-footer">
-                          {quote.character ? (
-                            <EntityAvatar
-                              entityType="character"
-                              entitySlug={quote.character.slug}
-                              imageSrc={quote.character.avatar_asset_path}
-                              label={quote.character.name_ru}
-                              ariaLabel={`Открыть персонажа ${quote.character.name_ru}`}
-                              size="sm"
-                              className="atlas-article-quote-avatar-link"
-                              avatarClassName="atlas-article-quote-avatar"
-                            />
-                          ) : null}
-
-                          <div className="atlas-article-quote-source">
-                            {quote.character ? (
-                              <Link to={quote.character.url} className="ui-underline-hover atlas-article-quote-speaker-link">
-                                <Typography variant="ui" as="span" className="atlas-article-quote-speaker">
-                                  {quote.speaker_name}
-                                </Typography>
-                              </Link>
-                            ) : (
-                              <Typography variant="ui" as="p" className="atlas-article-quote-speaker">
-                                {quote.speaker_name}
-                              </Typography>
-                            )}
-
-                            {quote.speaker_meta ? (
-                              <Typography variant="ui" as="p" className="tone-secondary atlas-article-quote-meta">
-                                {quote.speaker_meta}
-                              </Typography>
-                            ) : null}
-                          </div>
-                        </figcaption>
-                      </figure>
+                      <EditorialQuoteCard
+                        key={`${section.section}-${quote.id}`}
+                        text={quote.text}
+                        speaker={quote.speaker_name}
+                        speakerMeta={quote.speaker_meta}
+                        speakerHref={quote.character?.url}
+                        avatarSrc={quote.character?.avatar_asset_path}
+                        avatarLabel={quote.character?.name_ru}
+                        avatarHref={quote.character?.url}
+                      />
                     ))}
                   </div>
                 ) : null}

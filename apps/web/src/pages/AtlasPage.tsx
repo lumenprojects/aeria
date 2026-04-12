@@ -1,26 +1,29 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { type AtlasCatalogSort } from "@aeria/shared";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Search, SlidersHorizontal } from "lucide-react";
-import { AppliedFiltersBar, Input, SectionBreak, SelectField, Typography, type AppliedFilterItem } from "@/components/ui";
+import { useReducedMotion } from "framer-motion";
+import {
+  AppliedFiltersBar,
+  CatalogFiltersPanel,
+  CatalogSearchControls,
+  SectionBreak,
+  SelectField,
+  Typography,
+  type AppliedFilterItem
+} from "@/components/ui";
 import {
   AtlasCatalogFeature,
   AtlasCatalogResults,
   AtlasCatalogViewSwitch,
-  atlasSectionLabels,
-  atlasTypeLabels,
   buildAtlasFeatureEntry,
   type AtlasCatalogViewMode
 } from "@/components/atlas";
 import { useUnderlineActivation } from "@/components/search/useUnderlineActivation";
 import { getAtlasCatalog } from "@/lib/api";
-import { cn } from "@/lib/utils";
 import { useSearchParams } from "react-router-dom";
 
 const DEFAULT_SORT: AtlasCatalogSort = "title_asc";
 const SEARCH_DEBOUNCE_MS = 200;
-const MOTION_EASE = [0.22, 1, 0.36, 1] as const;
 
 const sortLabels: Record<AtlasCatalogSort, string> = {
   title_asc: "Название А-Я",
@@ -208,41 +211,23 @@ export default function AtlasPage() {
 
       <section className="width-medium atlas-catalog atlas-catalog-shell" data-testid="atlas-world-catalog">
         <div className="atlas-world-controls" aria-label="Фильтры каталога атласа">
-          <div className="atlas-catalog-controls">
-            <label className="atlas-catalog-search-shell" aria-label="Поиск по атласу">
-              <Search size={18} className="atlas-catalog-search-icon" aria-hidden="true" />
-              <Input
-                appearance="ghost"
-                data-testid="atlas-world-search"
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                onFocus={queueUnderlineActivation}
-                onBlur={() => {
-                  clearUnderlineActivation();
-                  setIsUnderlineActive(false);
-                }}
-                placeholder="Поиск по миру..."
-                className={cn(
-                  "atlas-catalog-search-input role-ui interactive-input-underline",
-                  isUnderlineActive && "interactive-input-underline-active"
-                )}
-              />
-            </label>
-
-            <button
-              type="button"
-              aria-label="Показать фильтры атласа"
-              aria-expanded={isFiltersOpen}
-              className={cn(
-                "navbar-icon atlas-catalog-filter-button ui-underline-click",
-                isFiltersOpen && "navbar-icon-active ui-underline-active"
-              )}
-              onClick={() => setIsFiltersOpen((value) => !value)}
-              data-testid="atlas-filter-button"
-            >
-              <SlidersHorizontal size={18} />
-            </button>
-          </div>
+          <CatalogSearchControls
+            searchLabel="Поиск по атласу"
+            searchPlaceholder="Поиск по миру..."
+            searchValue={searchInput}
+            onSearchChange={setSearchInput}
+            onSearchFocus={queueUnderlineActivation}
+            onSearchBlur={() => {
+              clearUnderlineActivation();
+              setIsUnderlineActive(false);
+            }}
+            isUnderlineActive={isUnderlineActive}
+            filterButtonLabel="Показать фильтры атласа"
+            isFiltersOpen={isFiltersOpen}
+            onToggleFilters={() => setIsFiltersOpen((value) => !value)}
+            filterButtonTestId="atlas-filter-button"
+            inputTestId="atlas-world-search"
+          />
 
           <AppliedFiltersBar items={activeFilters} onClearAll={hasActiveState ? clearAll : undefined} />
 
@@ -253,86 +238,67 @@ export default function AtlasPage() {
             <AtlasCatalogViewSwitch value={viewMode} onChange={setViewMode} />
           </div>
 
-          <AnimatePresence initial={false}>
-            {isFiltersOpen && (
-              <motion.div
-                initial={reduceMotion ? false : { opacity: 0, y: -8 }}
-                animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-                exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
-                transition={reduceMotion ? { duration: 0 } : { duration: 0.22, ease: MOTION_EASE }}
-                className="atlas-filters-drawer role-ui"
-                data-testid="atlas-filters-panel"
-              >
-                <div className="atlas-filters-grid">
-                  <SelectField
-                    label="Страна"
-                    value={countryParam}
-                    onValueChange={(value) => updateParams({ country: value || null })}
-                    options={(facets?.country ?? []).map((item) => ({ value: item.slug, label: item.title_ru }))}
-                    fieldClassName="atlas-filters-field"
-                    triggerClassName="atlas-filters-select"
-                    triggerTestId="atlas-world-filter-country"
-                  />
+          <CatalogFiltersPanel
+            open={isFiltersOpen}
+            reduceMotion={reduceMotion}
+            columns={2}
+            resetLabel="Сбросить фильтры"
+            onReset={() => updateParams({ type: null, section: null, country: null, location: null, sort: null })}
+            resetDisabled={!hasActiveFilters}
+            testId="atlas-filters-panel"
+          >
+            <SelectField
+              label="Страна"
+              value={countryParam}
+              onValueChange={(value) => updateParams({ country: value || null })}
+              options={(facets?.country ?? []).map((item) => ({ value: item.slug, label: item.title_ru }))}
+              fieldClassName="catalog-filters-field"
+              triggerTestId="atlas-world-filter-country"
+            />
 
-                  <SelectField
-                    label="Локация"
-                    value={locationParam}
-                    onValueChange={(value) => updateParams({ location: value || null })}
-                    options={(facets?.location ?? []).map((item) => ({ value: item.slug, label: item.title_ru }))}
-                    fieldClassName="atlas-filters-field"
-                    triggerClassName="atlas-filters-select"
-                    triggerTestId="atlas-world-filter-location"
-                  />
+            <SelectField
+              label="Локация"
+              value={locationParam}
+              onValueChange={(value) => updateParams({ location: value || null })}
+              options={(facets?.location ?? []).map((item) => ({ value: item.slug, label: item.title_ru }))}
+              fieldClassName="catalog-filters-field"
+              triggerTestId="atlas-world-filter-location"
+            />
 
-                  <SelectField
-                    label="Секция"
-                    value={sectionParam}
-                    onValueChange={(value) => updateParams({ section: value || null })}
-                    options={(facets?.section ?? []).map((item) => ({ value: item.value, label: item.label }))}
-                    fieldClassName="atlas-filters-field"
-                    triggerClassName="atlas-filters-select"
-                    triggerTestId="atlas-world-filter-section"
-                  />
+            <SelectField
+              label="Секция"
+              value={sectionParam}
+              onValueChange={(value) => updateParams({ section: value || null })}
+              options={(facets?.section ?? []).map((item) => ({ value: item.value, label: item.label }))}
+              fieldClassName="catalog-filters-field"
+              triggerTestId="atlas-world-filter-section"
+            />
 
-                  <SelectField
-                    label="Тип"
-                    value={typeParam}
-                    onValueChange={(value) => updateParams({ type: value || null })}
-                    options={(facets?.type ?? []).map((item) => ({ value: item.value, label: item.label }))}
-                    fieldClassName="atlas-filters-field"
-                    triggerClassName="atlas-filters-select"
-                    triggerTestId="atlas-world-filter-type"
-                  />
+            <SelectField
+              label="Тип"
+              value={typeParam}
+              onValueChange={(value) => updateParams({ type: value || null })}
+              options={(facets?.type ?? []).map((item) => ({ value: item.value, label: item.label }))}
+              fieldClassName="catalog-filters-field"
+              triggerTestId="atlas-world-filter-type"
+            />
 
-                  <SelectField
-                    label="Сортировка"
-                    value={sortParam}
-                    onValueChange={(value) => {
-                      const nextSort = normalizeSort(value);
-                      updateParams({ sort: nextSort === DEFAULT_SORT ? null : nextSort });
-                    }}
-                    options={[
-                      { value: "title_asc", label: "Название А-Я" },
-                      { value: "title_desc", label: "Название Я-А" },
-                      { value: "recent", label: "Сначала новое" }
-                    ]}
-                    fieldClassName="atlas-filters-field"
-                    triggerClassName="atlas-filters-select"
-                    triggerTestId="atlas-world-filter-sort"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  className="atlas-filters-reset tone-secondary ui-underline-hover"
-                  onClick={() => updateParams({ type: null, section: null, country: null, location: null, sort: null })}
-                  disabled={!hasActiveFilters}
-                >
-                  Сбросить фильтры
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            <SelectField
+              label="Сортировка"
+              value={sortParam}
+              onValueChange={(value) => {
+                const nextSort = normalizeSort(value);
+                updateParams({ sort: nextSort === DEFAULT_SORT ? null : nextSort });
+              }}
+              options={[
+                { value: "title_asc", label: "Название А-Я" },
+                { value: "title_desc", label: "Название Я-А" },
+                { value: "recent", label: "Сначала новое" }
+              ]}
+              fieldClassName="catalog-filters-field"
+              triggerTestId="atlas-world-filter-sort"
+            />
+          </CatalogFiltersPanel>
         </div>
 
         <div className="atlas-catalog-list" data-testid="atlas-world-list">

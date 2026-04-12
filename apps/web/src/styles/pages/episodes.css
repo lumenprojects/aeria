@@ -1,0 +1,300 @@
+.episode-detail-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2xl);
+}
+
+.episode-detail-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+  text-align: center;
+}
+
+.episode-detail-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.episode-detail-title-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.episode-detail-series-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: inherit;
+  --ui-underline-offset: -2px;
+}
+
+.episode-detail-series-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.episode-detail-title-en,
+.episode-detail-title-ru,
+.episode-detail-series-label {
+  margin: 0;
+}
+
+.episode-detail-participants {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.episode-detail-avatar-link {
+  display: inline-flex;
+  border-radius: 999px;
+}
+
+.episode-detail-avatar {
+  background: var(--surface);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.episode-detail-content {
+  width: min(100%, var(--width-narrow));
+}
+
+.episodes-catalog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.episodes-catalog-release {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  justify-content: center;
+  min-height: clamp(24rem, 52vh, 40rem);
+}
+
+.episodes-catalog-head {
+  display: grid;
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+.episodes-catalog-intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.episodes-catalog-title,
+.episodes-catalog-release-title,
+.episodes-catalog-lead,
+.episodes-series-context-title,
+.episodes-series-context-summary,
+.episodes-series-context-note {
+  margin: 0;
+}
+
+.episodes-catalog-release-title {
+  align-self: center;
+  text-align: center;
+}
+
+.episodes-catalog .home-faq {
+  padding-top: var(--space-xl);
+  padding-bottom: var(--space-xl);
+}
+
+.episodes-series-context {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding-top: var(--space-lg);
+  padding-bottom: var(--space-lg);
+  border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.episodes-series-context-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.episodes-series-context-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.episodes-series-context-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.episodes-series-context-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.episodes-series-context-reset {
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  cursor: pointer;
+  --ui-underline-offset: -2px;
+}
+
+.episodes-catalog-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.episodes-catalog-skeleton-item {
+  width: 100%;
+  height: calc(var(--space-xl) + var(--space-lg));
+  border-radius: var(--radius-md);
+}
+
+.episodes-catalog-skeleton-item + .episodes-catalog-skeleton-item {
+  margin-top: var(--space-sm);
+}
+
+.episodes-catalog-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-md);
+  align-items: center;
+  padding-inline: var(--space-md);
+  padding-block: 0;
+  --ui-underline-offset: 0;
+  --ui-underline-thickness: 1px;
+  --ui-underline-hover-idle-scale: 1;
+  --ui-underline-hover-idle-opacity: 1;
+  --ui-underline-hover-idle-color: color-mix(in srgb, var(--text) 8%, transparent);
+  --ui-underline-hover-idle-thickness: 1px;
+  --ui-underline-hover-active-color: var(--accent);
+  --ui-underline-hover-active-thickness: var(--nav-underline-thickness);
+}
+
+.episodes-catalog-item-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-width: 0;
+  min-height: 100%;
+  padding-block: var(--space-md);
+}
+
+.episodes-catalog-item-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-md);
+  align-items: start;
+}
+
+.episodes-catalog-item-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-width: 0;
+}
+
+.episodes-catalog-item-series {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.episodes-catalog-item-series-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.episodes-catalog-item-series-label,
+.episodes-catalog-item-title,
+.episodes-catalog-item-summary {
+  margin: 0;
+}
+
+.episodes-catalog-item-participants {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.episodes-catalog-item-avatar-link {
+  display: inline-flex;
+  border-radius: 999px;
+}
+
+.episodes-catalog-item-avatar {
+  background: var(--surface);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.episodes-catalog-item-number {
+  margin: 0;
+  text-align: right;
+}
+
+.episodes-catalog-item-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-height: var(--avatar-sm);
+  min-width: 0;
+}
+
+.episodes-catalog-item-reading {
+  margin: 0;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .episodes-catalog-item {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .episodes-catalog-item-header {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .episodes-catalog-item-number {
+    text-align: left;
+  }
+
+  .episodes-catalog-item-footer {
+    justify-content: flex-start;
+  }
+
+  .episodes-catalog-item-reading {
+    margin-left: 0;
+  }
+}
+
+@media (min-width: 768px) {
+  .episodes-catalog-head {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.85fr);
+  }
+}

@@ -30,19 +30,23 @@ export function SelectField({
   triggerTestId
 }: SelectFieldProps) {
   return (
-    <div className={fieldClassName}>
-      <span className="navbar-label">{label}</span>
+    <div className={cn("control-field", fieldClassName)}>
+      <span className="control-label">{label}</span>
       <Select value={value || EMPTY_SELECT_VALUE} onValueChange={(nextValue) => onValueChange(nextValue === EMPTY_SELECT_VALUE ? "" : nextValue)}>
-        <SelectTrigger className={cn("navbar-select", triggerClassName)} aria-label={label} data-testid={triggerTestId}>
-          <SelectValue className="navbar-select-value" />
+        <SelectTrigger
+          className={cn("select-field-trigger", triggerClassName)}
+          aria-label={label}
+          data-testid={triggerTestId}
+        >
+          <SelectValue className="select-field-value" />
         </SelectTrigger>
-        <SelectContent className="navbar-select-content" position="item-aligned">
-          <SelectItem value={EMPTY_SELECT_VALUE} className="navbar-select-item">
-            <span className="navbar-select-item-content">{emptyLabel}</span>
+        <SelectContent className="select-field-content" position="item-aligned">
+          <SelectItem value={EMPTY_SELECT_VALUE} className="select-field-item">
+            <span className="select-field-item-content">{emptyLabel}</span>
           </SelectItem>
           {options.map((option) => (
-            <SelectItem key={option.value} value={option.value} className="navbar-select-item">
-              <span className="navbar-select-item-content">{option.label}</span>
+            <SelectItem key={option.value} value={option.value} className="select-field-item">
+              <span className="select-field-item-content">{option.label}</span>
             </SelectItem>
           ))}
         </SelectContent>

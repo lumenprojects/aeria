@@ -1,0 +1,592 @@
+.character-detail-page {
+  gap: var(--space-2xl);
+}
+
+.character-detail-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.character-detail-hero-core {
+  display: grid;
+  gap: var(--space-xl);
+  align-items: center;
+  width: min(100%, var(--width-medium));
+}
+
+.character-detail-identity {
+  display: grid;
+  gap: var(--space-lg);
+  align-items: center;
+  justify-items: center;
+}
+
+.character-detail-avatar-shell {
+  display: inline-flex;
+  align-self: center;
+  border-radius: 999px;
+  line-height: 0;
+}
+
+.character-detail-avatar {
+  background: transparent;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.character-detail-intro {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-md);
+}
+
+.character-detail-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.character-detail-affiliation,
+.character-detail-title,
+.character-detail-native,
+.character-detail-tagline,
+.character-detail-rumors-title,
+.character-detail-section-title,
+.character-detail-section-lead,
+.character-detail-rumor-text,
+.character-detail-rumor-author,
+.character-detail-episode-title,
+.character-detail-episode-title-ru,
+.character-detail-episode-summary,
+.character-detail-episode-number,
+.character-detail-param-label,
+.character-detail-param-value {
+  margin: 0;
+}
+
+.character-detail-title-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.character-detail-title-stack {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.character-detail-title-line {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.character-detail-name-flag {
+  display: inline-flex;
+  align-items: center;
+}
+
+.character-detail-floating-flag {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-md);
+  transform: translateX(-50%);
+  z-index: 30;
+  pointer-events: none;
+}
+
+.character-detail-tagline-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(var(--space-xl) + var(--space-lg));
+  text-align: center;
+}
+
+.character-detail-tagline {
+  width: min(100%, var(--width-medium));
+  text-wrap: pretty;
+}
+
+.character-detail-affiliation-link,
+.character-detail-rumor-author-link {
+  display: inline-flex;
+  color: inherit;
+  --ui-underline-offset: -2px;
+}
+
+.character-detail-feed-conveyor {
+  width: min(100%, var(--width-wide));
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.character-detail-feed-conveyor-lane {
+  position: relative;
+  left: 50%;
+  width: 100vw;
+  margin-left: -50vw;
+  overflow: hidden;
+  line-height: 0;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.character-detail-feed-conveyor-lane::-webkit-scrollbar {
+  display: none;
+}
+
+.character-detail-feed-conveyor-lane-dragging {
+  cursor: grabbing;
+}
+
+.character-detail-feed-conveyor-track {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  gap: var(--space-xl);
+  will-change: transform;
+}
+
+.character-detail-feed-conveyor-group {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-xl);
+}
+
+.character-detail-feed-conveyor-item-shell {
+  display: inline-flex;
+  flex: 0 0 auto;
+  transform-origin: center;
+  will-change: transform, filter, opacity;
+}
+
+.character-detail-feed-conveyor-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-height: calc(var(--type-medium) + (2 * var(--space-xs)));
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.character-detail-feed-conveyor-icon {
+  width: calc(var(--type-medium) * 0.68);
+  height: calc(var(--type-medium) * 0.68);
+  flex: 0 0 auto;
+  object-fit: contain;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.character-detail-feed-conveyor-value {
+  margin: 0;
+  line-height: 1;
+}
+
+.character-detail-feed-conveyor-link {
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+}
+
+.character-detail-feed-conveyor-lane-dragging .character-detail-feed-conveyor-link {
+  pointer-events: none;
+}
+
+.character-detail-content {
+  display: grid;
+  gap: var(--space-xl);
+  align-items: start;
+}
+
+.character-detail-biography,
+.character-detail-quirks,
+.character-detail-rumors,
+.character-detail-episodes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.character-detail-biography-copy {
+  width: min(100%, var(--width-narrow));
+}
+
+.character-detail-biography-copy.markdown-content-reading {
+  gap: var(--space-lg);
+}
+
+.character-detail-quirks-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.character-detail-quirk-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-sm);
+  align-items: start;
+  padding-top: var(--space-sm);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.character-detail-quirk-index {
+  min-width: calc(var(--space-lg) + var(--space-xs));
+  line-height: 1;
+  letter-spacing: 0.08em;
+  padding-top: var(--space-1);
+}
+
+.character-detail-quirk-text {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.character-detail-section-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.character-detail-rumors-title {
+  width: min(100%, var(--width-medium));
+  text-align: center;
+}
+
+.character-detail-rumors-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-xl) var(--space-lg);
+  width: min(100%, var(--width-wide));
+}
+
+.character-detail-rumors {
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.character-detail-rumor {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.character-detail-episodes-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.character-detail-episode-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-md);
+  align-items: center;
+  padding-inline: var(--space-md);
+  padding-block: 0;
+  --ui-underline-offset: 0;
+  --ui-underline-thickness: 1px;
+  --ui-underline-hover-idle-scale: 1;
+  --ui-underline-hover-idle-opacity: 1;
+  --ui-underline-hover-idle-color: color-mix(in srgb, var(--text) 8%, transparent);
+  --ui-underline-hover-idle-thickness: 1px;
+  --ui-underline-hover-active-color: var(--accent);
+  --ui-underline-hover-active-thickness: var(--nav-underline-thickness);
+}
+
+.character-detail-episode-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding-block: var(--space-md);
+}
+
+.character-detail-episode-head {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.character-detail-episode-meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-md);
+  min-height: var(--flag-h-sm);
+}
+
+.character-detail-episode-reading {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.character-detail-episode-number {
+  text-align: right;
+  opacity: var(--opacity-64);
+}
+
+.characters-fact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  text-align: center;
+}
+
+.characters-fact-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.characters-fact-heading,
+.characters-fact-subtitle,
+.characters-fact-text,
+.characters-fact-comment-text {
+  margin: 0;
+}
+
+.characters-fact-heading em {
+  font-style: italic;
+}
+
+.characters-fact-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.characters-fact-text {
+  width: min(100%, var(--width-narrow));
+  text-wrap: balance;
+}
+
+.characters-fact-subject-avatar-link,
+.characters-fact-comment-avatar-link {
+  line-height: 0;
+}
+
+.characters-fact-divider {
+  margin-top: var(--space-xl);
+}
+
+.characters-fact-comment {
+  display: flex;
+  width: min(100%, var(--width-narrow));
+  margin-top: var(--space-xl);
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  text-align: left;
+}
+
+.characters-fact-comment-no-author {
+  text-align: center;
+}
+
+.characters-fact-comment-no-author .characters-fact-comment-text {
+  text-align: center;
+}
+
+.characters-fact-comment-text {
+  text-wrap: balance;
+}
+
+.characters-fact-skeleton {
+  display: flex;
+  width: min(100%, var(--width-medium));
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.characters-fact-skeleton-heading {
+  width: min(100%, var(--width-narrow));
+  height: var(--type-extra);
+}
+
+.characters-fact-skeleton-subtitle {
+  width: min(100%, var(--width-narrow));
+  height: var(--type-medium);
+}
+
+.characters-fact-skeleton-fact {
+  width: min(100%, var(--width-narrow));
+  height: var(--space-xl);
+}
+
+.characters-fact-skeleton-subject-avatar {
+  width: var(--avatar-md);
+  height: var(--avatar-md);
+  border-radius: 999px;
+}
+
+.characters-fact-skeleton-divider {
+  width: min(100%, var(--width-narrow));
+  height: 1px;
+}
+
+.characters-fact-skeleton-comment {
+  display: flex;
+  width: min(100%, var(--width-narrow));
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+}
+
+.characters-fact-skeleton-comment-avatar {
+  width: var(--avatar-md);
+  height: var(--avatar-md);
+  border-radius: 999px;
+}
+
+.characters-fact-skeleton-comment-text {
+  width: min(100%, var(--width-narrow));
+  height: var(--type-normal);
+}
+
+.characters-catalog {
+  display: flex;
+  flex-direction: column;
+}
+
+.characters-catalog-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-lg);
+}
+
+.characters-catalog-skeleton-item {
+  width: 100%;
+  height: var(--space-lg);
+  border-radius: var(--radius-md);
+}
+
+.characters-catalog-skeleton-item + .characters-catalog-skeleton-item {
+  margin-top: var(--space-sm);
+}
+
+.characters-catalog-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  --ui-underline-offset: 0;
+  --ui-underline-thickness: 1px;
+  --ui-underline-hover-idle-scale: 1;
+  --ui-underline-hover-idle-opacity: 1;
+  --ui-underline-hover-idle-color: color-mix(in srgb, var(--text) 8%, transparent);
+  --ui-underline-hover-idle-thickness: 1px;
+  --ui-underline-hover-active-color: var(--accent);
+  --ui-underline-hover-active-thickness: var(--nav-underline-thickness);
+}
+
+.characters-catalog-item-copy {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0;
+}
+
+.characters-catalog-item-name {
+  margin: 0;
+}
+
+.characters-catalog-item-country {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-height: var(--flag-h-md);
+  margin-top: var(--space-xs);
+}
+
+.characters-catalog-item-affiliation {
+  margin-top: var(--space-sm);
+}
+
+.characters-catalog-item-chevron {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  line-height: 1;
+  opacity: var(--opacity-64);
+}
+
+.characters-catalog-item:hover .characters-catalog-item-chevron,
+.characters-catalog-item:focus-visible .characters-catalog-item-chevron {
+  opacity: 1;
+}
+
+@media (max-width: 767px) {
+  .character-detail-episode-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .character-detail-episode-number {
+    text-align: left;
+  }
+
+  .character-detail-episode-reading {
+    margin-left: 0;
+  }
+
+  .characters-fact-comment,
+  .characters-fact-skeleton-comment {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+@media (min-width: 768px) {
+  .character-detail-hero-core {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .character-detail-identity {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .character-detail-content {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  }
+
+  .character-detail-rumors-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+  }
+}

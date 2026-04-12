@@ -1,0 +1,318 @@
+.markdown-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.markdown-content-reading {
+  gap: var(--space-md);
+  color: color-mix(in srgb, var(--text) 94%, var(--bg));
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+}
+
+.markdown-content-reading .markdown-reading-paragraph,
+.markdown-content-reading .markdown-reading-list-item,
+.markdown-content-reading .markdown-reading-blockquote {
+  text-wrap: pretty;
+}
+
+.markdown-content-reading .markdown-reading-heading {
+  text-wrap: balance;
+  margin-top: var(--space-sm);
+}
+
+.markdown-content-reading .markdown-reading-scene-label {
+  align-self: center;
+  max-width: min(100%, var(--measure-reading-scene-label));
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-sm);
+  text-align: center;
+  text-wrap: balance;
+  color: color-mix(in srgb, var(--text) 88%, var(--bg));
+}
+
+.markdown-content-reading .markdown-list {
+  gap: var(--space-sm);
+  padding-left: var(--indent-reading-list);
+}
+
+.markdown-content-reading .markdown-reading-blockquote {
+  margin-inline: var(--space-md);
+  padding-top: var(--space-xs);
+  padding-bottom: var(--space-xs);
+  padding-left: var(--space-md);
+  border-left: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
+  color: color-mix(in srgb, var(--text) 76%, var(--bg));
+  font-style: italic;
+}
+
+.markdown-content-reading .markdown-link {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, var(--accent) 68%, var(--text) 18%);
+  text-underline-offset: var(--offset-reading-link-underline);
+}
+
+.markdown-content-reading .markdown-link:hover,
+.markdown-content-reading .markdown-link:focus-visible {
+  text-decoration-color: var(--accent);
+}
+
+.markdown-divider-reading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  min-height: calc(var(--space-lg) + var(--space-sm));
+  background: none;
+  background-color: transparent;
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.markdown-divider-reading::before {
+  content: "* * *";
+  font-family: var(--font-heading, "Playfair Display"), serif;
+  font-size: var(--type-small);
+  line-height: 1;
+  letter-spacing: var(--tracking-reading-scene-break);
+  color: color-mix(in srgb, var(--text) 78%, var(--bg));
+}
+
+.markdown-content > * {
+  margin: 0;
+}
+
+.markdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: 0;
+  padding-left: 1.25em;
+}
+
+.markdown-list-unordered {
+  list-style: disc;
+}
+
+.markdown-list-ordered {
+  list-style: decimal;
+}
+
+.markdown-list-item {
+  margin: 0;
+  padding-left: var(--space-xs);
+}
+
+.markdown-link {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.inline-entity-reference {
+  cursor: pointer;
+}
+
+.entity-reference-preview-surface {
+  width: min(var(--width-preview-surface), calc(100vw - (2 * var(--space-md))));
+  padding: var(--space-md);
+}
+
+.entity-reference-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.entity-reference-preview-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.entity-reference-preview-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.entity-reference-preview-kind {
+  letter-spacing: var(--tracking-preview-kicker);
+  text-transform: uppercase;
+}
+
+.entity-reference-preview-summary {
+  margin: 0;
+}
+
+.entity-reference-preview-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.entity-reference-preview-country {
+  display: inline-flex;
+  align-items: center;
+}
+
+.entity-reference-preview-cta {
+  align-self: flex-start;
+  color: inherit;
+  text-decoration: none;
+  --ui-underline-offset: -2px;
+}
+
+.markdown-strong,
+.markdown-emphasis {
+  color: inherit;
+}
+
+.markdown-blockquote {
+  margin: 0;
+  padding-left: var(--space-sm);
+  border-left: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+.markdown-pre {
+  margin: 0;
+  overflow-x: auto;
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.markdown-code-inline,
+.markdown-code-block {
+  font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.95em;
+}
+
+.markdown-code-inline {
+  padding: 0 0.25em;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface) 88%, var(--text) 12%);
+}
+
+.markdown-divider {
+  width: 100%;
+  height: 1px;
+  background-color: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.article-outline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.article-outline-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.article-outline-item-nested {
+  padding-left: var(--space-md);
+}
+
+.article-outline-link {
+  color: inherit;
+}
+
+.article-outline-compact .article-outline-list {
+  gap: var(--space-sm);
+}
+
+.entity-fact-strip {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.entity-fact-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.entity-fact-strip-lane {
+  display: inline-flex;
+  min-width: 100%;
+  gap: var(--space-lg);
+}
+
+.entity-fact-strip-item {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: max-content;
+}
+
+.entity-fact-strip-link {
+  color: inherit;
+}
+
+.section-break {
+  margin-block: var(--space-xl);
+}
+
+.section-break-line {
+  margin-inline: auto;
+}
+
+.section-break-stars {
+  display: flex;
+  justify-content: center;
+  padding-top: 0;
+  padding-bottom: 0;
+  pointer-events: none;
+}
+
+.section-break-stars-cluster {
+  display: grid;
+  grid-template-columns: repeat(2, var(--space-lg));
+  grid-template-rows: repeat(2, var(--space-lg));
+  column-gap: var(--space-lg);
+  row-gap: var(--space-sm);
+  align-items: center;
+  justify-items: center;
+}
+
+.section-break-star {
+  display: block;
+  width: var(--space-lg);
+  height: var(--space-lg);
+  background-color: var(--text);
+  -webkit-mask-image: url("/assets/icons/star-gear.svg");
+  mask-image: url("/assets/icons/star-gear.svg");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.section-break-star-3 {
+  grid-column: 1 / span 2;
+}
+
+.home-section-divider {
+  margin-block: var(--space-xl);
+}
+
+/* In stacked page layouts the break is decorative; the stack owns the spacing rhythm. */
+.page-stack > .section-break {
+  margin-block: 0;
+}
+
+.page-stack > .section-break.section-break-stars {
+  padding-top: 0;
+}

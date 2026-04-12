@@ -2,7 +2,6 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { CharacterSort, PaginatedCharactersResponseDTO, PaginatedEpisodesResponseDTO } from "@aeria/shared";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Search, SlidersHorizontal } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { LatestEpisode } from "@/components/home/LatestEpisode";
 import { useUnderlineActivation } from "@/components/search/useUnderlineActivation";
@@ -14,14 +13,13 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-  Input,
-  SectionBreak,
+  CatalogFiltersPanel,
+  CatalogSearchControls,
   SelectField,
   Skeleton,
   Typography
 } from "@/components/ui";
 import { getCharacters, getEpisodes, getHomeSnapshot, getSeries, getSeriesList } from "@/lib/api";
-import { cn } from "@/lib/utils";
 
 const SEARCH_DEBOUNCE_MS = 200;
 const MOTION_EASE = [0.22, 1, 0.36, 1] as const;
@@ -349,100 +347,64 @@ export default function EpisodesPage() {
           </section>
         )}
 
-        <div className="episodes-catalog-controls">
-          <label className="episodes-catalog-search-shell" aria-label="Поиск эпизодов">
-            <Search size={18} className="episodes-catalog-search-icon" aria-hidden="true" />
-            <Input
-              appearance="ghost"
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              onFocus={queueUnderlineActivation}
-              onBlur={() => {
-                clearUnderlineActivation();
-                setIsUnderlineActive(false);
-              }}
-              placeholder="Поиск по главам..."
-              className={cn(
-                "episodes-catalog-search-input role-ui interactive-input-underline",
-                isUnderlineActive && "interactive-input-underline-active"
-              )}
-            />
-          </label>
+        <CatalogSearchControls
+          searchLabel="Поиск эпизодов"
+          searchPlaceholder="Поиск по главам..."
+          searchValue={searchInput}
+          onSearchChange={setSearchInput}
+          onSearchFocus={queueUnderlineActivation}
+          onSearchBlur={() => {
+            clearUnderlineActivation();
+            setIsUnderlineActive(false);
+          }}
+          isUnderlineActive={isUnderlineActive}
+          filterButtonLabel="Показать фильтры эпизодов"
+          isFiltersOpen={isFiltersOpen}
+          onToggleFilters={() => setIsFiltersOpen((value) => !value)}
+          filterButtonTestId="episodes-filter-button"
+        />
 
-          <button
-            type="button"
-            aria-label="Показать фильтры эпизодов"
-            aria-expanded={isFiltersOpen}
-            className={cn(
-              "navbar-icon episodes-catalog-filter-button ui-underline-click",
-              isFiltersOpen && "navbar-icon-active ui-underline-active"
-            )}
-            onClick={() => setIsFiltersOpen((value) => !value)}
-            data-testid="episodes-filter-button"
-          >
-            <SlidersHorizontal size={18} />
-          </button>
-        </div>
+        <CatalogFiltersPanel
+          open={isFiltersOpen}
+          reduceMotion={Boolean(reduceMotion)}
+          resetLabel="Сбросить фильтры"
+          onReset={() => updateParams({ character: null, series: null, sort: null })}
+          resetDisabled={!hasActiveFilters}
+          testId="episodes-filters-panel"
+        >
+          <SelectField
+            label="Персонаж"
+            value={characterParam}
+            onValueChange={(value) => updateParams({ character: value || null })}
+            options={characterOptions}
+            fieldClassName="catalog-filters-field"
+            triggerTestId="episodes-filter-character"
+          />
 
-        <AnimatePresence initial={false}>
-          {isFiltersOpen && (
-            <motion.div
-              initial={reduceMotion ? false : { opacity: 0, y: -8 }}
-              animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
-              transition={reduceMotion ? { duration: 0 } : { duration: 0.22, ease: MOTION_EASE }}
-              className="episodes-filters-drawer role-ui"
-              data-testid="episodes-filters-panel"
-            >
-              <div className="episodes-filters-grid">
-                <SelectField
-                  label="Персонаж"
-                  value={characterParam}
-                  onValueChange={(value) => updateParams({ character: value || null })}
-                  options={characterOptions}
-                  fieldClassName="episodes-filters-field"
-                  triggerClassName="episodes-filters-select"
-                  triggerTestId="episodes-filter-character"
-                />
+          <SelectField
+            label="Серия"
+            value={seriesParam}
+            onValueChange={(value) => updateParams({ series: value || null })}
+            options={seriesOptions}
+            fieldClassName="catalog-filters-field"
+            triggerTestId="episodes-filter-series"
+          />
 
-                <SelectField
-                  label="Серия"
-                  value={seriesParam}
-                  onValueChange={(value) => updateParams({ series: value || null })}
-                  options={seriesOptions}
-                  fieldClassName="episodes-filters-field"
-                  triggerClassName="episodes-filters-select"
-                  triggerTestId="episodes-filter-series"
-                />
-
-                <SelectField
-                  label="Порядок"
-                  value={sortParam}
-                  onValueChange={(value) => {
-                    const nextSort = normalizeSort(value);
-                    updateParams({ sort: nextSort === DEFAULT_SORT ? null : nextSort });
-                  }}
-                  options={[
-                    { value: "oldest", label: "Старые -> новые" },
-                    { value: "newest", label: "Новые -> старые" }
-                  ]}
-                  fieldClassName="episodes-filters-field"
-                  triggerClassName="episodes-filters-select"
-                  triggerTestId="episodes-filter-sort"
-                />
-              </div>
-
-              <button
-                type="button"
-                className="episodes-filters-reset tone-secondary ui-underline-hover"
-                onClick={() => updateParams({ character: null, series: null, sort: null })}
-                disabled={!hasActiveFilters}
-              >
-                Сбросить фильтры
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+          <SelectField
+            label="Порядок"
+            value={sortParam}
+            onValueChange={(value) => {
+              const nextSort = normalizeSort(value);
+              updateParams({ sort: nextSort === DEFAULT_SORT ? null : nextSort });
+            }}
+            options={[
+              { value: "oldest", label: "Старые -> новые" },
+              { value: "newest", label: "Новые -> старые" }
+            ]}
+            fieldClassName="catalog-filters-field"
+            triggerTestId="episodes-filter-sort"
+          />
+        </CatalogFiltersPanel>
 
         <div className="episodes-catalog-list" data-testid="episodes-catalog-list">
           {episodesQuery.isLoading && episodes.length === 0 && (

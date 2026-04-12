@@ -2,14 +2,22 @@
 import { useQuery } from "@tanstack/react-query";
 import type { CharacterSort, PaginatedCharactersResponseDTO } from "@aeria/shared";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Search, SlidersHorizontal } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Flag } from "@/components/entities";
 import { useUnderlineActivation } from "@/components/search/useUnderlineActivation";
 import { CharacterFactOfDaySection } from "@/components/characters/CharacterFactOfDaySection";
 import { getCharacterFactOfDay, getCharacters } from "@/lib/api";
-import { Avatar, AvatarFallback, AvatarImage, Input, SectionBreak, SelectField, Skeleton, Typography } from "@/components/ui";
-import { cn } from "@/lib/utils";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  CatalogFiltersPanel,
+  CatalogSearchControls,
+  SectionBreak,
+  SelectField,
+  Skeleton,
+  Typography
+} from "@/components/ui";
 
 const DEFAULT_SORT: CharacterSort = "name_asc";
 const SEARCH_DEBOUNCE_MS = 200;
@@ -161,100 +169,64 @@ export default function CharactersPage() {
       <SectionBreak variant="stars" />
 
       <section className="width-medium characters-catalog" data-testid="characters-catalog">
-        <div className="characters-catalog-controls">
-          <label className="characters-catalog-search-shell" aria-label="Поиск персонажей">
-            <Search size={18} className="characters-catalog-search-icon" aria-hidden="true" />
-            <Input
-              appearance="ghost"
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              onFocus={queueUnderlineActivation}
-              onBlur={() => {
-                clearUnderlineActivation();
-                setIsUnderlineActive(false);
-              }}
-              placeholder="Поиск по персонажам..."
-              className={cn(
-                "characters-catalog-search-input role-ui interactive-input-underline",
-                isUnderlineActive && "interactive-input-underline-active"
-              )}
-            />
-          </label>
+        <CatalogSearchControls
+          searchLabel="Поиск персонажей"
+          searchPlaceholder="Поиск по персонажам..."
+          searchValue={searchInput}
+          onSearchChange={setSearchInput}
+          onSearchFocus={queueUnderlineActivation}
+          onSearchBlur={() => {
+            clearUnderlineActivation();
+            setIsUnderlineActive(false);
+          }}
+          isUnderlineActive={isUnderlineActive}
+          filterButtonLabel="Показать фильтры персонажей"
+          isFiltersOpen={isFiltersOpen}
+          onToggleFilters={() => setIsFiltersOpen((value) => !value)}
+          filterButtonTestId="characters-filter-button"
+        />
 
-          <button
-            type="button"
-            aria-label="Показать фильтры персонажей"
-            aria-expanded={isFiltersOpen}
-            className={cn(
-              "navbar-icon characters-catalog-filter-button ui-underline-click",
-              isFiltersOpen && "navbar-icon-active ui-underline-active"
-            )}
-            onClick={() => setIsFiltersOpen((value) => !value)}
-            data-testid="characters-filter-button"
-          >
-            <SlidersHorizontal size={18} />
-          </button>
-        </div>
+        <CatalogFiltersPanel
+          open={isFiltersOpen}
+          reduceMotion={Boolean(reduceMotion)}
+          resetLabel="Сбросить"
+          onReset={() => updateParams({ country: null, affiliation: null, sort: null })}
+          resetDisabled={!hasActiveFilters}
+          testId="characters-filters-panel"
+        >
+          <SelectField
+            label="Страна"
+            value={countryParam}
+            onValueChange={(value) => updateParams({ country: value || null })}
+            options={countryOptions}
+            fieldClassName="catalog-filters-field"
+            triggerTestId="characters-filter-country"
+          />
 
-        <AnimatePresence initial={false}>
-          {isFiltersOpen && (
-            <motion.div
-              initial={reduceMotion ? false : { opacity: 0, y: -8 }}
-              animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
-              transition={reduceMotion ? { duration: 0 } : { duration: 0.22, ease: MOTION_EASE }}
-              className="characters-filters-drawer role-ui"
-              data-testid="characters-filters-panel"
-            >
-              <div className="characters-filters-grid">
-                <SelectField
-                  label="Страна"
-                  value={countryParam}
-                  onValueChange={(value) => updateParams({ country: value || null })}
-                  options={countryOptions}
-                  fieldClassName="characters-filters-field"
-                  triggerClassName="characters-filters-select"
-                  triggerTestId="characters-filter-country"
-                />
+          <SelectField
+            label="Принадлежность"
+            value={affiliationParam}
+            onValueChange={(value) => updateParams({ affiliation: value || null })}
+            options={affiliationOptions}
+            fieldClassName="catalog-filters-field"
+            triggerTestId="characters-filter-affiliation"
+          />
 
-                <SelectField
-                  label="Принадлежность"
-                  value={affiliationParam}
-                  onValueChange={(value) => updateParams({ affiliation: value || null })}
-                  options={affiliationOptions}
-                  fieldClassName="characters-filters-field"
-                  triggerClassName="characters-filters-select"
-                  triggerTestId="characters-filter-affiliation"
-                />
-
-                <SelectField
-                  label="Сортировка"
-                  value={sortParam}
-                  onValueChange={(value) => {
-                    const nextSort = normalizeSort(value);
-                    updateParams({ sort: nextSort === DEFAULT_SORT ? null : nextSort });
-                  }}
-                  options={[
-                    { value: "name_asc", label: "По имени (А-Я)" },
-                    { value: "name_desc", label: "По имени (Я-А)" }
-                  ]}
-                  fieldClassName="characters-filters-field"
-                  triggerClassName="characters-filters-select"
-                  triggerTestId="characters-filter-sort"
-                />
-              </div>
-
-              <button
-                type="button"
-                className="characters-filters-reset tone-secondary ui-underline-hover"
-                onClick={() => updateParams({ country: null, affiliation: null, sort: null })}
-                disabled={!hasActiveFilters}
-              >
-                Сбросить
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+          <SelectField
+            label="Сортировка"
+            value={sortParam}
+            onValueChange={(value) => {
+              const nextSort = normalizeSort(value);
+              updateParams({ sort: nextSort === DEFAULT_SORT ? null : nextSort });
+            }}
+            options={[
+              { value: "name_asc", label: "По имени (А-Я)" },
+              { value: "name_desc", label: "По имени (Я-А)" }
+            ]}
+            fieldClassName="catalog-filters-field"
+            triggerTestId="characters-filter-sort"
+          />
+        </CatalogFiltersPanel>
 
         <div className="characters-catalog-list" data-testid="characters-catalog-list">
           {charactersQuery.isLoading && characters.length === 0 && (

@@ -166,7 +166,7 @@ describe("Navbar smoke", () => {
 
     fireEvent.click(screen.getByRole("combobox", { name: "Style" }));
     await waitFor(() => {
-      expect(document.body.querySelectorAll(".navbar-theme-dot").length).toBeGreaterThanOrEqual(8);
+      expect(document.body.querySelectorAll(".control-swatch-dot").length).toBeGreaterThanOrEqual(8);
     });
     expect(await screen.findByRole("option", { name: "Mint" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Ink" })).toBeInTheDocument();
@@ -197,7 +197,7 @@ describe("Navbar smoke", () => {
     expect(container.querySelectorAll(".navbar-divider")).toHaveLength(3);
     expect(container.querySelector(".navbar-progress")).toBeInTheDocument();
     expect(container.querySelector(".navbar-progress-indicator")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Назад" })).toHaveClass("navbar-icon", "navbar-back");
+    expect(screen.getByRole("button", { name: "Назад" })).toHaveClass("icon-button", "navbar-back");
     expect(screen.queryByText("Назад")).not.toBeInTheDocument();
     expect(screen.getByText("<")).toBeInTheDocument();
     expect(screen.getByText(">")).toBeInTheDocument();

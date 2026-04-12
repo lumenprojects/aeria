@@ -1,0 +1,135 @@
+.interactive-input-underline {
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: color-mix(in srgb, var(--text) 8%, transparent);
+  transition: border-bottom-color 220ms ease, border-bottom-width 220ms ease;
+}
+
+.interactive-input-underline-active {
+  border-bottom-width: 3px;
+  border-bottom-color: var(--accent);
+}
+
+.control-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.control-label {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  opacity: var(--opacity-36);
+}
+
+.icon-button {
+  position: relative;
+  display: inline-flex;
+  width: var(--navbar-control-size);
+  height: var(--navbar-control-size);
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+  line-height: 1;
+  opacity: var(--opacity-64);
+  cursor: pointer;
+}
+
+.icon-button:hover,
+.icon-button:focus-visible,
+.icon-button-active {
+  opacity: 1;
+}
+
+.icon-button:disabled {
+  cursor: default;
+  opacity: var(--opacity-36);
+}
+
+.icon-button-active {
+  --ui-underline-inset-start: 6px;
+  --ui-underline-inset-end: 6px;
+}
+
+.icon-button-text {
+  font-family: var(--font-ui, "IBM Plex Sans"), sans-serif;
+  font-size: var(--space-sm);
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.select-field-trigger {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  border: none;
+  border-bottom: var(--nav-underline-thickness) solid color-mix(in srgb, var(--text) 8%, transparent);
+  padding: 0 0 var(--space-sm);
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  outline: none;
+  opacity: var(--opacity-64);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 180ms ease, color 180ms ease, opacity 180ms ease;
+}
+
+.select-field-trigger:hover,
+.select-field-trigger[data-state="open"],
+.select-field-trigger:focus-visible {
+  border-bottom-color: var(--accent);
+  opacity: var(--opacity-100);
+}
+
+.select-field-trigger:hover .select-trigger-icon,
+.select-field-trigger[data-state="open"] .select-trigger-icon,
+.select-field-trigger:focus-visible .select-trigger-icon {
+  opacity: 1;
+}
+
+.select-field-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select-field-content {
+  width: min(var(--radix-select-trigger-width), calc(100vw - (2 * var(--gutter))));
+  background: var(--bg);
+}
+
+.select-field-item {
+  min-height: calc(var(--navbar-control-size) + var(--space-xs));
+}
+
+.select-field-item[data-highlighted] {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.select-field-item-content {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.control-swatch-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent);
+}

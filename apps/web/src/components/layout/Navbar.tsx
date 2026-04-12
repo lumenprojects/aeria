@@ -75,19 +75,19 @@ function NavbarSelectField({
   options: readonly NavbarSelectOption[];
 }) {
   return (
-    <div className="navbar-field">
-      <span className="navbar-label">{label}</span>
+    <div className="control-field">
+      <span className="control-label">{label}</span>
       <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger className="navbar-select" aria-label={label}>
-          <SelectValue className="navbar-select-value" />
+        <SelectTrigger className="select-field-trigger" aria-label={label}>
+          <SelectValue className="select-field-value" />
         </SelectTrigger>
-        <SelectContent className="navbar-select-content" position="item-aligned">
+        <SelectContent className="select-field-content" position="item-aligned">
           {options.map((option) => (
-            <SelectItem key={option.value} value={option.value} className="navbar-select-item">
-              <span className="navbar-select-item-content">
+            <SelectItem key={option.value} value={option.value} className="select-field-item">
+              <span className="select-field-item-content">
                 {option.swatch ? (
                   <span
-                    className="navbar-theme-dot"
+                    className="control-swatch-dot"
                     style={{ backgroundColor: option.swatch }}
                     aria-hidden="true"
                   />
@@ -214,13 +214,13 @@ export default function Navbar() {
                   <motion.div key="navbar-detail" className="navbar-detail" {...panelMotion}>
                     <motion.button
                       type="button"
-                      className="navbar-icon navbar-back"
+                      className="icon-button navbar-back"
                       whileHover={{ x: -1.5, scale: 1.03 }}
                       whileTap={{ scale: 0.96 }}
                       aria-label="Назад"
                       onClick={handleBack}
                     >
-                      <span className="navbar-icon-text navbar-back-glyph" aria-hidden="true">
+                      <span className="icon-button-text navbar-back-glyph" aria-hidden="true">
                         {"<"}
                       </span>
                     </motion.button>
@@ -257,8 +257,8 @@ export default function Navbar() {
                   type="button"
                   aria-label="Поиск"
                   className={cn(
-                    "navbar-icon ui-underline-click",
-                    searchOpen && "navbar-icon-active ui-underline-active"
+                    "icon-button ui-underline-click",
+                    searchOpen && "icon-button-active ui-underline-active"
                   )}
                   whileHover={{ y: -1.5, scale: 1.03 }}
                   whileTap={{ scale: 0.96 }}
@@ -281,7 +281,7 @@ export default function Navbar() {
                   transition={{ duration: 0.2 }}
                 >
                   <span className="navbar-divider" aria-hidden="true" />
-                  <span className="navbar-reading navbar-icon-text" title={seriesTitle ?? ""}>
+                  <span className="navbar-reading icon-button-text" title={seriesTitle ?? ""}>
                     <span className="navbar-reading-current">{currentEpisode ?? "—"}</span>
                     <span className="navbar-reading-total tone-tertiary">{" / "}{totalEpisodes ?? "—"}</span>
                   </span>
@@ -294,7 +294,7 @@ export default function Navbar() {
                 <motion.button
                   type="button"
                   aria-label={mode === "dark" ? "Переключить на дневной режим" : "Переключить на ночной режим"}
-                  className="navbar-icon"
+                  className="icon-button"
                   whileHover={{ y: -1.5, scale: 1.03 }}
                   whileTap={{ rotate: mode === "dark" ? 14 : -14, scale: 0.96 }}
                   onClick={() => setMode(mode === "dark" ? "light" : "dark")}
@@ -312,8 +312,8 @@ export default function Navbar() {
                   type="button"
                   aria-label="Шрифты"
                   className={cn(
-                    "navbar-icon navbar-icon-text ui-underline-click",
-                    activePanel === "fonts" && "navbar-icon-active ui-underline-active"
+                    "icon-button icon-button-text ui-underline-click",
+                    activePanel === "fonts" && "icon-button-active ui-underline-active"
                   )}
                   whileHover={{ y: -1.5, scale: 1.03 }}
                   whileTap={{ scale: 0.96 }}
@@ -327,8 +327,8 @@ export default function Navbar() {
                   type="button"
                   aria-label="Настройки"
                   className={cn(
-                    "navbar-icon ui-underline-click",
-                    activePanel === "settings" && "navbar-icon-active ui-underline-active"
+                    "icon-button ui-underline-click",
+                    activePanel === "settings" && "icon-button-active ui-underline-active"
                   )}
                   whileHover={{ y: -1.5, scale: 1.03 }}
                   whileTap={{ scale: 0.96 }}

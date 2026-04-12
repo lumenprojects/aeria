@@ -12,12 +12,15 @@
 3. Типографика только через `Typography` (`ui|heading|body`).
 4. Состояния `hover/focus/active/disabled` фиксировать в компонентах, не в page-local CSS.
 5. Для underline-состояний использовать только общий слой `ui-underline*`.
+6. Повторяющиеся control/search/filter/quote-паттерны оформлять как shared assets (`components/ui` + shared CSS layer), а не как page-local reusable chunks.
 
 ## 3) Запрещено
 1. Оставлять дефолтный shadcn-визуал как финальный.
 2. Делать одноразовые визуальные форки под конкретную страницу.
 3. Вводить локальные размеры вне токенов.
 4. Дублировать примитивы, если задача решается variant/обёрткой.
+5. Использовать `navbar-*` как generic class contract вне navbar; navbar-namespace зарезервирован под layout/placement/reading-specific стили.
+6. Держать отдельные page-local версии search/filter/quote controls, если их можно выразить через shared asset.
 
 ## 4) Avatar policy
 1. Базовый `Avatar` один (shadcn/Radix).

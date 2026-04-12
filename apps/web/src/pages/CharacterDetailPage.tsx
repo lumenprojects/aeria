@@ -3,7 +3,15 @@ import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Flag } from "@/components/entities";
 import { CharacterDetailFeedConveyor, type CharacterDetailFeedItem } from "@/components/characters/CharacterDetailFeedConveyor";
-import { Avatar, AvatarFallback, AvatarImage, MarkdownContent, SectionBreak, Typography } from "@/components/ui";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  EditorialQuoteCard,
+  MarkdownContent,
+  SectionBreak,
+  Typography
+} from "@/components/ui";
 import { getCharacter } from "@/lib/api";
 
 function fallbackText(label: string) {
@@ -184,51 +192,19 @@ export default function CharacterDetailPage() {
             </Typography>
             <div className="character-detail-rumors-list">
               {data.rumors.map((rumor) => (
-                <figure
+                <EditorialQuoteCard
                   key={`${rumor.sort_order}-${rumor.author_name}`}
-                  className="character-detail-rumor atlas-article-quote-card"
-                >
-                  <blockquote className="character-detail-rumor-quote atlas-article-quote-text">
-                    <Typography variant="body" as="p" className="character-detail-rumor-text atlas-article-quote-copy">
-                      {rumor.text}
-                    </Typography>
-                  </blockquote>
-                  <figcaption className="character-detail-rumor-attribution atlas-article-quote-footer">
-                    {rumor.source?.avatar_asset_path ? (
-                      <Link
-                        to={rumor.source.url}
-                        className="character-detail-rumor-source-avatar atlas-article-quote-avatar-link"
-                      >
-                        <Avatar size="xs" className="character-detail-rumor-source-image">
-                          <AvatarImage src={rumor.source.avatar_asset_path} alt={rumor.source.title} />
-                          <AvatarFallback>{fallbackText(rumor.source.title)}</AvatarFallback>
-                        </Avatar>
-                      </Link>
-                    ) : null}
-
-                    <div className="atlas-article-quote-source">
-                      <Typography
-                        variant="ui"
-                        as="p"
-                        className="tone-secondary character-detail-rumor-author atlas-article-quote-speaker"
-                      >
-                        {rumor.author_name}
-                      </Typography>
-
-                      {rumor.author_meta ? (
-                        <Typography variant="ui" as="p" className="tone-secondary atlas-article-quote-meta">
-                          {rumor.author_meta}
-                        </Typography>
-                      ) : null}
-
-                      {rumor.source && !rumor.source.avatar_asset_path ? (
-                        <Link to={rumor.source.url} className="character-detail-rumor-author-link ui-underline-hover">
-                          {rumor.source.title}
-                        </Link>
-                      ) : null}
-                    </div>
-                  </figcaption>
-                </figure>
+                  className="character-detail-rumor"
+                  text={rumor.text}
+                  speaker={rumor.author_name}
+                  speakerMeta={rumor.author_meta}
+                  avatarSrc={rumor.source?.avatar_asset_path}
+                  avatarLabel={rumor.source?.title}
+                  avatarHref={rumor.source?.url}
+                  avatarSize="xs"
+                  secondaryLinkLabel={rumor.source && !rumor.source.avatar_asset_path ? rumor.source.title : null}
+                  secondaryLinkHref={rumor.source?.url}
+                />
               ))}
             </div>
           </section>
